@@ -181,12 +181,17 @@ mutVa<-function(raster_samples, raster_mutmaps,rest_mutmaps,betas){
   return(data.frame(thetaw=theta, pi=thetapi,M=M, E=E,
                     N=N,a=a, asub=asub, Va=Va, Suma2=Suma2))
 }
-mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps){
+
+# genetic diversity estimator
+mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps, rasterN = integer(0)){
   require(raster)
   # Get the number of samples
   N=sum(fn(values(raster_samples)),na.rm=T)
+  if (length(rasterN) == 0) {
+    rasterN = N
+  } 
   # freqs
-  P<-fn(apply(values(raster_mutmaps), 2, function(cells) sum(cells>0,na.rm=T) )) / N
+  P<-fn(apply(values(raster_mutmaps), 2, function(cells) sum(cells>0,na.rm=T) )) / rasterN
   # at least one cell has to have a presence of a mutation, and sum over
   M_<-fn(apply(values(raster_mutmaps), 2, function(cells) any(cells>0)) )
   M_[is.na(M_) ]<-0
@@ -196,13 +201,11 @@ mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps){
   E_[is.na(E_) ]<-0
   table(M_, E_)
   E<-sum(M_ & !E_)
-  # Sum samples across cells
-  N<-sum(values(raster_samples),na.rm=TRUE)
   # Get the number of SNPs for the sample
   L<-dim(raster_mutmaps)[3]
   # compute diversity, Theta Waterson
   if(N>0 & M >0){
-    theta<-M/(Hn(N)*L)
+    theta<-M/(Hn(rasterN)*L)
     thetapi<-sum(2*P*(1-P),na.rm=T)/L
   }else{
     theta=0
@@ -215,8 +218,10 @@ mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps){
   # area based on simple square
   a= dim(raster_samples)[1] * res(raster_samples)[1] * dim(raster_samples)[2] * res(raster_samples)[2] 
   # return
-  return(data.frame(thetaw=theta, pi=thetapi,M=M, E=E,N=N,a=a, asub=asub))
+  return(data.frame(thetaw=theta, pi=thetapi,M=M, E=E,N=N, rasterN=rasterN, a=a, asub=asub))
 }
+
+
 MARsampling<-function(genemaps, scheme="random", samples=10,centerfun=median){
   require(raster)
   require(dplyr)
@@ -389,6 +394,8 @@ MARextinction_radial<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
   # calculate original diversity
   listres<-c(listres,
              list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+  # extract the original rasterN
+  rasterN = listres[[1]]$rasterN
   if(debug) print(listres)
   while(A > 1){ # change 0 for Astop if wanted to stop earlier
     if(debug) message("A ",A)
@@ -401,7 +408,7 @@ MARextinction_radial<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
     values(raster_mutmaps)[toextinct,]<-NA
     values(rest_mutmaps)[toextinct,]<-NA
     # calculate diversity
-    tmpdiv<-mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)
+    tmpdiv<-mutdiv(raster_samples, raster_mutmaps, rest_mutmaps, rasterN)
     listres<-c(listres,list(tmpdiv))
     # recalculate area remaining
     gridpresent<-which(apply(values(raster_mutmaps),1,
@@ -441,6 +448,8 @@ MARextinction_sn<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE){
   # calculate original diversity
   listres<-c(listres,
              list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+  # extract the original rasterN
+  rasterN = listres[[1]]$rasterN
   while(A > 1){ 
     # extinct some grids
     toextinct<-sample(gridpresent,xstep,replace = TRUE,
@@ -451,7 +460,7 @@ MARextinction_sn<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE){
     values(rest_mutmaps)[toextinct,]<-NA
     # calculate diversity
     listres<-c(listres,
-               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps, rasterN)))
     # plot(raster_samples>0, col='black') # ** for debug# for debug
     # recalculate area remaining
     gridpresent<-which(apply(values(raster_mutmaps),1,function(x) any(!is.na(x)))==TRUE)
@@ -487,6 +496,8 @@ MARextinction_in<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE){
   # calculate original diversity
   listres<-c(listres,
              list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+  # extract the original rasterN
+  rasterN = listres[[1]]$rasterN
   while(A > 1){ # change 0 for Astop if want to stop earlier
     # extinct some grids
     toextinct<-sample(x = gridpresent,size = xstep,replace = TRUE,
@@ -496,7 +507,7 @@ MARextinction_in<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE){
     values(rest_mutmaps)[toextinct,]<-NA
     # calculate diversity
     listres<-c(listres,
-               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps, rasterN)))
     # for debug plot(raster_samples>0)
     # recalculate area remaining
     gridpresent<-which(apply(values(raster_mutmaps),1,function(x) any(!is.na(x)))==TRUE)
@@ -524,6 +535,8 @@ MARextinction_random<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
   # calculate original diversity
   listres<-c(listres,
              list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+  # extract the original rasterN
+  rasterN = listres[[1]]$rasterN
   while(A > 1){
     # extinct some grids
     toextinct<-sample(gridpresent,xstep,replace = TRUE)
@@ -532,7 +545,7 @@ MARextinction_random<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
     values(rest_mutmaps)[toextinct,]<-NA
     # calculate diversity
     listres<-c(listres,
-               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+               list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps, rasterN)))
     # recalculate area remaining
     gridpresent<-which(apply(values(raster_mutmaps),1,function(x) any(!is.na(x)))==TRUE)
     A=A-xstep
@@ -542,6 +555,8 @@ MARextinction_random<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
            mx = 1-(M/max(M,na.rm=T)))
   return(res)
 }
+
+
 MARextinction_sim<-function(genemaps, scheme="random", 
                             samples=10, xfrac=0.01, 
                             centerfun=median){
