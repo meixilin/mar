@@ -393,7 +393,9 @@ MARextinction_radial<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
   while(A > 1){ # change 0 for Astop if wanted to stop earlier
     if(debug) message("A ",A)
     # extinct some grids. get the top that are closest in distance
-    toextinct<-gridpresent[which( alldist[gridpresent] < sort(alldist[gridpresent])[xstep])]
+    # Modification: Change to <= instead of < so when xstep == 1, still doable
+    # Date: Mon Mar 13 00:35:57 2023
+    toextinct<-gridpresent[which( alldist[gridpresent] <= sort(alldist[gridpresent])[xstep])]
     # extinct those values
     values(raster_samples)[toextinct]<-NA
     values(raster_mutmaps)[toextinct,]<-NA

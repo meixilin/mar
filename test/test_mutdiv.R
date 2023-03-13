@@ -101,6 +101,68 @@ if(N>0 & M >0){
   thetapi=0
 }
 
+# radial extinction --------
+species = 'joshua'
+centerfun = median
+dtpath = '/Carnegie/DPB/Data/Shared/Labs/Moi/Everyone/mutationarearelationship/mar/tmpobjects/'
+load(paste0(dtpath, '/genemaps-', species, '.rda'))
+
+# get the normal ones first
+zz = MARextinction_sim(genemaps,scheme = "radial",
+                       centerfun = median,
+                       xfrac=0.05)
+# debug
+require(raster)
+require(dplyr)
+raster_samples<-genemaps[[1]]
+raster_mutmaps<-genemaps[[2]]
+rest_mutmaps<-raster_mutmaps
+# get most abundant location, or median
+tmp<-xyFromCell(genemaps[[1]], which(values(genemaps[[1]]) >0))
+startcoordextinction<-fn(apply(tmp,2, centerfun)) %>% t() %>% data.frame %>%
+  rename(x=X1, y=X2)
+# extinction cell from which we will expand extinction
+id.cell <- raster::extract(genemaps[[1]],SpatialPoints(startcoordextinction), cellnumbers=TRUE)[1]
+startrowcol<-rowColFromCell(genemaps[[1]], id.cell)
+# get the  present locations
+gridpresent<-which(apply(values(raster_mutmaps),1,function(x) any(!is.na(x)))==TRUE)
+A=length(gridpresent)
+Astart=A
+xstep=ceiling(xfrac*A)
+# get the latlong of every cell in the grid
+locs = raster::as.data.frame(raster_samples,xy=TRUE)
+# get distance to the extinction point
+alldist<-as.matrix(dist(rbind(startcoordextinction,locs[,1:2]),method = 'euclidean'))[1,-1] %>%fn()
+# iterate
+listres<-list()
+# calculate original diversity
+listres<-c(listres,
+           list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
+if(debug) print(listres)
+while(A > 1){ # change 0 for Astop if wanted to stop earlier
+  if(debug) message("A ",A)
+  # extinct some grids. get the top that are closest in distance
+  toextinct<-gridpresent[which( alldist[gridpresent] < sort(alldist[gridpresent])[xstep])]
+  # extinct those values
+  values(raster_samples)[toextinct]<-NA
+  values(raster_mutmaps)[toextinct,]<-NA
+  values(rest_mutmaps)[toextinct,]<-NA
+  # calculate diversity
+  tmpdiv<-mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)
+  listres<-c(listres,list(tmpdiv))
+  # recalculate area remaining
+  gridpresent<-which(apply(values(raster_mutmaps),1,
+                           function(x){any(!is.na(x))})
+  )
+  A=A-xstep
+  if(debug) message("asub ",tmpdiv$asub)
+  # if(debug) plot(raster_samples>100) # ** for debug# for debug
+}
+## end function
+res<- listres %>% do.call(rbind,.) %>% data.frame %>%
+  mutate(ax = 1-(asub/max(asub,na.rm=T)),
+         mx = 1-(M/max(M,na.rm=T)))
+
 
 # SCRATCH ========
 
