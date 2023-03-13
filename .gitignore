@@ -7,3 +7,5 @@ src/*.so
 src/*.dll
 
 mar.Rproj
+
+.DS_Store

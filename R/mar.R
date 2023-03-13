@@ -181,10 +181,7 @@ mutVa<-function(raster_samples, raster_mutmaps,rest_mutmaps,betas){
   return(data.frame(thetaw=theta, pi=thetapi,M=M, E=E,
                     N=N,a=a, asub=asub, Va=Va, Suma2=Suma2))
 }
-
-# Modification: Update Pi calculations to use all the cells
-# Date: Mon Dec  5 16:18:22 2022
-mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps, rasterL = -1){
+mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps){
   require(raster)
   # Get the number of samples
   N=sum(fn(values(raster_samples)),na.rm=T)
@@ -201,13 +198,8 @@ mutdiv<-function(raster_samples, raster_mutmaps,rest_mutmaps, rasterL = -1){
   E<-sum(M_ & !E_)
   # Sum samples across cells
   N<-sum(values(raster_samples),na.rm=TRUE)
-  # Get the number of SNPs for the sample (options for using the same L)
-  if (rasterL == -1) {
-    L<-dim(raster_mutmaps)[3]
-  } else {
-    L <- rasterL
-  }
-
+  # Get the number of SNPs for the sample
+  L<-dim(raster_mutmaps)[3]
   # compute diversity, Theta Waterson
   if(N>0 & M >0){
     theta<-M/(Hn(N)*L)
@@ -530,7 +522,6 @@ MARextinction_random<-function(genemaps,xfrac=0.01,centerfun=median, debug=FALSE
   # calculate original diversity
   listres<-c(listres,
              list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)))
-  # TODO get original L
   while(A > 1){
     # extinct some grids
     toextinct<-sample(gridpresent,xstep,replace = TRUE)
