@@ -9,3 +9,4 @@ src/*.dll
 mar.Rproj
 
 .DS_Store
+.lintr

@@ -9,3 +9,8 @@ rm -r '~/R/x86_64-pc-linux-gnu-library/3.6/mar'
 
 For minimal set of dataset from the 1001 Arabidopsis Genomes, download the folder 1001g available in this google drive link:
 https://drive.google.com/drive/folders/15bFfoUVo5tpNeqINlkrDZ8uctbGszkOs?usp=sharing
+
+FAQ:
+
+1. Errors for installation in macOS: uninstall and reinstall xcode commandline tools.
+
