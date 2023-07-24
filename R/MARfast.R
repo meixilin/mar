@@ -1,3 +1,26 @@
+
+#' Title Faster implementation of `MARsampling`
+#'
+#' @param coord data.frame with 3 columns,
+#' @param geno
+#' @param samples
+#' @param res
+#' @param quorum
+#' @param minN
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' library(mar)
+#' data("coords-Arabidopsis_thaliana")
+#' data("geno-Arabidopsis_thaliana")
+#' ### Run MAR
+#' MAR = MARfastGT(coord = coords, geno = genomes, res = 0.01)
+#' ### Plot MAR
+#' plot(MAR$A_sq, MAR$M)
+#' plot(log10(MAR$A_sq), log10(MAR$M))
+
 MARfastGT <- function(coord, geno, samples = 100, res = 0.05, quorum = T, minN = 1) {
 
     # calculate lon/lat range of study area , add 50% of range to each edge
