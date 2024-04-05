@@ -10,3 +10,4 @@ mar.Rproj
 
 .DS_Store
 .lintr
+test/*
