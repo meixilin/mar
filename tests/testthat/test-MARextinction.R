@@ -26,7 +26,7 @@ test_that("MARextinction joshua-southnorth", {
     expect_equal(outdf, testdf, tolerance = 1e-07)
 })
 
-# this is not expected to pass as the radial extinction had
+# after commit 6289, it is not expected to PASS with old test data and new data generated
 test_that("MARextinction joshua-radial", {
     # run MAR extinction
     testdf = readRDS('testdata/xsim-joshua-radial.rds')

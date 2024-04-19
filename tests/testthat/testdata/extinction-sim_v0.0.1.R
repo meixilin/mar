@@ -67,4 +67,11 @@ closeAllConnections()
 # the genemaps-joshua is copied to testdata too
 # Rscript --vanilla extinction-sim_v0.0.1.R
 
+# update after commit 6289 --------
+ss = "radial"
+outdt = myMARextinction_sim(genemaps, ss)
+saveRDS(outdt, file = paste0('xsim-', species, '-', ss, '.rds'))
+
+
+
 

@@ -14,3 +14,5 @@ test/*
 tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
 *.jpg
+
+ARCHIVE

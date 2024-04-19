@@ -24,7 +24,7 @@ Test output:
 
 * `test-MARextinction.R`: all PASS.
 
-## 24f0 and
+## 24f0 and 6289
 
 Edits are:
 
@@ -33,11 +33,25 @@ Edits are:
 Test output:
 
 * `test-MARextinction.R`: all not PASS without tolerance = 1e-07. (commit id: 24f0)
-* `test-MARextinction.R`: all PASS with tolerance = 1e-07. (commit id: )
+* `test-MARextinction.R`: all PASS with tolerance = 1e-07. (commit id: 6289)
 
 Cause of change:
 
 small numeric variations.
+
+##
+
+Edits are:
+
+* Put back the bug fix for `MARextinction_radial` in commit f1696
+
+Test output:
+
+* `test-MARextinction.R`: three PASS with tolerance = 1e-07 but `MARextinction_radial` test does not PASS.
+
+previous **xsim-joshua-radial.rds** now named **xsim-joshua-radial.6289.rds** and becomes obselete in this commit.
+
+new **xsim-joshua-radial.rds** generated
 
 
 
