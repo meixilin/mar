@@ -1,7 +1,7 @@
 Package: mar
 Type: Package
-Title: Fitting Mutations-Area Relationships using population genomic samples of a species 
-Version: 0.0.1
+Title: Fitting Mutations-Area Relationships using population genomic samples of a species
+Version: 0.0.2
 Date: 2021-12-01
 Author: Moi Exposito-Alonso
 Maintainer: Moi Exposito-Alonso <moisesexpositoalonso@gmail.com>

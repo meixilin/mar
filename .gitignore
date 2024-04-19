@@ -11,3 +11,6 @@ mar.Rproj
 .DS_Store
 .lintr
 test/*
+tests/testthat/testdata/*.rds
+tests/testthat/testdata/*.rda
+*.jpg
