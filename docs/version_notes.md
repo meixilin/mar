@@ -39,7 +39,7 @@ Cause of change:
 
 small numeric variations.
 
-##
+## 2a40
 
 Edits are:
 
@@ -53,5 +53,20 @@ previous **xsim-joshua-radial.rds** now named **xsim-joshua-radial.6289.rds** an
 
 new **xsim-joshua-radial.rds** generated
 
+# v0.0.3
+
+Put in small fix on P calculation within the genemaps framework. Used for Kristy's extinction-sim outputs for now.
+
+Edits are:
+
+* Count multiple samples in one raster cell. `P ... sum(cells > 0)` to `P ... sum(cells)`
+* Fix harmonic numbers from `Hn(N)` to `Hn(N-1)`
+* Add `n/(n-1)` term for `theta_pi` calculation
+* Changed conditions for `N > 0` to `N > 1`
+
+Test output:
+
+* `test-MARextinction.R`: expected to pass when considering only the columns 3 to 9. The differences are plotted when running the test.
+* `test-mutdiv.R`: newly added and expected to pass.
 
 
