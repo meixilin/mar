@@ -24,7 +24,7 @@ Test output:
 
 * `test-MARextinction.R`: all PASS.
 
-##
+## 24f0 and
 
 Edits are:
 
@@ -32,8 +32,8 @@ Edits are:
 
 Test output:
 
-* `test-MARextinction.R`: all not PASS without tolerance = 1e-07.
-* `test-MARextinction.R`: all PASS with tolerance = 1e-07.
+* `test-MARextinction.R`: all not PASS without tolerance = 1e-07. (commit id: 24f0)
+* `test-MARextinction.R`: all PASS with tolerance = 1e-07. (commit id: )
 
 Cause of change:
 

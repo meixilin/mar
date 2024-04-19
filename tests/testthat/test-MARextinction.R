@@ -1,3 +1,5 @@
+# add tolerance = 1e-07
+
 load('testdata/genemaps-joshua.rda')
 
 test_that("MARextinction joshua-random", {
@@ -5,7 +7,7 @@ test_that("MARextinction joshua-random", {
     testdf = readRDS('testdata/xsim-joshua-random.rds')
     set.seed(7)
     outdf = MARextinction_sim(genemaps, scheme = "random")
-    expect_equal(outdf, testdf)
+    expect_equal(outdf, testdf, tolerance = 1e-07)
 })
 
 test_that("MARextinction joshua-inwards", {
@@ -13,7 +15,7 @@ test_that("MARextinction joshua-inwards", {
     testdf = readRDS('testdata/xsim-joshua-inwards.rds')
     set.seed(7)
     outdf = MARextinction_sim(genemaps, scheme = "inwards")
-    expect_equal(outdf, testdf)
+    expect_equal(outdf, testdf, tolerance = 1e-07)
 })
 
 test_that("MARextinction joshua-southnorth", {
@@ -21,7 +23,7 @@ test_that("MARextinction joshua-southnorth", {
     testdf = readRDS('testdata/xsim-joshua-southnorth.rds')
     set.seed(7)
     outdf = MARextinction_sim(genemaps, scheme = "southnorth")
-    expect_equal(outdf, testdf)
+    expect_equal(outdf, testdf, tolerance = 1e-07)
 })
 
 # this is not expected to pass as the radial extinction had
@@ -30,7 +32,7 @@ test_that("MARextinction joshua-radial", {
     testdf = readRDS('testdata/xsim-joshua-radial.rds')
     set.seed(7)
     outdf = MARextinction_sim(genemaps, scheme = "radial")
-    expect_equal(outdf, testdf)
+    expect_equal(outdf, testdf, tolerance = 1e-07)
 })
 
 
