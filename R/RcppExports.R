@@ -17,10 +17,6 @@ sfsC <- function(X, myrows, mycols) {
     .Call(`_mar_sfsC`, X, myrows, mycols)
 }
 
-Hn <- function(N) {
-    .Call(`_mar_Hn`, N)
-}
-
 rcpparma_hello_world <- function() {
     .Call(`_mar_rcpparma_hello_world`)
 }

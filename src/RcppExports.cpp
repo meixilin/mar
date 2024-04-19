@@ -62,17 +62,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Hn
-double Hn(int N);
-RcppExport SEXP _mar_Hn(SEXP NSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    rcpp_result_gen = Rcpp::wrap(Hn(N));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rcpparma_hello_world
 arma::mat rcpparma_hello_world();
 RcppExport SEXP _mar_rcpparma_hello_world() {
@@ -122,7 +111,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mar_sfsloopC", (DL_FUNC) &_mar_sfsloopC, 1},
     {"_mar_sfsmatC", (DL_FUNC) &_mar_sfsmatC, 1},
     {"_mar_sfsC", (DL_FUNC) &_mar_sfsC, 3},
-    {"_mar_Hn", (DL_FUNC) &_mar_Hn, 1},
     {"_mar_rcpparma_hello_world", (DL_FUNC) &_mar_rcpparma_hello_world, 0},
     {"_mar_rcpparma_outerproduct", (DL_FUNC) &_mar_rcpparma_outerproduct, 1},
     {"_mar_rcpparma_innerproduct", (DL_FUNC) &_mar_rcpparma_innerproduct, 1},

@@ -89,11 +89,11 @@ void decode_plink(unsigned char *out,
   unsigned int i, k;
   unsigned char tmp, geno;
   unsigned int a1, a2;
-  
+
   for(i = 0 ; i < n ; ++i){
     tmp = in[i];
     k = PACK_DENSITY * i;
-    
+
     /* geno is interpreted as a char, however a1 and a2 are bits for allele 1 and
      * allele 2. The final genotype is the sum of the alleles, except for 01
      * which denotes missing.
@@ -103,19 +103,19 @@ void decode_plink(unsigned char *out,
     a2 = !(geno >> 1);
     out[k] = (geno == 1) ? 3 : a1 + a2;
     k++;
-    
+
     geno = (tmp & MASK1) >> 2;
     a1 = !(geno & 1);
     a2 = !(geno >> 1);
     out[k] = (geno == 1) ? 3 : a1 + a2;
     k++;
-    
+
     geno = (tmp & MASK2) >> 4;
     a1 = !(geno & 1);
     a2 = !(geno >> 1);
     out[k] = (geno == 1) ? 3 : a1 + a2;
     k++;
-    
+
     geno = (tmp & MASK3) >> 6;
     a1 = !(geno & 1);
     a2 = !(geno >> 1);
@@ -148,7 +148,7 @@ arma::Mat<double> readbed(std::string bedfile,
   // file size in bytes, ignoring first 3 bytes (2byte magic number + 1byte mode)
   len = (unsigned int)in.tellg() - 3;
   // Rcpp::Rcout << "The size in bytes of the file is: " << len<< std::endl;
-  
+
   ////////////////////////////////////////////////////
   // Iterating
   // size of packed data, in bytes, per SNP
@@ -156,9 +156,9 @@ arma::Mat<double> readbed(std::string bedfile,
   // Rcpp::Rcout << "Size in bytes of SNP packs is: " << np << std::endl;
   nsnps = len / np;
   in.seekg(3, std::ifstream::beg);
-  
+
   unsigned char* tmp = new unsigned char[np];
-  
+
   // Allocate more than the sample size since data must take up whole bytes
   unsigned char* tmp2 = new unsigned char[np * PACK_DENSITY];
   double val=0;
@@ -173,7 +173,7 @@ arma::Mat<double> readbed(std::string bedfile,
     X.col(j)=tmp3;
   }
   in.close();
-  
+
   // Subset matrix
   if(myrows.n_elem == X.n_rows){
     X=X.cols(mycols-1);
@@ -182,14 +182,14 @@ arma::Mat<double> readbed(std::string bedfile,
   }else{
     X=X.submat(myrows-1,mycols-1);
   }
-  
+
   return X;
 }
 
 // [[Rcpp::export]]
 arma::vec sfsloopC(const arma::Mat<int> & X) // genome matrix
   {
- arma::vec n((X).n_cols); 
+ arma::vec n((X).n_cols);
  arma::colvec ones((X).n_rows);
  ones.fill(1);
  n = X.t() * ones;
@@ -198,7 +198,7 @@ arma::vec sfsloopC(const arma::Mat<int> & X) // genome matrix
 // [[Rcpp::export]]
 arma::vec sfsmatC(const arma::Mat<int> & X) // genome matrix
   {
- arma::vec n((X).n_cols); 
+ arma::vec n((X).n_cols);
  arma::colvec ones((X).n_rows);
  ones.fill(1);
  n = X.t() * ones;
@@ -218,7 +218,7 @@ arma::vec sfsC(
     X2 = &subX;
   }
   // create vector of observations
-  arma::vec n((*X2).n_cols); 
+  arma::vec n((*X2).n_cols);
   n.fill(0); // need to fill otherwise unstable floats
   // iterate and sum number of alleles
   int m,p;
@@ -231,33 +231,5 @@ arma::vec sfsC(
   }
   return(n);
 }
- 
-// Get harmonic number for Theta waterson
-// [[Rcpp::export]]
-double Hn(int N){
-  // H1 = 1
-  float harmonic = 1.00;
-  // loop to apply the forumula
-  // Hn = H1 + H2 + H3 ... + Hn-1 + Hn-1 + 1/n
-  for (int i = 2; i <= N; i++) {
-    harmonic += (float)1 / i;
-  }
-  return harmonic;
-}
 
-// /*** R
-// HnR<-function(n){
-//   a=0
-//   for( i in 1:(n-1))  a = a + (1/i)
-//   return(a)
-// }
-// HnR(10)
-// HnR(100)
-// Hn(10)
-// Hn(100)
-// system.time(HnR(2))
-// system.time(Hn(2))
-// 
-// */
-// 
-// 
+//Harmonic number now implemented in R

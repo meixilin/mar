@@ -24,7 +24,20 @@ Test output:
 
 * `test-MARextinction.R`: all PASS.
 
+##
 
+Edits are:
+
+* Changed `cpp` implementation for `Hn` and used R's native implementation for harmonic number.
+
+Test output:
+
+* `test-MARextinction.R`: all not PASS without tolerance = 1e-07.
+* `test-MARextinction.R`: all PASS with tolerance = 1e-07.
+
+Cause of change:
+
+small numeric variations.
 
 
 
