@@ -51,4 +51,13 @@ test_that("MARextinction joshua-radial", {
     plot_diff(outdf, testdf)
 })
 
-
+# test the debug options
+test_that("MARextinction joshua-southnorth debug", {
+    # run MAR extinction
+    testdf = readRDS('testdata/xsim-joshua-southnorth.rds')
+    set.seed(7)
+    outlist = MARextinction_sim(genemaps, scheme = "southnorth", debug = TRUE)
+    outdf = outlist[[1]]
+    listext = outlist[[2]]
+    expect_equal(outdf[,3:9], testdf[,3:9], tolerance = 1e-07)
+})

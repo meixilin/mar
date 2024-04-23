@@ -93,6 +93,9 @@ MARextinction_sn <- function(genemaps, xfrac = 0.01, centerfun = median, debug =
         listres,
         list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
     )
+    if (debug) {
+        listext <- list()
+    }
     while (A > 1) {
         # extinct some grids
         toextinct <- sample(gridpresent, xstep,
@@ -100,6 +103,10 @@ MARextinction_sn <- function(genemaps, xfrac = 0.01, centerfun = median, debug =
             # prob =normalize(northdist[gridpresent])^10)  # likely created a bug with normalize
             prob = rank(-northdist[gridpresent])^10
         ) # high prob with exponential decay
+        if (debug) {
+            listext <- c(listext, list(toextinct))
+            print(toextinct)
+        }
         values(raster_samples)[toextinct] <- NA
         values(raster_mutmaps)[toextinct, ] <- NA
         values(rest_mutmaps)[toextinct, ] <- NA
@@ -120,7 +127,11 @@ MARextinction_sn <- function(genemaps, xfrac = 0.01, centerfun = median, debug =
             ax = 1 - (asub / max(asub, na.rm = T)),
             mx = 1 - (M / max(M, na.rm = T))
         )
-    return(res)
+    if (debug) {
+        return(list(res, listext))
+    } else {
+        return(res)
+    }
 }
 
 MARextinction_in <- function(genemaps, xfrac = 0.01, centerfun = median, debug = FALSE) {
@@ -226,7 +237,7 @@ MARextinction_random <- function(genemaps, xfrac = 0.01, centerfun = median, deb
 
 MARextinction_sim <- function(genemaps, scheme = "random",
                               samples = 10, xfrac = 0.01,
-                              centerfun = median) {
+                              centerfun = median, debug = FALSE) {
     require(raster)
     require(dplyr)
     ## Check conditions
@@ -255,7 +266,7 @@ MARextinction_sim <- function(genemaps, scheme = "random",
     ## southnorth ############################################################################
     ## Sampling grids from south to north
     else if (scheme == "southnorth") {
-        res <- MARextinction_sn(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun)
+        res <- MARextinction_sn(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun, debug = debug)
     } # end condition
     ## radial ############################################################################
     else if (scheme == "radial") {
