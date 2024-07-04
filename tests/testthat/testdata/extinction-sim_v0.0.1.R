@@ -44,8 +44,7 @@ myschemes = c("random", "inwards", "southnorth", "radial")
 
 # load data --------
 species = 'joshua'
-load('~/AMoiLab/mar_related/pi_extinct/data-raw/tmpobjects/genemaps-joshua.rda')
-
+load('~/AMoiLab/mar_related/MAR2.0/pi_extinct/ARCHIVE/data-raw/tmpobjects/genemaps-joshua.rda')
 # check that they are the same with pi_extinct tests
 testdt = load_prevdata()
 

@@ -69,4 +69,11 @@ Test output:
 * `test-MARextinction.R`: expected to pass when considering only the columns 3 to 9. The differences are plotted when running the test.
 * `test-mutdiv.R`: newly added and expected to pass.
 
+# v0.1.0
+
+* IMPORTANT: Removed old genemap as the central data structure. Introduces `genemap` as a S3 class.
+* Fix `create_gene_maps` bug that it misses some samples at the edge. See `bugs-creategeno.R`
+
+Test output:
+
 
