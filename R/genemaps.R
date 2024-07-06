@@ -12,12 +12,35 @@
     class(obj) <- "genemaps"
 
     # add attribute for the starting extent
-    lonlatr <- c(
-        range(lonlat[,1]),
-        range(lonlat[,2])
-    )
+    lonlatr <- apply(lonlat, 2, range)
     attr(obj, "extent") <- lonlatr
+    # add attribute to recommend operation resolution
+    attr(obj, "res") <- .lonlat_res(lonlat, lonlatr)
+    print(attributes(obj))
     return(obj)
+}
+
+# resolution determination inspired from: https://www.sciencedirect.com/science/article/pii/S0098300405002657 (eq. 12)
+.lonlat_res <- function(lonlat, lonlatr) {
+    aa = apply(lonlatr, 2, diff)
+    area = aa[1]*aa[2]
+    res = 0.5*sqrt(area/nrow(lonlat))
+    # round to first non-zero digits
+    outres = as.numeric(sprintf('%.e', res))
+    return(outres)
+}
+
+# these two functions can be used to create `raster_samples` equivalent
+# TODO: currently decided to not use this framework (constrains flexibility and speed)
+.raster_lonlat <- function(lonlat, lonlatr, res = NULL, padding = 0.01) {
+    # if resolution not provided, determine resolution
+    if(is.null(res)) {
+        res = .lonlat_res(lonlat, lonlatr)
+    }
+    lonlatrp <- t(apply(lonlatr, 2, function(xx){xx + c(-1,1)*diff(xx)*padding}))
+    baser <- raster(resolution = res, extent(lonlatrp))
+    rr <- rasterize(lonlat, baser, fun = "count")
+    print(rr)
 }
 
 # validate and helper functions for genemaps class
@@ -64,3 +87,4 @@ genemaps <- function(lonlat,
     )
     return(output)
 }
+

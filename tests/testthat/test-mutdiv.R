@@ -1,5 +1,9 @@
 # test that mutdiv calculation is correct
-load('testdata/genemaps-joshua.rda')
+# load('testdata/genemaps-joshua.rda')
+
+# create new genemaps
+load('testdata/genemaps_new-joshua.rda')
+genemaps = newmaps
 
 test_that("mutdiv works", {
     raster_samples <- genemaps[[1]]

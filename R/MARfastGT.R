@@ -24,8 +24,8 @@
 MARfastGT <- function(genemaps, samples = 100, res = 0.05, quorum = T, minN = 1) {
 
     # calculate lon/lat range of study area , add 50% of range to each edge
-    lonrange <- range(coord[, 1]) + c(-1, 1) * diff(range(coord[, 1])) * 0.50 # range coords ± 50% of study area
-    latrange <- range(coord[, 2]) + c(-1, 1) * diff(range(coord[, 2])) * 0.50 # range coords ± 50% of study area
+    lonrange <- range(coord[, 1]) + c(-1, 1) * diff(range(coord[, 1])) * 0.50 # range coords +- 50% of study area
+    latrange <- range(coord[, 2]) + c(-1, 1) * diff(range(coord[, 2])) * 0.50 # range coords +- 50% of study area
 
     # set min-max dimension of squares to compute MAR
     minD <- res # minimal dimension of squares: map resolution

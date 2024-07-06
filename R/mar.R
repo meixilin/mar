@@ -83,10 +83,10 @@ create_gene_maps <- function(coord, geno, bystep = 1, names = NULL) {
     # stop condition
     stopifnot(dim(coord)[1] == dim(geno)[1])
     # create edges of the raster
-    xmn <- range(coord[, 1])[1]
-    xmx <- range(coord[, 1])[2]
-    ymn <- range(coord[, 2])[1]
-    ymx <- range(coord[, 2])[2]
+    xmn <- range(coord[, 1])[1] - diff(range(coord[, 1]))*0.01
+    xmx <- range(coord[, 1])[2] + diff(range(coord[, 1]))*0.01
+    ymn <- range(coord[, 2])[1] - diff(range(coord[, 2]))*0.01
+    ymx <- range(coord[, 2])[2] + diff(range(coord[, 2]))*0.01
     # create raster
     r <- raster(resolution = bystep, xmn = xmn, xmx = xmx, ymn = ymn, ymx = ymx)
     ## project coordinates in raster to count samples per grid point
@@ -219,7 +219,10 @@ MARsampling <- function(genemaps, scheme = "random", samples = 10, centerfun = m
                 rest_mutmaps <- genemaps[[2]]
                 rest_mutmaps <- mask(rest_mutmaps, as(tmpextent, "SpatialPolygons"), inverse = TRUE)
                 # compute diversity metrics and areas
-                mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)
+                res = mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)
+                # DEBUG: add the extent stats
+                res$extent = paste0(c(xstart, xstart + sidesize, ystart, ystart + sidesize), collapse = ';')
+                return(res)
             }) %>% do.call(rbind, .)
         }) %>% do.call(rbind, .)
     }

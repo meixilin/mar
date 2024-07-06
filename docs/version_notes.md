@@ -69,11 +69,21 @@ Test output:
 * `test-MARextinction.R`: expected to pass when considering only the columns 3 to 9. The differences are plotted when running the test.
 * `test-mutdiv.R`: newly added and expected to pass.
 
-# v0.1.0
+# v0.0.4
 
-* IMPORTANT: Removed old genemap as the central data structure. Introduces `genemap` as a S3 class.
-* Fix `create_gene_maps` bug that it misses some samples at the edge. See `bugs-creategeno.R`
+* IMPORTANT: Removed old genemap as the central data structure. Introduces `genemaps` as a S3 class.
+    * `.lonlat_res` function added to automatically select the optimal resolution in generating `genemaps`
+* Fix `create_gene_maps` bug that it misses some samples at the edge. See `bugs-creategeno.R` and `mar.R`
+* Add a debug line in `MARsampling` to track the cells circled in each replicate runs. See `mar.R`
+* Generate test file `genemaps_new-joshua.rda` from fixed `create_gene_maps` function.
+* Generate test file `mares_new-joshua.rda` from `MARsampling` random scheme.
+
 
 Test output:
 
+# TODO list
 
+test the consistency of using `mutdiv` and `calc_M` in a given extent
+test the ability to circle correct individuals using `MARsampling` and `MARfastGT`
+
+* Decided to completely discard the `raster` usage in `raster_samples` and `raster_mutmaps`.
