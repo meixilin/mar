@@ -35,7 +35,7 @@
     attr(obj, "mapres") <- mapres
     # get number of snps
     # TODO: this can be total length of callable sites.
-    attr(obj, "genolen") <- dim(genotype)[2]
+    attr(obj, "genolen") <- dim(genotype)[1]
     # print(attributes(obj))
     return(obj)
 }
@@ -54,6 +54,7 @@
 # TODO: currently decided to not use this framework (constrains flexibility and speed)
 .raster_lonlat <- function(lonlat, lonlatr, mapres, padding = 0.01) {
     lonlatrp <- t(apply(lonlatr, 2, function(xx){xx + c(-1,1)*diff(xx)*padding}))
+    # NOTE: slight floating point error. Should not impact anything.
     baser <- raster(resolution = mapres, extent(lonlatrp))
     rr <- rasterize(lonlat, baser, fun = "count")
     print(rr)
@@ -62,6 +63,7 @@
 # validate and helper functions for genemaps class
 genemaps <- function(lonlat,
                      genotype,
+                     het2hom = TRUE,
                      sample = NULL,
                      genoinfo = NULL,
                      mapres = NULL,
@@ -79,9 +81,14 @@ genemaps <- function(lonlat,
     stopifnot(!any(is.na(lonlat)))
     # only allow 0,1,2 in genotype
     stopifnot(all(sort(unique(as.vector(genotype))) %in% c(0,1,2)))
+    if (het2hom) {
+        # convert all values to 0/1
+        genotype = genotype > 0
+    }
+
     # set variables
     nsamples = dim(lonlat)[1]
-    nsnps = dim(genotype)[2]
+    nsnps = dim(genotype)[1]
     logger::log_info("number of samples: ", nsamples)
     logger::log_info("number of genomic sites: ", nsnps)
 
@@ -95,8 +102,8 @@ genemaps <- function(lonlat,
     }
 
     # check for number of sample dimensions
-    stopifnot(nsamples == dim(genotype)[1] & nsamples == dim(sample)[1])
-    stopifnot(nsnps == dim(genotype)[2] & nsnps == dim(genoinfo)[1])
+    stopifnot(nsamples == dim(genotype)[2] & nsamples == dim(sample)[1])
+    stopifnot(nsnps == dim(genotype)[1] & nsnps == dim(genoinfo)[1])
 
     # assemble genemaps
     output <- .new_genemaps(

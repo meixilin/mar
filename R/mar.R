@@ -183,7 +183,7 @@ mutVa <- function(raster_samples, raster_mutmaps, rest_mutmaps, betas) {
 }
 
 
-MARsampling <- function(genemaps, scheme = "random", samples = 10, centerfun = median) {
+MARsampling_old <- function(genemaps, scheme = "random", samples = 10, centerfun = median) {
     require(raster)
     require(dplyr)
     ## Check conditions
@@ -204,6 +204,7 @@ MARsampling <- function(genemaps, scheme = "random", samples = 10, centerfun = m
         res <- lapply(1:minrange, function(sidesize) {
             lapply(1:samples, function(dum) {
                 # create box of study
+                # ML: small bug here when minrange reaches max. it sample(c(0,1)).
                 xstart <- sample(1:(lonrange - sidesize), 1)
                 ystart <- sample(1:(latrange - sidesize), 1)
                 tmpextent <- extent(genemaps[[1]], xstart, xstart + sidesize, ystart, ystart + sidesize)

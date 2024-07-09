@@ -88,14 +88,26 @@ Test output:
 Test output:
 
 * `test-genemaps.R`: creates `gm-joshua.rda` and `gm-arabidopsis.rda` objects. validates that samples are mapped correctedly without loss in data.
-*
 
 TODO:
 
 * Sampling can be extended outside of the gridded system used by `raster_samples` and `samplemap`. But it is impossible to test for reproducibility.
 
+# v0.0.5
 
-# TODO list
+* IMPORTANT: Greatly speed up `MARsampling` while ensuring reproducibility.
+    * `MARsampling` in `mar.R` renamed to `MARsampling_old`
+* Added two supporting function groups `mutdiv.R` and `opsraster.R` to calculate genetic diversity and perform operations on raster files.
 
-test the consistency of using `mutdiv` and `calc_M` in a given extent
-test the ability to circle correct individuals using `MARsampling` and `MARfastGT`
+Test output:
+* `test-mutdiv`: test that new `.mutdiv.gridded` function works to reproduce results from `mutdiv` in previous version in full genemaps samples.
+* `test-opsraster`: test that new `areaofraster` function works to reporduce results from `areaofraster_old`
+* `test-MARsampling`: completely reproduces the results from `MARsampling_old`. The `Asq` is not matched with `a` in the last 10 replicates. Because there was a small bug in `MARsampling_old` that creates 0 as a starting point.
+* `test-MARextinction`: now rolled out, awaiting new updates.
+* Ran `usethis::use_pipe` and `devtools::document` to import the pipe `%>%` function.
+
+# TODO
+
+* Add other sampling support for `MARsampling`
+* Add support for large files and subsetting sample info (likely through `gds` related packages)
+

@@ -6,6 +6,10 @@ test_that("genemaps works", {
     for (ii in myspecies) {
         load(paste0('testdata/coords-', ii, '.rda'))
         load(paste0('testdata/genome-', ii, '.rda'))
+        # transpose if needed
+        if (dim(coords)[1] == dim(genomes)[1]) {
+            genomes = t(genomes)
+        }
         # test for previous one
         gm <- genemaps(coords, genomes)
         # write new gm if it doesn't exists
@@ -16,7 +20,7 @@ test_that("genemaps works", {
         # test that the cellid is correctly relinked
         cellids = gm$sample$cellid
         samplemap = gm$samplemap
-        rmat = t(as.matrix(samplemap))
+        rmat = t(raster::as.matrix(samplemap))
         rmatid = which(!is.na(rmat))
         expect_true(all(rmat[rmatid] == table(cellids)))
         ## plot for the first sample
