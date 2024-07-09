@@ -1,3 +1,14 @@
+# base::match but with some checks
+# TODO: orphaned function not used.
+.match <- function(x, xdb) {
+    stopifnot(all(x %in% xdb))
+    # sort the ids if provided in the wrong orders
+    ids = sort(base::match(x, xdb))
+    return(ids)
+}
+
+
+
 ################################################################################
 #### Function utilities
 ################################################################################

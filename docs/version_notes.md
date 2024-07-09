@@ -73,17 +73,29 @@ Test output:
 
 * IMPORTANT: Removed old genemap as the central data structure. Introduces `genemaps` as a S3 class.
     * `.lonlat_res` function added to automatically select the optimal resolution in generating `genemaps`
+    * `.raster_lonlatr` function generates `samplemap`.
+* Decided to completely discard the `raster` usage in `raster_samples` and `raster_mutmaps`.
+    * `genemaps` now have a slot `samplemap` that is the same as `raster_samples`. It is used to align operations in the same grid systems.
 * Fix `create_gene_maps` bug that it misses some samples at the edge. See `bugs-creategeno.R` and `mar.R`
+    * Now `create_gene_maps` is obselete. Use `genemaps` constructor.
 * Add a debug line in `MARsampling` to track the cells circled in each replicate runs. See `mar.R`
 * Generate test file `genemaps_new-joshua.rda` from fixed `create_gene_maps` function.
 * Generate test file `mares_new-joshua.rda` from `MARsampling` random scheme.
-
+* Other:
+    * added `.match` function (but not used)
+    * speed profiler `profilespeed` (added but not tracked in git)
 
 Test output:
+
+* `test-genemaps.R`: creates `gm-joshua.rda` and `gm-arabidopsis.rda` objects. validates that samples are mapped correctedly without loss in data.
+*
+
+TODO:
+
+* Sampling can be extended outside of the gridded system used by `raster_samples` and `samplemap`. But it is impossible to test for reproducibility.
+
 
 # TODO list
 
 test the consistency of using `mutdiv` and `calc_M` in a given extent
 test the ability to circle correct individuals using `MARsampling` and `MARfastGT`
-
-* Decided to completely discard the `raster` usage in `raster_samples` and `raster_mutmaps`.

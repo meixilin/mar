@@ -125,12 +125,7 @@ get_total_area <- function(coord) {
     # get the raster area
     values(raster::area(r))
 }
-areaofraster <- function(myraster) {
-    asub <- raster::area(myraster) # better with area function
-    values(asub)[is.na(values(myraster))] <- NA
-    asub <- sum(values(asub), na.rm = T)
-    return(asub)
-}
+
 # areapolygonofraster<-function(myraster){
 #   tmp<-xyFromCell(myraster, which(values(myraster) >0))
 #   tmp.mcp <- adehabitatHR::mcp(SpatialPoints(tmp,proj4string = myraster@crs),percent = 100,unout="km2")
