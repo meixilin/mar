@@ -106,8 +106,11 @@ Test output:
 * `test-MARextinction`: now rolled out, awaiting new updates.
 * Ran `usethis::use_pipe` and `devtools::document` to import the pipe `%>%` function.
 
+# v0.0.6
+
+* Removed `mutdiv_old` `areaofraster_old` and `MARsampling_old`
+
 # TODO
 
 * Add other sampling support for `MARsampling`
 * Add support for large files and subsetting sample info (likely through `gds` related packages)
-

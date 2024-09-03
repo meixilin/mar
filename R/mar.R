@@ -204,7 +204,7 @@ MARsampling_old <- function(genemaps, scheme = "random", samples = 10, centerfun
         res <- lapply(1:minrange, function(sidesize) {
             lapply(1:samples, function(dum) {
                 # create box of study
-                # ML: small bug here when minrange reaches max. it sample(c(0,1)).
+                # ML: small bug here when minrange reaches max. it sample(c(0,1)). Besides, the minimum sample size in this is 4 cells.
                 xstart <- sample(1:(lonrange - sidesize), 1)
                 ystart <- sample(1:(latrange - sidesize), 1)
                 tmpextent <- extent(genemaps[[1]], xstart, xstart + sidesize, ystart, ystart + sidesize)

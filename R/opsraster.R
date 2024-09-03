@@ -3,7 +3,7 @@ areaofraster <- function(rr, na.rm = FALSE, tol = 1, cached = TRUE) {
     asub <- raster::area(rr, na.rm = na.rm)
     # if cells' coefficient of variation too large (different area per cell)
     cv_asub = raster::cv(values(asub), na.rm = T)
-    # if cv > tol/100, stop the program
+    # if cv > tol/100, warn the variation
     if (cv_asub > tol) {
         warning(paste('Area of raster CV =', round(cv_asub, 1), '%'))
     }
@@ -30,18 +30,20 @@ cellid_sample <- function(gm, cellid) {
 }
 
 # find cellids by row and column list
+# bbox should be c(xmin, xmax, ymin, ymax).
 # TODO: speed TBD with just using extent_sample function
-rowcol_cellid <- function(gm, xmin, xmax, ymin, ymax) {
+rowcol_cellid <- function(gm, bbox) {
+    stopifnot(length(bbox) == 4)
     # get the cells
-    cells <- raster::cellFromRowColCombine(gm$samplemap, xmin:xmax, ymin:ymax)
+    cells <- raster::cellFromRowColCombine(gm$samplemap, bbox[1]:bbox[2], bbox[3]:bbox[4])
     cellsnotna <- intersect(gm$sample$cellid, cells)
     return(cellsnotna)
 }
 
-# TODO: orphaned function, not used anywhere yet.
-rowcol_extent <- function(gm, xmin, xmax, ymin, ymax) {
+rowcol_extent <- function(gm, bbox) {
+    stopifnot(length(bbox) == 4)
     # create an extent from gm$samplemap
-    out = raster::extent(gm$samplemap, xmin, xmax, ymin, ymax)
+    out = raster::extent(gm$samplemap, bbox[1], bbox[2], bbox[3], bbox[4])
     return(out)
 }
 

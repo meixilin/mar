@@ -8,7 +8,7 @@
     # calculate area by size of bounding box
     Asq <- areaofsquare(nrow, ncol, resrow, rescol)
     # locate cellids from bbox
-    cellids <- rowcol_cellid(gm, xmin, xmax, ymin, ymax)
+    cellids <- rowcol_cellid(gm, bbox)
     # if no cells
     if (length(cellids) == 0) {
         out = list(Asq = Asq)

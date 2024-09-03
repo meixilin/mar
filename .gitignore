@@ -13,6 +13,8 @@ mar.Rproj
 test/*
 tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
+*.pdf
+*.png
 *.jpg
-
+tmpobjects
 ARCHIVE
