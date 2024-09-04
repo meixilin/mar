@@ -1,9 +1,9 @@
 # combine area and genetic diversity calculation in a gridded bounding box
-# bbox should be c(xmin, xmax, ymin, ymax).
+# bbox should be c(r1, r2, c1, c2).
 .mutdiv.gridded <- function(gm, gmarea, bbox) {
     stopifnot(length(bbox) == 4)
-    xmin = bbox[1]; xmax = bbox[2]; ymin = bbox[3]; ymax = bbox[4]
-    nrow = xmax - xmin + 1; ncol = ymax - ymin + 1
+    r1 = bbox[1]; r2 = bbox[2]; c1 = bbox[3]; c2 = bbox[4]
+    nrow = r2 - r1 + 1; ncol = c2 - c1 + 1
     resrow = res(gm$samplemap)[1]; rescol = res(gm$samplemap)[2]
     # calculate area by size of bounding box
     Asq <- areaofsquare(nrow, ncol, resrow, rescol)

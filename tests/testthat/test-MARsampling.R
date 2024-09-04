@@ -73,3 +73,44 @@ test_that("MARsampling random update") {
     expect_equal(adf[1:270, 1], adf[1:270, 2])
 }
 
+test_that("MARsampling random bugfix") {
+    load('testdata/gm-joshua.rda')
+    mardf <- mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
+    # new mardf will not have the same order compared with mares
+    # new mardf are grouped by replicates to allow for inward / outward sampling
+    # new mardf will have area with smaller sizes
+    adf <- data.frame(newa = sort(mardf$Asq), olda = mares$a)
+    # plot(adf$newa, adf$olda)
+    expect_equal(adf[11:280, 1], adf[1:270, 2])
+    # the largest boundary in the old version is invalid
+    # plot(rowcol_extent(gm, c(1,28,9,36), add = T)
+    # plot(rowcol_extent(gm, c(0,28,9,36), col = 'red', add = T)
+}
+
+test_that("Probability-based sampling") {
+    latrange = 28
+    # ss = 1
+    ss = 5
+    myprob = 1:(latrange - ss + 1)
+    if (from == 'S') {myprob = rev(myprob)}
+    xx = sapply(1:100000, function(i) sample(1:(latrange - ss + 1), size = 1, prob = myprob))
+    hist(xx, breaks = 0:28)
+}
+
+test_that("pole_MARsampling") {
+    load('testdata/gm-joshua.rda')
+    latrange <- dim(gm$samplemap)[1]
+    lonrange <- dim(gm$samplemap)[2]
+    sidesize <- c(1,2,10)
+    bblist <- .pole_MARsampling(latrange, lonrange, sidesize, from ='N')
+    plot(gm$samplemap)
+    sapply(bblist, function(bb) plot(rowcol_extent(gm, bb), add = T))
+}
+
+test_that('Raster xy directions') {
+    plot(gm$samplemap)
+    plot(rowcol_extent(gm, c(1,1,1,1)), add = T)
+    plot(rowcol_extent(gm, c(2,2,1,1)), add = T, col = 'red') # latitude changes on r1,r2
+    plot(rowcol_extent(gm, c(1,1,2,2)), add = T, col = 'blue') # longitude changes on c1,c2
+}
+

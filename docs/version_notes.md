@@ -109,6 +109,8 @@ Test output:
 # v0.0.6
 
 * Removed `mutdiv_old` `areaofraster_old` and `MARsampling_old`
+* Fix `MARsampling` bugs that 1. creates 0 as a starting point and 2. cannot start with only one cell selected.
+* Fix `lonrange` bugs that should be `latrange`. See `xFromCol` and `yFromRow`.
 
 # TODO
 

@@ -10,9 +10,9 @@ MARsampling <- function(gm, scheme = allowed_schemes, nrep = 10, gridded = TRUE,
     # calculate and store raster area in the given gm$samplemap
     gmarea = areaofraster(gm$samplemap)
     # the x and y number of cells in gm$samplemap
-    lonrange <- dim(gm$samplemap)[1]
-    latrange <- dim(gm$samplemap)[2]
-    minrange <- min(lonrange, latrange) # the maximum size box can become
+    latrange <- dim(gm$samplemap)[1] # y is Row is Lat. Selected by r1, r2.
+    lonrange <- dim(gm$samplemap)[2] # x is Col is Lon. Selected by c1, c2.
+    minrange <- min(latrange, lonrange) # the maximum size box can become
     # match schemes (default to random)
     scheme = match.arg(scheme)
     # find right stepsize
@@ -22,8 +22,9 @@ MARsampling <- function(gm, scheme = allowed_schemes, nrep = 10, gridded = TRUE,
     bboxlist = vector('list', length = nrep)
     for (ii in 1:nrep) {
         bboxlist[[ii]] = switch(scheme,
-                                random = .random_MARsampling(lonrange, latrange, sidesize),
-                                inwards = NULL,
+                                random = .random_MARsampling(latrange, lonrange, sidesize),
+                                southnorth = .pole_MARsampling(latrange, lonrange, sidesize, from = 'S'),
+                                northsouth = .pole_MARsampling(latrange, lonrange, sidesize, from = 'N'),
         )
     }
     bboxlist = unlist(bboxlist, recursive = FALSE)
@@ -39,13 +40,27 @@ MARsampling <- function(gm, scheme = allowed_schemes, nrep = 10, gridded = TRUE,
 
 # sampling methods
 # old method but fix the minimum bug.
-.random_MARsampling <- function(lonrange, latrange, sidesize) {
+.random_MARsampling <- function(latrange, lonrange, sidesize) {
     bblist = lapply(sidesize, function(ss) {
-        # xmin <- sample(1:(lonrange - ss + 1), 1); xmax <- xmin + ss - 1
-        # ymin <- sample(1:(latrange - ss + 1), 1); ymax <- ymin + ss - 1
-        xmin <- sample(1:(lonrange - ss), 1); xmax <- xmin + ss
-        ymin <- sample(1:(latrange - ss), 1); ymax <- ymin + ss
-        return(c(xmin, xmax, ymin, ymax))
+        r1 <- sample(1:(latrange - ss + 1), size = 1); r2 <- r1 + ss - 1
+        c1 <- sample(1:(lonrange - ss + 1), size = 1); c2 <- c1 + ss - 1
+        return(c(r1, r2, c1, c2))
+    })
+    return(bblist)
+}
+
+# southnorth / northsouth sampling
+.pole_MARsampling <- function(latrange, lonrange, sidesize, from = c('N', 'S')) {
+    bblist = lapply(sidesize, function(ss) {
+        # TODO: assumes row = 1, col = 1 of raster is northwest corner. Add row, go south. Add col, go east.
+        # use a geometric distribution to scale probability
+        myprob = dgeom(0:(latrange - ss), prob = 0.5)
+        myprob = myprob/sum(myprob)
+        if (from == 'S') {myprob = rev(myprob)}
+        # same selection of r1 c1, except that r1 is sampled with a probability highest in the south/north
+        r1 <- sample(1:(latrange - ss + 1), size = 1, prob = myprob); r2 <- r1 + ss - 1
+        c1 <- sample(1:(lonrange - ss + 1), size = 1); c2 <- c1 + ss - 1
+        return(c(r1, r2, c1, c2))
     })
     return(bblist)
 }
