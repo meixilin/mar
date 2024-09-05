@@ -32,12 +32,16 @@ cellid_sample <- function(gm, cellid) {
 # find cellids by row and column list
 # bbox should be c(r1, r2, c1, c2).
 # TODO: speed TBD with just using extent_sample function
-rowcol_cellid <- function(gm, bbox) {
+rowcol_cellid <- function(gm, bbox, revbbox = FALSE) {
     stopifnot(length(bbox) == 4)
     # get the cells
     # cellFromRowColCombine returns the cell numbers obtained by the combination of all row and
     # column numbers supplied as arguments
     cells <- raster::cellFromRowColCombine(gm$samplemap, bbox[1]:bbox[2], bbox[3]:bbox[4])
+    # reverse the cells if revbbox
+    if (revbbox) {
+        cells <- setdiff(1:ncell(gm$samplemap), cells)
+    }
     cellsnotna <- intersect(gm$sample$cellid, cells)
     return(cellsnotna)
 }

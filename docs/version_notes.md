@@ -111,6 +111,10 @@ Test output:
 * Removed `mutdiv_old` `areaofraster_old` and `MARsampling_old`
 * Fix `MARsampling` bugs that 1. creates 0 as a starting point and 2. cannot start with only one cell selected.
 * Fix `lonrange` bugs that should be `latrange`. See `xFromCol` and `yFromRow`.
+* Add plotting methods and CRS for `genemaps`.
+* Decided to not use `leaflet` as the main plotting method, but available in scratch.
+* Add consistent `MARsampling` sampling method support modulated by the `prob` parameter in sample. (Available for extinction as well).
+
 
 # TODO
 

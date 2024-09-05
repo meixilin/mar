@@ -2,8 +2,8 @@
                           sample,
                           genotype,
                           genoinfo,
-                          mapres = NULL,
-                          mapcrs = NULL) {
+                          mapres,
+                          mapcrs) {
     # add info on lonlat range
     lonlatr <- apply(lonlat, 2, range)
     # if mapresolution not provided, determine resolution
@@ -12,7 +12,7 @@
     }
     # TODO: support for more CRS projections
     # create sample maps
-    samplemap = .raster_lonlat(lonlat, lonlatr, mapres)
+    samplemap = .raster_lonlat(lonlat, lonlatr, mapres, mapcrs)
 
     # get the cell ids from samplemap
     cellid = raster::cellFromXY(samplemap, lonlat)
@@ -52,11 +52,12 @@
 
 # these two functions can be used to create `raster_samples` equivalent
 # TODO: currently decided to not use this framework (constrains flexibility and speed)
-.raster_lonlat <- function(lonlat, lonlatr, mapres, padding = 0.01) {
+.raster_lonlat <- function(lonlat, lonlatr, mapres, mapcrs, padding = 0.01) {
     lonlatrp <- t(apply(lonlatr, 2, function(xx){xx + c(-1,1)*diff(xx)*padding}))
     # NOTE: slight floating point error. Should not impact anything.
     baser <- raster(resolution = mapres, extent(lonlatrp))
     rr <- rasterize(lonlat, baser, fun = "count")
+    crs(rr) <- mapcrs
     print(rr)
 }
 
@@ -67,7 +68,7 @@ genemaps <- function(lonlat,
                      sample = NULL,
                      genoinfo = NULL,
                      mapres = NULL,
-                     mapcrs = NULL) {
+                     mapcrs = "+proj=longlat +datum=WGS84") {
     # convert lonlat and genotype if needed
     # TODO: big genotype data manipulations
     if (class(lonlat) != "matrix")
@@ -116,4 +117,15 @@ genemaps <- function(lonlat,
     )
     return(output)
 }
+
+# define the plotting method
+plot.genemaps <- function(gm) {
+    plot(gm = NA, y = NA, type = "n",  # "n" means no plotting of points
+         xlab = "lon", ylab = "lat",
+         xlim = attr(gm, "egmtent")[,1], ylim = attr(gm, "egmtent")[,2])
+    plot(gm$samplemap, add = T)
+    points(gm$lonlat)
+}
+
+
 

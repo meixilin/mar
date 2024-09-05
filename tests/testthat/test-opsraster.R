@@ -27,9 +27,24 @@ test_that("cellid_sample works", {
     ## plot the selected sampleids
     testmap = gm$samplemap
     testmap[setdiff(1:ncell(testmap), cellids)] <- NA
-    plot(gm$samplemap)
-    plot(testmap)
-    points(x = gm$lonlat[sampleids,1], y = gm$lonlat[sampleids,2])
+    # plot(gm$samplemap)
+    # plot(testmap)
+    # points(x = gm$lonlat[sampleids,1], y = gm$lonlat[sampleids,2])
 })
 
+# revbbox
+test_that("revbbox") {
+    load('testdata/gm-joshua.rda')
+    bbox = c(1,1,1,1)
+    bbox = c(13,13,1,1)
+    bbox = c(1,10,1,20)
+    rowcol_cellid(gm, bbox)
+    ids = rowcol_cellid(gm, bbox, revbbox = T)
+    testmap = gm$samplemap
+    values(testmap) = NA
+    testmap[ids] <- 1
+    plot(gm$samplemap)
+    plot(rowcol_extent(gm, bbox), add = TRUE)
+    plot(testmap, add = TRUE)
+}
 

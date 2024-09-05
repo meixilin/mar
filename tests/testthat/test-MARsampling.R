@@ -114,3 +114,11 @@ test_that('Raster xy directions') {
     plot(rowcol_extent(gm, c(1,1,2,2)), add = T, col = 'blue') # longitude changes on c1,c2
 }
 
+test_that() {
+    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
+    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'southnorth', animate = T)
+    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'northsouth', animate = T)
+    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'outwards')
+    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'northsouth')
+}
+

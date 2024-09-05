@@ -1,14 +1,18 @@
 # combine area and genetic diversity calculation in a gridded bounding box
 # bbox should be c(r1, r2, c1, c2).
-.mutdiv.gridded <- function(gm, gmarea, bbox) {
+.mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
     stopifnot(length(bbox) == 4)
     r1 = bbox[1]; r2 = bbox[2]; c1 = bbox[3]; c2 = bbox[4]
     nrow = r2 - r1 + 1; ncol = c2 - c1 + 1
     resrow = res(gm$samplemap)[1]; rescol = res(gm$samplemap)[2]
     # calculate area by size of bounding box
     Asq <- areaofsquare(nrow, ncol, resrow, rescol)
+    # if reverse bounding box
+    if(revbbox) {
+        Asq <- areaofsquare(dim(gm$samplemap)[1], dim(gm$samplemap)[2], resrow, rescol) - Asq
+    }
     # locate cellids from bbox
-    cellids <- rowcol_cellid(gm, bbox)
+    cellids <- rowcol_cellid(gm, bbox, revbbox = revbbox)
     # if no cells
     if (length(cellids) == 0) {
         out = list(Asq = Asq)
