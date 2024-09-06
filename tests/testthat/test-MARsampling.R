@@ -7,118 +7,74 @@
 # load('tests/testthat/testdata/mardf-joshua.rda')
 # load('tests/testthat/testdata/mares_new-joshua.rda')
 
-load('testdata/mares_new-joshua.rda')
-
+options(warn = -1)
 library(raster)
 
-test_that("set seeds works", {
-    load('testdata/genemaps_new-joshua.rda')
-    set.seed(7)
-    lonrange <- dim(newmaps[[1]])[1]
-    latrange <- dim(newmaps[[1]])[2]
-    minrange <- min(lonrange, latrange)
-    data <- c()
-    for (sidesize in 1:minrange) {
-        for (ii in 1:10) {
-            xstart <- sample(1:(lonrange - sidesize), 1)
-            ystart <- sample(1:(latrange - sidesize), 1)
-            data <- c(data, (paste0(c(xstart, xstart + sidesize, ystart, ystart + sidesize), collapse = ';')))
+# output mardf
+test_that('MARsampling random works', {
+    myspecies = c('joshua', 'arabidopsis')
+    for (ii in myspecies) {
+        # output mardf if needed
+        if (!file.exists(paste0('testdata/mardf-', ii, '.rda'))) {
+            load(paste0('testdata/gm-', ii, '.rda'))
+            mardf = mar::MARsampling(gm = gm, myseed = 7)
+            expect_s3_class(mardf, 'marsamp')
+            save(mardf, file = paste0('testdata/mardf-', ii, '.rda'))
         }
     }
-    expect_equal(mares$extent, data)
 })
 
-test_that("MARsampling random works", {
+test_that("set seeds gives reproducible results", {
     load('testdata/gm-joshua.rda')
-    mardf <- mar::MARsampling(gm = gm, myseed = 7)
-    # # output mardf if needed
-    # save(mardf, file = 'testdata/mardf-joshua.rda')
-    # fill in zero for NA
-    mardf[is.na(mardf)] = 0
-    # check that it completely reproduces the results from mares
-    expect_equal(mardf$N, mares$N)
-    expect_equal(mardf$M, mares$M)
-    expect_equal(mardf$E, mares$E)
-    expect_equal(mardf$thetaw, mares$thetaw)
-    expect_equal(mardf$thetapi, mares$pi)
-    expect_equal(mardf$A, mares$asub)
-    # There is a small bug when sidesize = 28 (max of the lon/latrange)
-    expect_equal(mardf$Asq, mares$a, tolerance = 0.001)
+    for (sc in mar:::.MARsampling_schemes) {
+        dflist <- lapply(1:2, function(ii) {mar::MARsampling(gm = gm, myseed = 7, scheme = sc)})
+        expect_equal(dflist[[1]], dflist[[2]])
+        dflist <- lapply(1:2, function(ii) {mar::MARsampling(gm = gm, myseed = 7, scheme = sc, quorum = TRUE)})
+        expect_equal(dflist[[1]], dflist[[2]])
+    }
 })
 
-test_that("MARsampling random is fast", {
+test_that("MARsampling is fast", {
     load('testdata/gm-arabidopsis.rda')
-    mardf = mar::MARsampling(gm = gm, myseed = 7)
-    # output mardf if needed
-    save(mardf, file = 'testdata/mardf-arabidopsis.rda')
-    runtime = system.time(mar::MARsampling(gm = gm, myseed = 7))
-    # runtime should be less than 10 seconds
-    expect_lt(runtime['elapsed'], 10)
+    for (sc in mar:::.MARsampling_schemes) {
+        runtime = system.time(mardf <- mar::MARsampling(gm = gm, scheme = sc, quorum = TRUE))
+        # runtime should be less than 15 seconds for 10000 SNPs
+        expect_lt(runtime['elapsed'], 15)
+    }
 })
 
-test_that("MARsampling set seed is consistent") {
+test_that("MARsampling area bug fixed", {
     load('testdata/gm-joshua.rda')
-    mardf0 <- mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
-    mardf <- mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
-    expect_equal(mardf0, mardf)
-}
-
-test_that("MARsampling random update") {
-    load('testdata/gm-joshua.rda')
-    mardf <- mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
-    # new mardf will not have the same order compared with mares
-    # new mardf are grouped by replicates to allow for inward / outward sampling
-    # confirm the areas are the same
-    adf <- data.frame(newa = sort(mardf$Asq), olda = mares$a)
-    expect_equal(adf[1:270, 1], adf[1:270, 2])
-}
-
-test_that("MARsampling random bugfix") {
-    load('testdata/gm-joshua.rda')
-    mardf <- mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
-    # new mardf will not have the same order compared with mares
-    # new mardf are grouped by replicates to allow for inward / outward sampling
+    # confirm with the old results now obselete at v0.0.6
+    load('testdata/mares_new-joshua.rda')
+    mardf <- mar::MARsampling(gm = gm, myseed = 7)
+    # confirm the areas are the same except that
     # new mardf will have area with smaller sizes
-    adf <- data.frame(newa = sort(mardf$Asq), olda = mares$a)
-    # plot(adf$newa, adf$olda)
-    expect_equal(adf[11:280, 1], adf[1:270, 2])
     # the largest boundary in the old version is invalid
-    # plot(rowcol_extent(gm, c(1,28,9,36), add = T)
-    # plot(rowcol_extent(gm, c(0,28,9,36), col = 'red', add = T)
-}
+    expect_equal(mardf$Asq[11:280], mares$a[1:270])
+})
 
-test_that("Probability-based sampling") {
-    latrange = 28
-    # ss = 1
-    ss = 5
-    myprob = 1:(latrange - ss + 1)
-    if (from == 'S') {myprob = rev(myprob)}
-    xx = sapply(1:100000, function(i) sample(1:(latrange - ss + 1), size = 1, prob = myprob))
-    hist(xx, breaks = 0:28)
-}
+# # Not run but available to check
+# test_that("Probability-based sampling") {
+#     load('testdata/gm-joshua.rda')
+#     ss = 10
+#     myscheme = 'inwards'
+#     mynrep = 1000
+#     r0c0 = matrix(c(5,5), nrow = 1, ncol = 2)
+#     bblist <- mar:::.bblist_sample(ss, gm, scheme = myscheme, nrep = mynrep, quorum = FALSE,
+#                                    latrange = 28, lonrange = 45, r0c0 = r0c0, revbbox = FALSE)
+#     baseraster <- gm$samplemap
+#     values(baseraster) <- 0
+#     plot(baseraster)
+#     for(ii in seq_along(bblist)) {
+#         bbextents <- rasterize(rowcol_extent(gm, bblist[[ii]]), baseraster, field = 1, background = 0)
+#         baseraster <- baseraster + bbextents
+#     }
+#     # this plot shows the sampling frequency for all the bounding boxes created
+#     # not perfectly even as the bounds are less likely to be sampled
+#     plot(baseraster)
+#     baseraster[5,5] <- -5
+#     plot(baseraster)
+# }
 
-test_that("pole_MARsampling") {
-    load('testdata/gm-joshua.rda')
-    latrange <- dim(gm$samplemap)[1]
-    lonrange <- dim(gm$samplemap)[2]
-    sidesize <- c(1,2,10)
-    bblist <- .pole_MARsampling(latrange, lonrange, sidesize, from ='N')
-    plot(gm$samplemap)
-    sapply(bblist, function(bb) plot(rowcol_extent(gm, bb), add = T))
-}
-
-test_that('Raster xy directions') {
-    plot(gm$samplemap)
-    plot(rowcol_extent(gm, c(1,1,1,1)), add = T)
-    plot(rowcol_extent(gm, c(2,2,1,1)), add = T, col = 'red') # latitude changes on r1,r2
-    plot(rowcol_extent(gm, c(1,1,2,2)), add = T, col = 'blue') # longitude changes on c1,c2
-}
-
-test_that() {
-    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE)
-    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'southnorth', animate = T)
-    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'northsouth', animate = T)
-    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'outwards')
-    mardf = mar::MARsampling(gm = gm, myseed = 7, debug = TRUE, scheme = 'northsouth')
-}
 

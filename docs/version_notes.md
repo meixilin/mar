@@ -114,9 +114,13 @@ Test output:
 * Add plotting methods and CRS for `genemaps`.
 * Decided to not use `leaflet` as the main plotting method, but available in scratch.
 * Add consistent `MARsampling` sampling method support modulated by the `prob` parameter in sample. (Available for extinction as well).
+* Add `MARcalc`.
+* All tests updated.
+
 
 
 # TODO
 
-* Add other sampling support for `MARsampling`
+* Update `MARextinction` to match `MARsampling`
+* Update `MARPIPELINE`
 * Add support for large files and subsetting sample info (likely through `gds` related packages)

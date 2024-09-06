@@ -24,9 +24,9 @@ test_that("genemaps works", {
         rmatid = which(!is.na(rmat))
         expect_true(all(rmat[rmatid] == table(cellids)))
         ## plot for the first sample
-        plot(samplemap)
-        plot(rasterFromCells(samplemap, cells = cellids[1]), col = 'red', add = T)
-        points(x = coords[1,1], y = coords[1,2])
+        # plot(samplemap)
+        # plot(rasterFromCells(samplemap, cells = cellids[1]), col = 'red', add = T)
+        # points(x = coords[1,1], y = coords[1,2])
         # test that the number of samples is correct
         expect_equal(nrow(coords), cellStats(gm$samplemap, 'sum'))
     }
