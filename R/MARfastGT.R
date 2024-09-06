@@ -1,25 +1,25 @@
 
-#' Title Faster implementation of `MARsampling`
-#'
-#' @param coord data.frame with 3 columns,
-#' @param geno
-#' @param samples
-#' @param res
-#' @param quorum
-#' @param minN
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' library(mar)
-#' load("ARCHIVE/coords-Arabidopsis_thaliana.rda")
-#' load("ARCHIVE/geno-Arabidopsis_thaliana.rda")
-#' ### Run MAR
-#' MAR = MARfastGT(coord = coords, geno = genomes, res = 0.01)
-#' ### Plot MAR
-#' plot(MAR$A_sq, MAR$M)
-#' plot(log10(MAR$A_sq), log10(MAR$M))
+### Title Faster implementation of `MARsampling`
+###
+### @param coord data.frame with 3 columns,
+### @param geno
+### @param samples
+### @param res
+### @param quorum
+### @param minN
+###
+### @return
+### @export
+###
+### @examples
+### library(mar)
+### load("ARCHIVE/coords-Arabidopsis_thaliana.rda")
+### load("ARCHIVE/geno-Arabidopsis_thaliana.rda")
+### ### Run MAR
+### MAR = MARfastGT(coord = coords, geno = genomes, res = 0.01)
+### ### Plot MAR
+### plot(MAR$A_sq, MAR$M)
+### plot(log10(MAR$A_sq), log10(MAR$M))
 
 MARfastGT <- function(genemaps, samples = 100, res = 0.05, quorum = T, minN = 1) {
 

@@ -2,6 +2,19 @@
 
 # match with old MARsampling
 # TODO: Add not gridded sampling
+#' MAR sampling wrapper function
+#'
+#' @param gm a [genemaps] object created by [genemaps()]
+#' @param scheme sampling schemes for spatial data. allowed are \code{\link{.MARsampling_schemes}}.
+#' @param nrep number of replicates.
+#' @param quorum require all sampling grid to have samples. default is FALSE.
+#' @param animate play an animation of the sampling boxes. default is FALSE.
+#' @param myseed set seed for reproducibility. default is NULL.
+#'
+#' @return a [marsamp] object. consist of a data frame.
+#' @export
+#'
+#' @examples
 MARsampling <-
     function(gm,
              scheme = .MARsampling_schemes,

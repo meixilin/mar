@@ -117,10 +117,19 @@ Test output:
 * Add `MARcalc`.
 * All tests updated.
 
+# v0.0.7
+
+* Folder cleanup
+* Add documentations for major functions.
+* Removed Cpp codes as these are not needed to run `MARPIPELINE`. And SFS generation can be fast in R.
+
+# v0.0.8
+
 
 
 # TODO
 
+* Add `sfs` functionality for genotypes
 * Update `MARextinction` to match `MARsampling`
 * Update `MARPIPELINE`
 * Add support for large files and subsetting sample info (likely through `gds` related packages)

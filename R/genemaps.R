@@ -1,3 +1,75 @@
+
+# validate and helper functions for genemaps class
+#' Title
+#'
+#' @param lonlat
+#' @param genotype
+#' @param het2hom
+#' @param sample
+#' @param genoinfo
+#' @param mapres
+#' @param mapcrs
+#'
+#' @return
+#' @export
+#'
+#' @examples
+genemaps <- function(lonlat,
+                     genotype,
+                     het2hom = TRUE,
+                     sample = NULL,
+                     genoinfo = NULL,
+                     mapres = NULL,
+                     mapcrs = "+proj=longlat +datum=WGS84") {
+    # convert lonlat and genotype if needed
+    # TODO: big genotype data manipulations
+    if (class(lonlat) != "matrix")
+        lonlat = as.matrix(lonlat)
+    if (class(genotype) != "matrix")
+        genotype = as.matrix(genotype)
+
+    # check dimensions
+    stopifnot(dim(lonlat)[2] == 2 & dim(lonlat) > 0)
+    # not allowing NA values in lonlat
+    stopifnot(!any(is.na(lonlat)))
+    # only allow 0,1,2 in genotype
+    stopifnot(all(sort(unique(as.vector(genotype))) %in% c(0,1,2)))
+    if (het2hom) {
+        # convert all values to 0/1
+        genotype = genotype > 0
+    }
+
+    # set variables
+    nsamples = dim(lonlat)[1]
+    nsnps = dim(genotype)[1]
+    logger::log_info("number of samples: ", nsamples)
+    logger::log_info("number of genomic sites: ", nsnps)
+
+    # fill in sample and genoinfo
+    if (is.null(sample)) {
+        # TODO: add custom sample data frames and custom filtering but keep id as the UID by row
+        sample = data.frame(id = 1:nsamples)
+    }
+    if (is.null(genoinfo)) {
+        genoinfo = data.frame(chr = NA, pos = 1:nsnps)
+    }
+
+    # check for number of sample dimensions
+    stopifnot(nsamples == dim(genotype)[2] & nsamples == dim(sample)[1])
+    stopifnot(nsnps == dim(genotype)[1] & nsnps == dim(genoinfo)[1])
+
+    # assemble genemaps
+    output <- .new_genemaps(
+        lonlat = lonlat,
+        sample = sample,
+        genotype = genotype,
+        genoinfo = genoinfo,
+        mapres = mapres,
+        mapcrs = mapcrs
+    )
+    return(output)
+}
+
 .new_genemaps <- function(lonlat,
                           sample,
                           genotype,
@@ -59,63 +131,6 @@
     rr <- rasterize(lonlat, baser, fun = "count")
     crs(rr) <- mapcrs
     print(rr)
-}
-
-# validate and helper functions for genemaps class
-genemaps <- function(lonlat,
-                     genotype,
-                     het2hom = TRUE,
-                     sample = NULL,
-                     genoinfo = NULL,
-                     mapres = NULL,
-                     mapcrs = "+proj=longlat +datum=WGS84") {
-    # convert lonlat and genotype if needed
-    # TODO: big genotype data manipulations
-    if (class(lonlat) != "matrix")
-        lonlat = as.matrix(lonlat)
-    if (class(genotype) != "matrix")
-        genotype = as.matrix(genotype)
-
-    # check dimensions
-    stopifnot(dim(lonlat)[2] == 2 & dim(lonlat) > 0)
-    # not allowing NA values in lonlat
-    stopifnot(!any(is.na(lonlat)))
-    # only allow 0,1,2 in genotype
-    stopifnot(all(sort(unique(as.vector(genotype))) %in% c(0,1,2)))
-    if (het2hom) {
-        # convert all values to 0/1
-        genotype = genotype > 0
-    }
-
-    # set variables
-    nsamples = dim(lonlat)[1]
-    nsnps = dim(genotype)[1]
-    logger::log_info("number of samples: ", nsamples)
-    logger::log_info("number of genomic sites: ", nsnps)
-
-    # fill in sample and genoinfo
-    if (is.null(sample)) {
-        # TODO: add custom sample data frames and custom filtering but keep id as the UID by row
-        sample = data.frame(id = 1:nsamples)
-    }
-    if (is.null(genoinfo)) {
-        genoinfo = data.frame(chr = NA, pos = 1:nsnps)
-    }
-
-    # check for number of sample dimensions
-    stopifnot(nsamples == dim(genotype)[2] & nsamples == dim(sample)[1])
-    stopifnot(nsnps == dim(genotype)[1] & nsnps == dim(genoinfo)[1])
-
-    # assemble genemaps
-    output <- .new_genemaps(
-        lonlat = lonlat,
-        sample = sample,
-        genotype = genotype,
-        genoinfo = genoinfo,
-        mapres = mapres,
-        mapcrs = mapcrs
-    )
-    return(output)
 }
 
 # define the plotting method

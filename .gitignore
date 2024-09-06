@@ -2,9 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-src/*.o
-src/*.so
-src/*.dll
 
 mar.Rproj
 
@@ -13,6 +10,7 @@ mar.Rproj
 test/*
 tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
+tests/testthat/testdata/1001g
 *.pdf
 *.png
 *.jpg
