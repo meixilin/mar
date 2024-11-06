@@ -125,11 +125,21 @@ Test output:
 
 # v0.0.8
 
+* Add file parser and use `SeqArray` to read genotype files.
+* Change `.mutdiv.gridded` to `mutdiv.gridded`
+* Update `genemaps` to `genomaps` and support `SeqArray` `margeno` format changes.
+
 
 
 # TODO
 
 * Add `sfs` functionality for genotypes
+* Add missing data handling for `mutdiv`
 * Update `MARextinction` to match `MARsampling`
 * Update `MARPIPELINE`
-* Add support for large files and subsetting sample info (likely through `gds` related packages)
+
+# Question
+
+* How to handle heterozygotes.
+* Potentials to extrapolate genetic diversity in area of know occurrences.
+

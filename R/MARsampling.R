@@ -71,7 +71,7 @@ MARsampling <-
         # calculate area and genetic diversity in each bounding boxes
         outlist = lapply(
             bboxlist,
-            mar:::.mutdiv.gridded,
+            mutdiv.gridded,
             gm = gm,
             gmarea = gmarea,
             revbbox = revbbox

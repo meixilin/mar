@@ -11,6 +11,7 @@ test/*
 tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
 tests/testthat/testdata/1001g
+tests/testthat/testdata/fileparser
 *.pdf
 *.png
 *.jpg

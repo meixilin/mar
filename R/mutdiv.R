@@ -1,6 +1,6 @@
 # combine area and genetic diversity calculation in a gridded bounding box
 # bbox should be c(r1, r2, c1, c2).
-.mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
+mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
     stopifnot(length(bbox) == 4)
     r1 = bbox[1]; r2 = bbox[2]; c1 = bbox[3]; c2 = bbox[4]
     nrow = r2 - r1 + 1; ncol = c2 - c1 + 1

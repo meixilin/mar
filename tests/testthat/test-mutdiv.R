@@ -73,7 +73,7 @@ test_that("new mutdiv works", {
     # load new data
     load('testdata/gm-joshua.rda')
     gmarea = areaofraster(gm$samplemap)
-    newmut = .mutdiv.gridded(gm, gmarea, bbox = c(1,dim(gm$samplemap)[1],1,dim(gm$samplemap)[2]))
+    newmut = mutdiv.gridded(gm, gmarea, bbox = c(1,dim(gm$samplemap)[1],1,dim(gm$samplemap)[2]))
     expect_equal(newmut$N, outmut$N)
     expect_equal(newmut$M, outmut$M)
     expect_equal(newmut$E, 100) # outmut$E used to be 0
