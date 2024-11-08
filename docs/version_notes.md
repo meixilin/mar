@@ -128,8 +128,13 @@ Test output:
 * Add file parser and use `SeqArray` to read genotype files.
 * Change `.mutdiv.gridded` to `mutdiv.gridded`
 * Update `genemaps` to `genomaps` and support `SeqArray` `margeno` format changes.
+* Discontinued `padding` option in `.lonlat_raster` to avoid rounding errors.
+* Update `MARPIPELINE` to use the new `genomaps` format.
 
+# Did not use but tried
 
+* Considered using `SeqArray` as the main framework for `genomaps` but it would require reading from disk constantly.
+    * Now only use `SeqArray` to read plink and vcf files.
 
 # TODO
 
@@ -138,8 +143,10 @@ Test output:
 * Update `MARextinction` to match `MARsampling`
 * Update `MARPIPELINE`
 
-# Question
+# Notes
 
-* How to handle heterozygotes.
+* Heterozygous genotypes can be handled normally given the definition of `pi`.
+* Non-biallelic SNPs are not implemented.
+* Theoretically, this pipeline works for any ploidy but the interpretation of the results is not straightforward for non-diploid organisms.
 * Potentials to extrapolate genetic diversity in area of know occurrences.
 

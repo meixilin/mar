@@ -48,25 +48,25 @@
     return(df)
 }
 
-# only allow files without headers, just the genotype matrix. row is SNPs, column is samples.
-.read_genotype <- function(geno.fn, het2hom) {
+# only allow files without headers, just the genotype matrix. row is SNPs, column is samples, value is the amount of alternative alleles.
+.read_genotype <- function(geno.fn, ploidy, het2hom) {
     # read first line to guess the format
     delim <- .firstline(geno.fn)
     # not allow row or column names
     df <- .read_table(geno.fn, header = FALSE, sep = delim)
     df <- as.matrix(df)
     dimnames(df) <- NULL
-    # check that the data only contains 0,1,2
-    .valid_genotype(df)
+    # check that the data only contains 0,1,...,ploidy
+    .valid_genotype(df, ploidy)
     # if convert het to hom
     if (het2hom) {
         # convert all values to 0/1
         message("converting heterozygotes to homozygotes")
         print(table(as.vector(df)))
-        df = apply(df, 2, function(xx) ifelse(xx == 2, 1, xx))
+        df = apply(df, 2, function(xx) ifelse(xx > 1, 1, xx))
         print(table(as.vector(df)))
     }
-    .valid_genotype(df)
+    .valid_genotype(df, ploidy)
     return(df)
 }
 
@@ -77,9 +77,9 @@
     return(list(df[[1]], df[[2]]))
 }
 
-# no header or delimiter allowed for samp.fn
-.read_samp <- function(samp.fn) {
-    df <- .read_table(samp.fn, header = FALSE, sep = "")
+# no header or delimiter allowed for samp.fn (any single column file)
+.read_column <- function(fn) {
+    df <- .read_table(fn, header = FALSE, sep = "")
     stopifnot(ncol(df) == 1)
     return(df[[1]])
 }
@@ -94,18 +94,15 @@
 
 # genotype txt/csv parser, with or without chromosome and position information
 # default ploidy is 2
-text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2, het2hom = TRUE) {
-    if (ploidy != 2) {
-        stop("ploidy other than 2 is better handled by SeqArray")
-    }
+text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2, het2hom = FALSE) {
     # check if geno.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
     stopifnot(any(sapply(txt.ext, function(xx) grepl(xx, geno.fn))))
     # read txt file
-    genotype <- .read_genotype(geno.fn)
+    genotype <- .read_genotype(geno.fn, ploidy, het2hom)
     # read sample file if exists
     if (!is.null(samp.fn)) {
-        sample.id <- .read_samp(samp.fn)
+        sample.id <- .read_column(samp.fn)
     } else {
         sample.id <- seq_len(ncol(genotype))
     }
@@ -154,8 +151,6 @@ plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
     bed.fn <- paste0(plink.fn, ".bed")
     fam.fn <- paste0(plink.fn, ".fam")
     bim.fn <- paste0(plink.fn, ".bim")
-    # check if inputs exists
-    stopifnot(all(sapply(c(bed.fn, fam.fn, bim.fn), file.exists)))
     # assign name if gds.fn is not provided
     if (is.null(gds.fn)) {
         gds.fn <- paste0(.strip_ext(bed.fn, ".bed"), ".gds")
@@ -177,17 +172,7 @@ lonlat_parser <- function(lonlat.fn, mapres = NULL, mapcrs = "+proj=longlat +dat
     stopifnot(any(sapply(txt.ext, function(xx) grepl(xx, lonlat.fn))))
     # read txt file
     lonlatdf <- .read_lonlat(lonlat.fn)
-    sample.id <- lonlatdf[[1]]
-    lonlat <- as.matrix(lonlatdf[,2:3])
-
-    # create marmaps object
-    marmaps <- marmaps(
-        sample.id = sample.id,
-        lonlat = lonlat,
-        mapres = mapres,
-        mapcrs = mapcrs
-    )
-    return(marmaps)
+    return(lonlatdf)
 }
 
 

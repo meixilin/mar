@@ -1,12 +1,29 @@
+# matrix validators
+.valid_genotype <- function(genotype, ploidy) {
+    # if (ploidy != 2) {
+    #     warning(paste0("ploidy = ", ploidy, " != 2, be careful with the interpretation of the results"))
+    # }
+    # 0 = HomRef, 1 = Het, 2 = HomAlt
+    valid_vars <- seq(0, ploidy)
+    stopifnot(is.matrix(genotype))
+    stopifnot(all(unique(as.vector(genotype)) %in% valid_vars))
+    return(invisible())
+}
+
 # genotype operations that works on both margeno and SeqArray objects
-.get_genodata <- function(x, what = c("sample.id", "variant.id", "position", "chromosome","genotype","ploidy")) {
+.get_genodata <- function(x, what = c("sample.id", "variant.id", "position", "chromosome","genotype","ploidy", "num.variant")) {
     what <- match.arg(what)
     if (class(x) == "margeno") {
-        return(x[[what]])
-    } else if (class(x) == "SeqVarGDSClass") {
         return(switch(what,
+            "num.variant" = length(x$variant.id),
+            x[[what]]
+        ))
+    } else if (class(x) == "SeqVarGDSClass") {
+        # TODO: nsnps debug
+        return(switch(what,
+            "num.variant" = SeqArray::seqSummary(x, verbose = FALSE)$num.variant,
             "ploidy" = SeqArray::seqSummary(x, verbose = FALSE)$ploidy,
-            "genotype" = .seqgeno2mat(SeqArray::seqGetData(x, what)),
+            "genotype" = .seqgeno2mat(SeqArray::seqGetData(x, what), SeqArray::seqSummary(x, verbose = FALSE)$ploidy),
             SeqArray::seqGetData(x, what)
         ))
     } else {
@@ -17,13 +34,13 @@
 # convert seqGetData output to genotype matrix in margeno
 # in SeqArray, dim1 = ploidy, dim2 = number of sample, dim3 = number of variant
 # in margeno$genotype, dim1 = number of variant (row), dim2 = number of sample (col), only diploid or pseudo-haploid allowed
-.seqgeno2mat <- function(gg) {
+.seqgeno2mat <- function(gg, ploidy) {
     stopifnot(class(gg) == "array")
-    stopifnot(length(dim(gg)) == 3 & dim(gg)[1] == 2)
+    stopifnot(length(dim(gg)) == 3 & dim(gg)[1] == ploidy)
     # sum up the allele counts
     df <- apply(gg, c(3,2), sum)
     attr(df, 'dimnames') <- NULL
-    .valid_genotype(df)
+    .valid_genotype(df, ploidy)
     return(df)
 }
 
@@ -53,7 +70,7 @@
     return(out)
 }
 
-# convert margeno object to SeqArray object
+# convert margeno object to SeqArray object (TODO: debug)
 # inspired by: https://github.com/zhengxwen/SeqArray/issues/62
 .margeno2seqarray <- function(x, gds.fn = NULL, opengds = FALSE) {
     stopifnot(class(x) == "margeno")

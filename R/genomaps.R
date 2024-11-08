@@ -1,20 +1,3 @@
-
-# matrix validators
-.valid_genotype <- function(genotype) {
-    # 0 = HomRef, 1 = Het, 2 = HomAlt
-    valid_vars <- c(0, 1, 2)
-    stopifnot(is.matrix(genotype))
-    stopifnot(all(unique(as.vector(genotype)) %in% valid_vars))
-    return(invisible())
-}
-
-.valid_lonlat <- function(lonlat) {
-    stopifnot(is.matrix(lonlat))
-    stopifnot(ncol(lonlat) == 2 & nrow(lonlat) > 0)
-    stopifnot(!any(is.na(lonlat)))
-    return(invisible())
-}
-
 # margeno class
 .new_margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploidy) {
     # create object (order determined by SeqArray output)
@@ -34,8 +17,8 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
     # validate data class
     stopifnot(class(sample.id) %in% c("character", "integer"))
     stopifnot(class(variant.id) == "integer")
-    stopifnot(class(position) == "integer")
-    stopifnot(class(chromosome) %in% c("character", "integer"))
+    stopifnot(class(position) == "integer" | is.null(position))
+    stopifnot(class(chromosome) %in% c("character", "integer") | is.null(position))
     stopifnot(class(genotype) == "matrix")
     stopifnot(class(ploidy) == "numeric")
 
@@ -46,7 +29,7 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
     stopifnot(length(sample.id) == dim(genotype)[2])
 
     # validate genotype
-    .valid_genotype(genotype)
+    .valid_genotype(genotype, ploidy)
 
     # create object
     output <- .new_margeno(
@@ -114,7 +97,12 @@ plot.marmaps <- function(marmaps) {
 }
 
 # Main marmaps function
-marmaps <- function(sample.id, lonlat, mapres, mapcrs) {
+marmaps <- function(lonlatdf, mapres, mapcrs) {
+    # unpack lonlatdf
+    stopifnot(class(lonlatdf) == "data.frame" & ncol(lonlatdf) == 3)
+    sample.id <- lonlatdf[[1]]
+    lonlat <- as.matrix(lonlatdf[,2:3])
+
     # Validate inputs
     stopifnot(class(sample.id) == "character")
     stopifnot(is.matrix(lonlat))
@@ -154,67 +142,22 @@ marmaps <- function(sample.id, lonlat, mapres, mapcrs) {
 
 # genomaps class
 
-# combine the margeno/SeqArray and marmaps objects
-.new_genomaps <- function(geno, maps, subs, useSeqArray) {
-    obj <- list(geno = geno,
-                maps = maps,
-                subs = subs)
-    class(obj) <- "genomaps"
-    attr(obj, "useSeqArray") <- useSeqArray
-    return(obj)
-}
-
-genomaps <- function(geno, maps, subs, useSeqArray) {
-    # validate inputs
-    stopifnot(file.exists(geno))
-    stopifnot(file.exists(maps))
-    stopifnot(is.list(subs))
-    stopifnot(length(subs) == 2)
-    stopifnot(is.logical(useSeqArray))
-
-    # create object
-    obj <- .new_genomaps(geno, maps, subs, useSeqArray)
-
-    # test open the object and check that the sample IDs are the same
-    objo <- gmOpen(obj)
-    geno_sampid <- .get_genodata(objo$geno, "sample.id")
-    maps_sampid <- objo$maps$sample.id
-    stopifnot(all(geno_sampid == maps_sampid))
-    gmClose(objo)
-
-    # return the unopened object
-    return(obj)
-}
-
-# utility function to open a genomaps object
-gmOpen <- function(genomaps) {
-    stopifnot(class(genomaps) == "genomaps")
-    if (attr(genomaps, "useSeqArray")) {
-        geno = SeqArray::seqOpen(genomaps$geno)
-    } else {
-        geno = get(load(genomaps$geno))
-    }
-    maps = get(load(genomaps$maps))
-
-    # if subsets are needed
-    if (!all(sapply(genomaps$subs, is.null))) {
-        if (!is.null(genomaps$subs[[1]])) {
-            geno = .filter_genosample(geno, genomaps$subs[[1]])
-        }
-        if (!is.null(genomaps$subs[[2]])) {
-            geno = .filter_genovariant(geno, genomaps$subs[[2]])
-        }
-    }
+# combine the margeno and marmaps objects
+.new_genomaps <- function(geno, maps) {
     obj <- list(geno = geno,
                 maps = maps)
-    class(obj) <- "genomapso" # opened genomaps
+    class(obj) <- "genomaps"
     return(obj)
 }
 
-gmClose <- function(genomapso) {
-    if (class(genomapso$geno) == "SeqVarGDSClass") {
-        SeqArray::seqClose(genomapso$geno)
-    }
-    return(invisible())
+genomaps <- function(geno, maps) {
+    # validate inputs
+    stopifnot(class(geno) == "margeno")
+    stopifnot(class(maps) == "marmaps")
+    stopifnot(all(geno$sample.id == maps$sample.id))
+
+    # create object
+    obj <- .new_genomaps(geno, maps)
+    return(obj)
 }
 

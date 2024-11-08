@@ -1,3 +1,10 @@
+.valid_lonlat <- function(lonlat) {
+    stopifnot(is.matrix(lonlat))
+    stopifnot(ncol(lonlat) == 2 & nrow(lonlat) > 0)
+    stopifnot(!any(is.na(lonlat)))
+    return(invisible())
+}
+
 # calculate area of a given raster
 areaofraster <- function(rr, na.rm = FALSE, tol = 1, cached = TRUE) {
     asub <- raster::area(rr, na.rm = na.rm)
