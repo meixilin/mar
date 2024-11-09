@@ -1,3 +1,27 @@
+# test myprob
+scheme = 'inwards'
+scheme = 'outwards'
+
+rcprob <- switch(
+    scheme,
+    random = list(NULL, NULL),
+    # no prob
+    inwards = lapply(.point_prob(rvars, cvars, r0c0, ss=1), function(x) 1-x),
+    outwards = .point_prob(rvars, cvars, r0c0, ss=1),
+    southnorth = .pole_prob(rvars, from = 'S'),
+    northsouth = .pole_prob(rvars, from = 'N')
+)
+myprob <- .rcprob2myprob(rcprob)
+names(myprob) <- gridpresent
+ss = gm$maps$samplemap
+plot(ss)
+ss[as.integer(names(myprob))] = myprob
+plot(ss)
+
+
+
+
+
 # add tolerance = 1e-07
 
 load('testdata/genemaps-joshua.rda')

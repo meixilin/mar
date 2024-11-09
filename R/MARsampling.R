@@ -4,7 +4,7 @@
 # TODO: Add not gridded sampling
 #' MAR sampling wrapper function
 #'
-#' @param gm a [genemaps] object created by [genemaps()]
+#' @param gm a [genomaps] object created by [genomaps()]
 #' @param scheme sampling schemes for spatial data. allowed are \code{\link{.MARsampling_schemes}}.
 #' @param nrep number of replicates.
 #' @param quorum require all sampling grid to have samples. default is FALSE.
@@ -19,6 +19,7 @@ MARsampling <-
     function(gm,
              scheme = .MARsampling_schemes,
              nrep = 10,
+             xfrac = 0.01,
              quorum = FALSE,
              animate = FALSE,
              myseed = NULL) {
@@ -30,23 +31,23 @@ MARsampling <-
         scheme = match.arg(scheme)
         # if scheme is inwards, reverse the bounding box
         revbbox = ifelse(scheme == "inwards", TRUE, FALSE)
-        # calculate and store raster area in the given gm$samplemap
-        gmarea = areaofraster(gm$samplemap)
-        # the x and y number of cells in gm$samplemap
+        # calculate and store raster area in the given gm$maps$samplemap
+        gmarea = areaofraster(gm$maps$samplemap)
+        # the x and y number of cells in gm$maps$samplemap
         # y is Row is Lat. Selected by r1, r2.
         # x is Col is Lon. Selected by c1, c2.
-        latrange <- dim(gm$samplemap)[1]
-        lonrange <- dim(gm$samplemap)[2]
+        latrange <- dim(gm$maps$samplemap)[1]
+        lonrange <- dim(gm$maps$samplemap)[2]
         # the maximum size box can become
         minrange <- min(latrange, lonrange)
         # the point where most samples are available (for inwards / outwards sampling)
-        maxids <- raster::which.max(gm$samplemap)
+        maxids <- raster::which.max(gm$maps$samplemap)
         if (length(maxids) > 1) {
             warning('More than one cell with maximum samples')
         }
-        r0c0 <- rowColFromCell(gm$samplemap, maxids[1])
+        r0c0 <- raster::rowColFromCell(gm$maps$samplemap, maxids[1])
         # find right stepsize
-        mystep = ifelse(minrange > 100, ceiling(minrange / 100), 1)
+        mystep = ifelse(minrange > 100, ceiling(minrange * xfrac), 1)
         sidesize = seq(1, minrange, by = mystep)
         # differences btw different schemes are in the bounding boxes selected for diversity calculations
         # differences in bounding boxes are in the sample probability settings
@@ -76,7 +77,7 @@ MARsampling <-
             gmarea = gmarea,
             revbbox = revbbox
         )
-        outdf = do.call(dplyr::bind_rows, lapply(outlist, as.data.frame))
+        outdf = do.call(rbind, lapply(outlist, as.data.frame))
         # return bounding boxes as well
         outdf$extent = unlist(lapply(bboxlist, paste0, collapse = ';'))
         if (revbbox) {
@@ -163,7 +164,7 @@ MARsampling <-
                 sapply(lapply(
                     bblist,
                     rowcol_cellid,
-                    gm = gm,
+                    mm = gm$maps,
                     revbbox = revbbox
                 ),
                 length)
@@ -176,7 +177,7 @@ MARsampling <-
                     sapply(lapply(
                         tbblist,
                         rowcol_cellid,
-                        gm = gm,
+                        mm = gm$maps,
                         revbbox = revbbox
                     ),
                     length)
@@ -187,7 +188,7 @@ MARsampling <-
                     sapply(lapply(
                         bblist,
                         rowcol_cellid,
-                        gm = gm,
+                        mm = gm$maps,
                         revbbox = revbbox
                     ),
                     length)
@@ -205,9 +206,9 @@ MARsampling <-
 # animate the sampling results
 .animate_MARsampling <- function(gm, bblist, pause = 0.2) {
     grDevices::dev.flush()
-    plot(gm$samplemap)
+    plot(gm$maps)
     for (ii in seq_along(bblist)) {
-        plot(rowcol_extent(gm, bblist[[ii]]),
+        plot(rowcol_extent(gm$maps, bblist[[ii]]),
              add = T,
              col = 'black')
         Sys.sleep(pause)

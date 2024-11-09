@@ -104,7 +104,7 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
     lonlat <- as.matrix(lonlatdf[,2:3])
 
     # Validate inputs
-    stopifnot(class(sample.id) == "character")
+    stopifnot(class(sample.id) %in% c("character", "integer"))
     stopifnot(is.matrix(lonlat))
     .valid_lonlat(lonlat)
     stopifnot(length(sample.id) == nrow(lonlat))
@@ -147,6 +147,7 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
     obj <- list(geno = geno,
                 maps = maps)
     class(obj) <- "genomaps"
+    attr(obj, "genolen") <- .get_genodata(geno, "num.variant")
     return(obj)
 }
 

@@ -131,6 +131,15 @@ Test output:
 * Discontinued `padding` option in `.lonlat_raster` to avoid rounding errors.
 * Update `MARPIPELINE` to use the new `genomaps` format.
 
+# v0.0.9
+
+* MARPIPELINE completely rewritten.
+* Add `mutdiv.cells` to calculate genetic diversity in a cell list.
+* Rewrite `MARextinction` to match `MARsampling`.
+* Add `MARcalc_all` to calculate MAR/EMAR relationship.
+* Update dependencies from `genemaps` object to `genomaps` object `gm$samplemap` to `gm$maps$samplemap` etc.
+* Not fully tested yet.
+
 # Did not use but tried
 
 * Considered using `SeqArray` as the main framework for `genomaps` but it would require reading from disk constantly.

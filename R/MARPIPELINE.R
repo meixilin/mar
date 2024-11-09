@@ -5,8 +5,9 @@ MARPIPELINE <- function(name,
                         lonlatfile,
                         extra_file = list(samplefile = NULL, posfile = NULL, subsample = NULL, subvariant = NULL),
                         filetype = c('text', 'vcf', 'plink'),
-                        option_geno = list(ploidy = 2, het2hom = FALSE, maxsnps = 1000000, nreps = 10),
+                        option_geno = list(ploidy = 2, het2hom = FALSE, maxsnps = 1000000),
                         option_map = list(mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84"),
+                        option_mar = list(scheme = .MARsampling_schemes, nrep = 10, quorum = FALSE, animate = FALSE, myseed = NULL),
                         marsteps = c("data", "gm", "sfs", "mar", "ext"),
                         saveobj = FALSE) {
 # Define some variables --------------------------------------------------------
@@ -15,8 +16,8 @@ MARPIPELINE <- function(name,
         data = c("genodata", "mapsdata"),
         gm = c("gm"),
         sfs = c("sfs"),
-        mar = c("mardf", "mar"),
-        ext = c("extdf", "ext")
+        mar = c("mardflist", "marlist"),
+        ext = c("extdflist", "extlist")
     )
 
 # Check and file setup ---------------------------------------------------------
@@ -115,130 +116,37 @@ MARPIPELINE <- function(name,
 
 # MARsampling ------------------------------------------------------------------
     if ("mar" %in% marsteps) {
-        message("sampling the distribution ...")
-        load(file = filegenemaps)
+        message("MARPIPELINE sampling the MAR distribution ...")
+        .required_objects("gm", ofn, outfile) # requires output from "gm" step
+
         # Create sampling
-        mares <- MARsampling(genemaps, scheme = "random", samples = nsamplesMAR)
-        # save object
-        if (saveobjects) save(file = filemares, mares)
-        message("...done")
+        mardflist <- lapply(option_mar$scheme, function(scheme) {
+            message(paste0("Sampling scheme: ", scheme))
+            MARsampling(gm = gm, scheme = scheme, nrep = option_mar$nrep, xfrac = option_mar$xfrac,
+                        quorum = option_mar$quorum, animate = option_mar$animate, myseed = option_mar$myseed)
+        })
+        names(mardflist) <- option_mar$scheme
 
-        message("building the mutations area relationship ...")
-        load(file = filemares)
-        # head(mares); tail(mares)
-        # Build MAR
-        # tmpmar<-dplyr::select(filter(mares,M>0,asub>0), asub,M)
-        tmpmar <- dplyr::select(filter(mares, M > 0, a > 0), a, M)
-        # changed as of Aug 6 2021 to the total area, it seems less sensitive
-        if (length(dim(tmpmar)[1] == 0 | unique(tmpmar$M)) < 3) {
-            message("same mutations in every location! cannot calculate MAR")
-            mar <- NA
-            marz <- NA
-        } else {
-            mar <- sar_power(tmpmar)
-            marz <- marcoef(mar)
-            # if(debug) print(mar)
-        }
-        # Build EMAR
-        tmpemar <- dplyr::select(filter(mares, E > 0, asub > 0), asub, E)
-        if (dim(tmpemar)[1] == 0 | length(unique(tmpmar$E)) < 3) {
-            message("no endemic mutations! cannot calculate EMAR")
-            emar <- NA
-            emarz <- NA
-        } else {
-            emar <- sar_power(tmpemar)
-            emarz <- marcoef(emar)
-        }
-
-        save(file = filemar, mar)
-        save(file = fileemar, emar)
-        save(file = filemarz, marz)
-        save(file = fileemarz, emarz)
-        message("...done")
+        # Calculate MAR
+        marlist <- lapply(mardflist, MARcalc_all)
+        names(marlist) <- option_mar$scheme
     }
 
 # MARextinction simulation -----------------------------------------------------
     if ("ext" %in% marsteps) {
-        message("in silico extinction of distribution cells ...")
-        load(filegenemaps)
-        load(filemar)
-        load(fileemar)
-        ### Simulate extinctions
-        # random losss of cells in grid
-        random.X <-
-            MARextinction_sim(genemaps,
-                scheme = "random",
-                xfrac = 0.01
-            ) %>%
-            mutate(type = "random")
-        # extinction from outside to
-        inward.X <-
-            MARextinction_sim(genemaps,
-                scheme = "inwards",
-                xfrac = 0.01
-            ) %>%
-            mutate(type = "inwards")
-        # from outside to the midpoint value
-        inward.X.center <-
-            MARextinction_sim(genemaps,
-                scheme = "inwards",
-                centerfun = function(x) (min(x) + max(x)) / 2
-            ) %>%
-            mutate(type = "inwards.center")
-        # from south to north
-        sn.X <-
-            MARextinction_sim(genemaps,
-                scheme = "southnorth",
-                xfrac = 0.01
-            ) %>%
-            mutate(type = "southnorth")
-        # radial from a central point
-        radial.X <-
-            MARextinction_sim(genemaps,
-                scheme = "radial",
-                centerfun = median,
-                xfrac = 0.05
-            ) %>%
-            mutate(type = "radial")
-        radial.spain.X <-
-            MARextinction_sim(genemaps,
-                scheme = "radial",
-                centerfun = min,
-                xfrac = 0.05
-            ) %>%
-            mutate(type = "radial.xymin")
-        radial.scand.X <-
-            MARextinction_sim(genemaps,
-                scheme = "radial",
-                centerfun = max,
-                xfrac = 0.05
-            ) %>%
-            mutate(type = "radial.xymax")
-        # assemble all simulations
-        xsim <- rbind(
-            random.X,
-            inward.X,
-            inward.X.center,
-            sn.X,
-            radial.X,
-            radial.spain.X,
-            radial.scand.X
-        )
-        save(file = fileextinctionsim, xsim)
+        message("MARPIPELINE simulating extinction of distribution cells ...")
+        .required_objects("gm", ofn, outfile) # requires output from "gm" step
 
-        # Create a mar of the extinction values themselves
-        marsim <- sars::sar_power(data = dplyr::select(xsim, asub, M))
-        save(file = fileextinctionmar, marsim)
+        # Create extinction scheme
+        extdflist <- lapply(option_mar$scheme, function(scheme) {
+            message(paste0("Extinction scheme: ", scheme))
+            MARextinction(gm = gm, scheme = scheme, nrep = option_mar$nrep, xfrac = option_mar$xfrac, animate = option_mar$animate, myseed = option_mar$myseed)
+        })
+        names(extdflist) <- option_mar$scheme
 
-        # quantify how good the fit is
-        # R2_randomMAR<-marR2(mar, dplyr::select(xsim,asub,M))
-        # R2_randomEmAR<-marR2(emar, dplyr::select(xsim,asub,M))
-        # R2sim<-list(R2_randomMAR,R2_randomEmAR)
-
-        # save objects
-        # save(file = fileextinctionsimR2, R2sim)
-
-        message("...done")
+        # Calculate MAR
+        extlist <- lapply(extdflist, MARcalc_all)
+        names(extlist) <- option_mar$scheme
     }
 
 # Save data and exit -----------------------------------------------------------

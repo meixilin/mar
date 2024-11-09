@@ -1,267 +1,127 @@
+# not a reverse function of MARsampling. Here the operation is on a cell level but MARsampling circles the grid with boxes
 
-## SIM EXTINCT ##############################################################################
-
-MARextinction_radial <- function(genemaps, xfrac = 0.01, centerfun = median, debug = FALSE) {
-    require(raster)
-    require(dplyr)
-    raster_samples <- genemaps[[1]]
-    raster_mutmaps <- genemaps[[2]]
-    rest_mutmaps <- raster_mutmaps
-    # get most abundant location, or median
-    tmp <- xyFromCell(genemaps[[1]], which(values(genemaps[[1]]) > 0))
-    startcoordextinction <- fn(apply(tmp, 2, centerfun)) %>%
-        t() %>%
-        data.frame() %>%
-        rename(x = X1, y = X2)
-    # extinction cell from which we will expand extinction
-    id.cell <- raster::extract(genemaps[[1]], SpatialPoints(startcoordextinction), cellnumbers = TRUE)[1]
-    startrowcol <- rowColFromCell(genemaps[[1]], id.cell)
-    # get the  present locations
-    gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-    A <- length(gridpresent)
-    Astart <- A
-    xstep <- ceiling(xfrac * A)
-    # get the latlong of every cell in the grid
-    locs <- raster::as.data.frame(raster_samples, xy = TRUE)
-    # get distance to the extinction point
-    alldist <- as.matrix(dist(rbind(startcoordextinction, locs[, 1:2]), method = "euclidean"))[1, -1] %>% fn()
-    # iterate
-    listres <- list()
-    # calculate original diversity
-    listres <- c(
-        listres,
-        list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-    )
-    if (debug) print(listres)
-    while (A > 1) { # change 0 for Astop if wanted to stop earlier
-        if (debug) message("A ", A)
-        # extinct some grids. get the top that are closest in distance
-        # Modification: Change to <= instead of < so when xstep == 1, still doable
-        # Date: Mon Mar 13 00:35:57 2023
-        toextinct <- gridpresent[which(alldist[gridpresent] <= sort(alldist[gridpresent])[xstep])]
-        # extinct those values
-        values(raster_samples)[toextinct] <- NA
-        values(raster_mutmaps)[toextinct, ] <- NA
-        values(rest_mutmaps)[toextinct, ] <- NA
-        # calculate diversity
-        tmpdiv <- mutdiv(raster_samples, raster_mutmaps, rest_mutmaps)
-        listres <- c(listres, list(tmpdiv))
-        # recalculate area remaining
-        gridpresent <- which(apply(
-            values(raster_mutmaps), 1,
-            function(x) {
-                any(!is.na(x))
-            }
-        ))
-        A <- A - xstep
-        if (debug) message("asub ", tmpdiv$asub)
-        # if(debug) plot(raster_samples>100) # ** for debug# for debug
+MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
+    # same as MARsampling ------------------------------------------------------
+    # set seed if specified
+    if (!is.null(myseed)) {
+        set.seed(myseed)
     }
-    ## end function
-    res <- listres %>%
-        do.call(rbind, .) %>%
-        data.frame() %>%
-        mutate(
-            ax = 1 - (asub / max(asub, na.rm = T)),
-            mx = 1 - (M / max(M, na.rm = T))
-        )
-    return(res)
-}
-
-MARextinction_sn <- function(genemaps, xfrac = 0.01, centerfun = median, debug = FALSE) {
-    require(raster)
-    require(dplyr)
-    raster_samples <- genemaps[[1]]
-    raster_mutmaps <- genemaps[[2]]
-    rest_mutmaps <- raster_mutmaps
-    # get the  present locations
-    gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-    A <- length(gridpresent)
-    Astart <- A
-    xstep <- ceiling(xfrac * A)
-    # get the latlong of every cell in the grid
-    locs <- raster::as.data.frame(raster_samples, xy = TRUE)
-    # distance to top latitude would lead to South to North prob extinction
-    # fixed for situations where pole is south. get the location
-    # no mater if negative or positive, that mathes the largest number
-    northdist <- 90 - locs$y
-    if (mean(northdist, na.rm = T) < 0) northdist <- northdist * (-1)
-    # iterate object
-    listres <- list()
-    # calculate original diversity
-    listres <- c(
-        listres,
-        list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-    )
-    while (A > 1) {
-        # extinct some grids
-        toextinct <- sample(gridpresent, xstep,
-            replace = TRUE,
-            # prob =normalize(northdist[gridpresent])^10)  # likely created a bug with normalize
-            prob = rank(-northdist[gridpresent])^10
-        ) # high prob with exponential decay
-        values(raster_samples)[toextinct] <- NA
-        values(raster_mutmaps)[toextinct, ] <- NA
-        values(rest_mutmaps)[toextinct, ] <- NA
-        # calculate diversity
-        listres <- c(
-            listres,
-            list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-        )
-        # plot(raster_samples>0, col='black') # ** for debug# for debug
-        # recalculate area remaining
-        gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-        A <- A - xstep
+    # match schemes (default to random)
+    scheme = match.arg(scheme)
+    # calculate and store raster area in the given gm$maps$samplemap
+    gmarea = areaofraster(gm$maps$samplemap)
+    # the point where most samples are available (for inwards / outwards sampling)
+    maxids <- raster::which.max(gm$maps$samplemap)
+    if (length(maxids) > 1) {
+        warning('More than one cell with maximum samples')
     }
-    res <- listres %>%
-        do.call(rbind, .) %>%
-        data.frame() %>%
-        mutate(
-            ax = 1 - (asub / max(asub, na.rm = T)),
-            mx = 1 - (M / max(M, na.rm = T))
-        )
-    return(res)
-}
+    r0c0 <- raster::rowColFromCell(gm$maps$samplemap, maxids[1])
+    # End same as MARsampling --------------------------------------------------
+    extlist <- .extlist_sample(gm, xfrac, scheme, nrep, r0c0)
 
-MARextinction_in <- function(genemaps, xfrac = 0.01, centerfun = median, debug = FALSE) {
-    require(raster)
-    require(dplyr)
-    raster_samples <- genemaps[[1]]
-    raster_mutmaps <- genemaps[[2]]
-    rest_mutmaps <- raster_mutmaps
-    # get the  present locations
-    gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-    A <- length(gridpresent)
-    Astart <- A
-    xstep <- ceiling(xfrac * A)
-    # get the median coordinate of each Arabidopsis sample
-    tmp <- raster::xyFromCell(raster_samples, which(values(raster_samples) > 0))
-    midcoord <- fn(apply(tmp, 2, centerfun)) %>%
-        t() %>%
-        data.frame() %>%
-        rename(x = X1, y = X2)
-    # get the latlong of every cell in the grid
-    locs <- raster::as.data.frame(raster_samples, xy = TRUE)
-    # get distance center to each cell
-    alldist <- as.matrix(dist(rbind(midcoord, locs[, 1:2]), method = "euclidean"))[1, -1]
-    # iterate object
-    listres <- list()
-    # calculate original diversity
-    listres <- c(
-        listres,
-        list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-    )
-    while (A > 1) { # change 0 for Astop if want to stop earlier
-        # extinct some grids
-        toextinct <- sample(
-            x = gridpresent, size = xstep, replace = TRUE,
-            prob = normalize(alldist[gridpresent])^10
-        ) # high prob with exponential decay
-        values(raster_samples)[toextinct] <- NA
-        values(raster_mutmaps)[toextinct, ] <- NA
-        values(rest_mutmaps)[toextinct, ] <- NA
-        # calculate diversity
-        listres <- c(
-            listres,
-            list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-        )
-        # for debug plot(raster_samples>0)
-        # recalculate area remaining
-        gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-        A <- A - xstep
+    # if need to plot
+    if (animate) {
+        lapply(extlist, .animate_MARextinction, gm = gm)
     }
-    res <- listres %>%
-        do.call(rbind, .) %>%
-        data.frame() %>%
-        mutate(
-            ax = 1 - (asub / max(asub, na.rm = T)),
-            mx = 1 - (M / max(M, na.rm = T))
-        )
-    return(res)
+
+    # calculate area and genetic diversity in each extant cell list
+    outlist <- lapply(seq_along(extlist), function(ii) {
+        out <- lapply(extlist[[ii]], mutdiv.cells, gm = gm, gmarea = gmarea)
+        out <- as.data.frame(do.call(rbind, out))
+        # append end theta (zero in all)
+        out[nrow(out)+1, ] <- rep(0, ncol(out))
+        out$repid <- ii # replicate id
+        return(out)
+    })
+    outdf <- do.call(rbind, outlist)
+
+    # set outdf as a marsamp class
+    class(outdf) <- c("data.frame", "marextinct") # marextinction output class
+    attr(outdf, 'scheme') <- scheme
+    return(outdf)
 }
 
-MARextinction_random <- function(genemaps, xfrac = 0.01, centerfun = median, debug = FALSE) {
-    require(raster)
-    require(dplyr)
-    raster_samples <- genemaps[[1]]
-    raster_mutmaps <- genemaps[[2]]
-    rest_mutmaps <- raster_mutmaps
-    # get the  present locations
-    gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-    A <- length(gridpresent)
-    Astart <- A
-    xstep <- ceiling(xfrac * A)
-    # iterate
-    listres <- list()
-    # calculate original diversity
-    listres <- c(
-        listres,
-        list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-    )
-    while (A > 1) {
-        # extinct some grids
-        toextinct <- sample(gridpresent, xstep, replace = TRUE)
-        values(raster_mutmaps)[toextinct, ] <- NA
-        values(raster_samples)[toextinct] <- NA
-        values(rest_mutmaps)[toextinct, ] <- NA
-        # calculate diversity
-        listres <- c(
-            listres,
-            list(mutdiv(raster_samples, raster_mutmaps, rest_mutmaps))
-        )
-        # recalculate area remaining
-        gridpresent <- which(apply(values(raster_mutmaps), 1, function(x) any(!is.na(x))) == TRUE)
-        A <- A - xstep
+.rcprob2myprob <- function(rcprob) {
+    if (is.null(rcprob[[1]])) {
+        myprob <- rcprob[[2]]
+    } else {
+        if (is.null(rcprob[[2]])) {
+            myprob <- rcprob[[1]]
+        } else {
+            myprob <- rcprob[[1]] * rcprob[[2]]
+            myprob <- myprob / sum(myprob)
+        }
     }
-    res <- listres %>%
-        do.call(rbind, .) %>%
-        data.frame() %>%
-        mutate(
-            ax = 1 - (asub / max(asub, na.rm = T)),
-            mx = 1 - (M / max(M, na.rm = T))
-        )
-    return(res)
+    return(myprob)
 }
 
-
-MARextinction_sim <- function(genemaps, scheme = "random",
-                              samples = 10, xfrac = 0.01,
-                              centerfun = median) {
-    require(raster)
-    require(dplyr)
-    ## Check conditions
-    stopifnot(scheme %in% c("random", "inwards", "outwards", "southnorth", "radial"))
-    stopifnot(is.function(centerfun))
-    stopifnot(length(genemaps) == 2) # expecting density of samples and mutations
-    ## End conditions
-    # # some general variables
-    # lonrange <- dim(genemaps[[1]])[1]
-    # latrange <- dim(genemaps[[1]])[2]
-    ## random #############################################################################
-    ## sampling boxes of sizes 1 ... min range with 1 stride but at random (too many combinations)
-    if (scheme == "random") {
-        res <- MARextinction_random(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun)
-    } # end condition
-    ## outwards ############################################################################
-    ## sampling from center to edges
-    else if (scheme == "outwards") {
-        stop("outwards extinction not implemented yet")
-    } # end condition
-    ## inwards ############################################################################
-    ## sampling from center to edges
-    else if (scheme == "inwards") {
-        res <- MARextinction_in(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun)
-    } # end condition
-    ## southnorth ############################################################################
-    ## Sampling grids from south to north
-    else if (scheme == "southnorth") {
-        res <- MARextinction_sn(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun)
-    } # end condition
-    ## radial ############################################################################
-    else if (scheme == "radial") {
-        res <- MARextinction_radial(genemaps = genemaps, xfrac = xfrac, centerfun = centerfun)
-    } # end condition
-    # end of funciton
-    return(res)
+.rescale_prob <- function(myprob) {
+    return(myprob / sum(myprob))
 }
 
+# core sampling function
+.extlist_sample <- function(gm, xfrac, scheme, nrep, r0c0) {
+    gridpresent <- sort(unique(gm$maps$cellid))
+    gridrowcol <- raster::rowColFromCell(gm$maps$samplemap, gridpresent)
+    # find right stepsize
+    mystep <- ifelse(length(gridpresent) > 100, ceiling(length(gridpresent) * xfrac), 1)
+    rvars <- gridrowcol[,'row']
+    cvars <- gridrowcol[,'col']
+
+    # Calculate probability of all grids (rescale at each step). synonymous to the rcprob
+    rcprob <- switch(
+        scheme,
+        random = list(NULL, NULL),
+        # no prob
+        inwards = lapply(.point_prob(rvars, cvars, r0c0, ss=1), function(x) 1-x),
+        outwards = .point_prob(rvars, cvars, r0c0, ss=1),
+        southnorth = .pole_prob(rvars, from = 'S'),
+        northsouth = .pole_prob(rvars, from = 'N')
+    )
+    myprob <- .rcprob2myprob(rcprob)
+    names(myprob) <- gridpresent
+    extlist <- lapply(1:nrep, function(ii) .extsample(gridpresent, myprob, mystep))
+    return(extlist)
+}
+
+.extsample <- function(gridpresent, myprob, mystep) {
+    # Create a list to store grids that remain after each extinction step
+    extl <- vector('list', length = ceiling(length(gridpresent) / mystep))
+    extl[[1]] <- gridpresent
+
+    # Simulate extinction process
+    for (ii in 2:length(extl)) {
+        if (length(gridpresent) <= mystep) {
+            break
+        }
+        # Sample grids to become extinct
+        toextinct <- base::sample(gridpresent, size = mystep, prob = myprob, replace = FALSE)
+
+        # Update remaining grids
+        gridpresent <- setdiff(gridpresent, toextinct)
+        extl[[ii]] <- gridpresent
+        myprob <- .rescale_prob(myprob[names(myprob) %in% gridpresent])
+        # print(which.min(myprob))
+        stopifnot(all(names(myprob) == gridpresent))
+    }
+    # sanity check that the last on the list should be less than mystep
+    stopifnot(length(extl[[length(extl)]]) <= mystep)
+
+    return(extl)
+}
+
+.animate_MARextinction <- function(gm, extl, pause = 0.2) {
+    grDevices::dev.flush()
+    tempmaps <- gm$maps
+    tempids <- 1:raster::ncell(tempmaps$samplemap)
+    for (ii in seq_along(extl)) {
+        tempmaps$samplemap[setdiff(tempids, extl[[ii]])] <- NA
+        tempmaps$lonlat = gm$maps$lonlat[gm$maps$cellid %in% extl[[ii]], ]
+        if (!is.matrix(tempmaps$lonlat)) {
+            tempmaps$lonlat = matrix(tempmaps$lonlat, ncol = 2)
+        }
+        plot(tempmaps)
+        Sys.sleep(pause)
+    }
+    return(invisible())
+}

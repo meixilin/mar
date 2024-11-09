@@ -12,6 +12,7 @@ tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
 tests/testthat/testdata/1001g
 tests/testthat/testdata/fileparser
+tests/testthat/MARPIPELINE
 *.pdf
 *.png
 *.jpg

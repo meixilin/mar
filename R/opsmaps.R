@@ -30,35 +30,35 @@ areaofsquare <- function(nrow, ncol, resrow, rescol) {
 }
 
 # subset samples by cellids
-cellid_sample <- function(gm, cellid) {
+cellid_sample <- function(mm, cellid) {
     stopifnot(length(cellid) > 0)
-    sampleid <- gm$sample[gm$sample$cellid %in% cellid, 'id']
+    sampleid <- mm$sample.id[mm$cellid %in% cellid]
     return(sampleid)
 }
 
 # find cellids by row and column list
 # bbox should be c(r1, r2, c1, c2).
 # TODO: speed TBD with just using extent_sample function
-rowcol_cellid <- function(gm, bbox, revbbox = FALSE) {
+rowcol_cellid <- function(mm, bbox, revbbox = FALSE) {
     stopifnot(length(bbox) == 4)
     # get the cells
     # cellFromRowColCombine returns the cell numbers obtained by the combination of all row and
     # column numbers supplied as arguments
-    cells <- raster::cellFromRowColCombine(gm$samplemap, bbox[1]:bbox[2], bbox[3]:bbox[4])
+    cells <- raster::cellFromRowColCombine(mm$samplemap, bbox[1]:bbox[2], bbox[3]:bbox[4])
     # reverse the cells if revbbox
     if (revbbox) {
-        cells <- setdiff(1:ncell(gm$samplemap), cells)
+        cells <- setdiff(1:raster::ncell(mm$samplemap), cells)
     }
-    cellsnotna <- intersect(gm$sample$cellid, cells)
+    cellsnotna <- intersect(mm$cellid, cells)
     return(cellsnotna)
 }
 
-rowcol_extent <- function(gm, bbox) {
+rowcol_extent <- function(mm, bbox) {
     stopifnot(length(bbox) == 4)
-    # create an extent from gm$samplemap
+    # create an extent from mm$samplemap
     # When x is a Raster* object, you can pass four additional arguments to crop the
     # extent: r1, r2, c1, c2, representing the first and last row and column number
-    out = raster::extent(gm$samplemap, bbox[1], bbox[2], bbox[3], bbox[4])
+    out = raster::extent(mm$samplemap, bbox[1], bbox[2], bbox[3], bbox[4])
     return(out)
 }
 
