@@ -13,6 +13,7 @@ biocViews:
 Imports:
     magrittr,
     raster,
+    sars,
     SeqArray (>= 1.28.0)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
