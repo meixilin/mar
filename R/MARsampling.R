@@ -77,7 +77,8 @@ MARsampling <-
             gmarea = gmarea,
             revbbox = revbbox
         )
-        outdf = do.call(rbind, lapply(outlist, as.data.frame))
+        # need bind_rows because number of columns are not the same
+        outdf = do.call(dplyr::bind_rows, lapply(outlist, as.data.frame))
         # return bounding boxes as well
         outdf$extent = unlist(lapply(bboxlist, paste0, collapse = ';'))
         if (revbbox) {

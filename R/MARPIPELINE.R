@@ -11,6 +11,7 @@ MARPIPELINE <- function(name,
                         marsteps = c("data", "gm", "sfs", "mar", "ext"),
                         saveobj = FALSE) {
 # Define some variables --------------------------------------------------------
+    options(warn = 1) # print warning as they occur
     # all potential output files (and objects)
     ofn <- list(
         data = c("genodata", "mapsdata"),
@@ -152,7 +153,11 @@ MARPIPELINE <- function(name,
 # Save data and exit -----------------------------------------------------------
     if (saveobj) {
         message("MARPIPELINE saving objects ...")
-        .save_objects(marsteps, ofn, outfile)
+        for (ii in marsteps) {
+            for (jj in seq_along(ofn[[ii]])) {
+                save(list = ofn[[ii]][jj], file = outfile[[ii]][jj])
+            }
+        }
     }
 
     message(paste0("MARPIPELINE successfully ends at ", Sys.time(), "."))
@@ -192,10 +197,6 @@ MARPIPELINE <- function(name,
 .valid_output <- function(name, workdir, marsteps, ofn) {
     # check if workdir exists
     stopifnot(dir.exists(workdir))
-    # check if required files exist if not running all steps
-    if (any(c("sfs", "mar", "ext") %in% marsteps) & !("gm" %in% marsteps)) {
-        stopifnot(file.exists(paste0(workdir, "/genomaps_", name, ".rda")))
-    }
     # outfile does not have workdir as workdir will be set in pipeline
     outfile <- lapply(ofn, function(x) paste0(x, "_", name, ".rda"))
     return(outfile)
@@ -215,10 +216,3 @@ MARPIPELINE <- function(name,
     return(invisible())
 }
 
-.save_objects <- function(marsteps, ofn, outfile) {
-    for (ii in marsteps) {
-        for (jj in seq_along(ofn[[ii]])) {
-            save(list = ofn[[ii]][jj], file = outfile[[ii]][jj])
-        }
-    }
-}

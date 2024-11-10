@@ -3,5 +3,6 @@
 export("%>%")
 export(Hn)
 export(MARsampling)
-export(genemaps)
+export(genomaps)
+export(MARPIPELINE)
 importFrom(magrittr,"%>%")

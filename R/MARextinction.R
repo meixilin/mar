@@ -26,8 +26,8 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
 
     # calculate area and genetic diversity in each extant cell list
     outlist <- lapply(seq_along(extlist), function(ii) {
-        out <- lapply(extlist[[ii]], mutdiv.cells, gm = gm, gmarea = gmarea)
-        out <- as.data.frame(do.call(rbind, out))
+        outl <- lapply(extlist[[ii]], mutdiv.cells, gm = gm, gmarea = gmarea)
+        out <- do.call(rbind, lapply(outl, as.data.frame))
         # append end theta (zero in all)
         out[nrow(out)+1, ] <- rep(0, ncol(out))
         out$repid <- ii # replicate id
@@ -41,7 +41,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     return(outdf)
 }
 
-.rcprob2myprob <- function(rcprob) {
+.rcprob2myprob <- function(rcprob, gridpresent) {
     if (is.null(rcprob[[1]])) {
         myprob <- rcprob[[2]]
     } else {
@@ -52,11 +52,19 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
             myprob <- myprob / sum(myprob)
         }
     }
+    # add names if myprob is not NULL
+    if (!is.null(myprob)) {
+        names(myprob) <- gridpresent
+    }
     return(myprob)
 }
 
 .rescale_prob <- function(myprob) {
-    return(myprob / sum(myprob))
+    if (!is.null(myprob)) {
+        return(myprob / sum(myprob))
+    } else {
+        return(myprob)
+    }
 }
 
 # core sampling function
@@ -78,8 +86,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
         southnorth = .pole_prob(rvars, from = 'S'),
         northsouth = .pole_prob(rvars, from = 'N')
     )
-    myprob <- .rcprob2myprob(rcprob)
-    names(myprob) <- gridpresent
+    myprob <- .rcprob2myprob(rcprob, gridpresent)
     extlist <- lapply(1:nrep, function(ii) .extsample(gridpresent, myprob, mystep))
     return(extlist)
 }
@@ -102,7 +109,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
         extl[[ii]] <- gridpresent
         myprob <- .rescale_prob(myprob[names(myprob) %in% gridpresent])
         # print(which.min(myprob))
-        stopifnot(all(names(myprob) == gridpresent))
+        stopifnot(all(names(myprob) == gridpresent) | is.null(myprob))
     }
     # sanity check that the last on the list should be less than mystep
     stopifnot(length(extl[[length(extl)]]) <= mystep)
