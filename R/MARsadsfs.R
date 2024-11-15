@@ -1,6 +1,19 @@
 # fit sad models (sorted alphabetically)
 .sad_models <- c("bs", "geom", "lnorm", "ls", "mzsm", "weibull")
-MARsad_sfs <- function(AC, N, ploidy, sads = .sad_models) {
+
+
+#' Title
+#'
+#' @param AC
+#' @param N
+#' @param ploidy
+#' @param sad_models
+#'
+#' @return
+#' @export
+#'
+#' @examples
+MARsadsfs <- function(AC, N, ploidy, sad_models = .sad_models) {
     # build SFS and expected SFS
     lenAC <- length(AC)
     datasfs <- sfs(AC, N, ploidy)
@@ -9,8 +22,9 @@ MARsad_sfs <- function(AC, N, ploidy, sads = .sad_models) {
     rAC <- sort(AC, decreasing =  TRUE) # ranked AC
 
     # build SAD models
-    sadms <- lapply(sads, function(x) sads::fitsad(AC, x))
-    AICtabs <- bbmle::AICtab(sadms, base = TRUE, logLik = TRUE, mnames = sads)
+    sadms <- lapply(sad_models, function(x) sads::fitsad(AC, x))
+    AICtabs <- bbmle::AICtab(sadms, base = TRUE, logLik = TRUE, mnames = sad_models)
+    # TODO: This sometimes take random amount of time to complete?
     sadpreds <- lapply(sadms, sads::radpred) # this is the AC equivalent
     sadsfs <- lapply(sadpreds, function(x) {
         osfs <- sfs(AC = round(x$abund), N = N, ploidy = ploidy)
@@ -35,7 +49,7 @@ MARsad_sfs <- function(AC, N, ploidy, sads = .sad_models) {
                    statdf = statdf,
                    AICtabs = AICtabs)
 
-    class(output) <- c("marsadsfs", class(output))
+    class(output) <- c(class(output), "marsadsfs")
     return(output)
 }
 
@@ -76,24 +90,49 @@ MARsad_sfs <- function(AC, N, ploidy, sads = .sad_models) {
     } else {
         names(vect) <- 0:(length(vect)-1)
     }
-    class(vect) <- c("sfs", class(vect))
+    class(vect) <- c(class(vect), "sfs")
     attr(vect, "folded") <- folded
     attr(vect, "nozero") <- nozero
     return(vect)
 }
 
 # not allowing filter at this stage. All filters should be done at step "gm"
+#' Title
+#'
+#' @param AC
+#' @param N
+#' @param ploidy
+#' @param folded
+#' @param nozero
+#'
+#' @return
+#' @export
+#'
+#' @examples
 sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
-    if (any(AC > N*ploidy)) {
-        warning(paste0(sum(AC > N*ploidy), " SNPs had allele counts exceeding N*ploidy"))
+    xN = N*ploidy
+    if (any(AC > xN)) {
+        warning(paste0(sum(AC > xN), " SNPs had allele counts exceeding N*ploidy"))
     }
-    vect <- sapply(0:(N*ploidy), function(x) sum(AC == x))
+    vect <- sapply(0:xN, function(x) sum(AC == x))
     # add class and handle folding
     vect <- .new_sfs(vect, folded, nozero)
     return(vect)
 }
 
 # generate expected SFS for given SNPs surveyed (lenAC) and number of samples (N)
+#' Title
+#'
+#' @param lenAC
+#' @param N
+#' @param ploidy
+#' @param folded
+#' @param nozero
+#'
+#' @return
+#' @export
+#'
+#' @examples
 expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
     xN = N*ploidy
     theta = lenAC / Hn(xN) # scale theta
@@ -152,6 +191,16 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
 .ll_per_bin <- Vectorize(..ll_per_bin)
 
 # < 0 and NA test have been tested in the sfs data construction phase
+#' Title
+#'
+#' @param model
+#' @param data
+#' @param missing_model_cutoff
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ll_sfs <- function(model, data, missing_model_cutoff = 1e-6) {
     stopifnot("sfs" %in% c(class(model), class(data)))
     stopifnot(length(model) == length(data)) # same length
@@ -159,7 +208,7 @@ ll_sfs <- function(model, data, missing_model_cutoff = 1e-6) {
     # check for zeros in models
     d0 = data[which(model == 0)]
     if (sum(d0)/sum(data) > missing_model_cutoff) {
-        warning(paste0("In ", scales::percent(sum(d0)/sum(data)), " of data. Model is 0 where data is neither masked nor 0."))
+        warning(paste0("In ", sprintf("%.2f%%", 100 * sum(d0) / sum(data)), " of data. Model is 0 where data is neither masked nor 0."))
     }
     ll <- sum(.ll_per_bin(model, data))
     return(ll)

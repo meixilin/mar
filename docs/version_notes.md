@@ -140,6 +140,15 @@ Test output:
 * Update dependencies from `genemaps` object to `genomaps` object `gm$samplemap` to `gm$maps$samplemap` etc.
 * Not fully tested yet.
 
+# v0.1.0
+
+* First stable release! Yeah!
+* Fix the harmonic number bug `Hn(N-1)` to `Hn(N*ploidy-1)`. In diploids, this is Hn(2N-1), where N is the number of samples with geographical information.
+* Remove unused scripts.
+* Greatly update the SFS and SAD models.
+* Fix the `class(obj)` to keep the original class.
+* Add dependencies.
+
 # Did not use but tried
 
 * Considered using `SeqArray` as the main framework for `genomaps` but it would require reading from disk constantly.

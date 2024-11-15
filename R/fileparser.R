@@ -41,7 +41,7 @@
 .read_table <- function(filename, header, sep) {
     con <- .open_txt(filename)
     tryCatch({
-        df <- read.table(con, header = header, sep = sep, row.names = NULL, stringsAsFactors = FALSE)
+        df <- utils::read.table(con, header = header, sep = sep, row.names = NULL, stringsAsFactors = FALSE)
     },
         finally = close(con)
     )
@@ -94,6 +94,18 @@
 
 # genotype txt/csv parser, with or without chromosome and position information
 # default ploidy is 2
+#' Title
+#'
+#' @param geno.fn
+#' @param samp.fn
+#' @param pos.fn
+#' @param ploidy
+#' @param het2hom
+#'
+#' @return
+#' @export
+#'
+#' @examples
 text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2, het2hom = FALSE) {
     # check if geno.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
@@ -127,6 +139,16 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2, het2
 }
 
 # vcf parser
+#' Title
+#'
+#' @param vcf.fn
+#' @param gds.fn
+#' @param opengds
+#'
+#' @return
+#' @export
+#'
+#' @examples
 vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
     # check if vcf.fn is a valid vcf file
     vcf.ext <- c(".vcf", ".vcf.gz")
@@ -146,6 +168,16 @@ vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
 }
 
 # plink parser
+#' Title
+#'
+#' @param plink.fn
+#' @param gds.fn
+#' @param opengds
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
     # add suffix to plink.fn
     bed.fn <- paste0(plink.fn, ".bed")
@@ -166,6 +198,16 @@ plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
 }
 
 # lonlat file parser
+#' Title
+#'
+#' @param lonlat.fn
+#' @param mapres
+#' @param mapcrs
+#'
+#' @return
+#' @export
+#'
+#' @examples
 lonlat_parser <- function(lonlat.fn, mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84") {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")

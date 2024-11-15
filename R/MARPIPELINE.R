@@ -1,4 +1,21 @@
-# genofile is of length 1
+#' MARPIPELINE wrapper function
+#'
+#' @param name
+#' @param workdir
+#' @param genofile
+#' @param lonlatfile
+#' @param extra_file
+#' @param filetype
+#' @param option_geno
+#' @param option_map
+#' @param option_mar
+#' @param marsteps
+#' @param saveobj
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MARPIPELINE <- function(name,
                         workdir,
                         genofile,
@@ -16,14 +33,14 @@ MARPIPELINE <- function(name,
     ofn <- list(
         data = c("genodata", "mapsdata"),
         gm = c("gm"),
-        sfs = c("sfs"),
+        sfs = c("marsadsfs"),
         mar = c("mardflist", "marlist"),
         ext = c("extdflist", "extlist")
     )
 
 # Check and file setup ---------------------------------------------------------
     message(paste0("MARPIPELINE starts at ", Sys.time(), "."))
-    print(sessionInfo())
+    print(utils::sessionInfo())
     filetype <- match.arg(filetype)
     marsteps <- match.arg(marsteps, several.ok = TRUE)
 
@@ -95,24 +112,13 @@ MARPIPELINE <- function(name,
 
 # Build SAR / SFS --------------------------------------------------------------
     if ("sfs" %in% marsteps) {
-        message("site frequency spectrum ...")
-        # freq <- data.table::fread(freqfile)
-        # M <- (ceiling(freq$MAF * freq$NCHROBS))
-        # M <- M[!is.na(M) & M != 0]
-        # Mrad <- rad(M)
-
-        # models <- c("weibull", "lnorm", "ls", "bs", "geom", "mzsm")
-        # fitted_models <- lapply(models, function(m) fitsad(M, m))
-        # names(fitted_models) <- models
-        # fitted_models$sfs <- predSFS(M)
-
-        # tableaic <- do.call(AICtab, fitted_models[names(fitted_models) != "sfs"])
-        # liksfs <- likelihoodSFSfold(M)
-
-        # if (saveobjects) {
-        #     save(file = filetable, object = tableaic)
-        #     save(file = fileliksfs, object = liksfs)
-        # }
+        message("MARPIPELINE fitting SAD models and calculating SFS ...")
+        AC <- .get_AC(gm$geno) # allele counts used for SAD and SFS
+        marsadsfs <- MARsadsfs(AC, N = length(gm$maps$sample.id), ploidy = option_geno$ploidy)
+        message("SAD models AIC:")
+        print(marsadsfs$AICtabs)
+        message("SAD model evaluation using SFS:")
+        print(marsadsfs$statdf)
     }
 
 # MARsampling ------------------------------------------------------------------

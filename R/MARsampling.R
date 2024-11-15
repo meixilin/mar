@@ -1,12 +1,11 @@
 .MARsampling_schemes = c("random", "inwards", "outwards", "southnorth", "northsouth")
 
-# match with old MARsampling
-# TODO: Add not gridded sampling
 #' MAR sampling wrapper function
 #'
 #' @param gm a [genomaps] object created by [genomaps()]
-#' @param scheme sampling schemes for spatial data. allowed are \code{\link{.MARsampling_schemes}}.
+#' @param scheme sampling schemes for spatial data. allowed are `r toString(.MARsampling_schemes)`.
 #' @param nrep number of replicates.
+#' @param xfrac fraction of the range to use for the step size in the sampling scheme.
 #' @param quorum require all sampling grid to have samples. default is FALSE.
 #' @param animate play an animation of the sampling boxes. default is FALSE.
 #' @param myseed set seed for reproducibility. default is NULL.
@@ -14,7 +13,6 @@
 #' @return a [marsamp] object. consist of a data frame.
 #' @export
 #'
-#' @examples
 MARsampling <-
     function(gm,
              scheme = .MARsampling_schemes,
@@ -32,7 +30,7 @@ MARsampling <-
         # if scheme is inwards, reverse the bounding box
         revbbox = ifelse(scheme == "inwards", TRUE, FALSE)
         # calculate and store raster area in the given gm$maps$samplemap
-        gmarea = areaofraster(gm$maps$samplemap)
+        gmarea = .areaofraster(gm$maps$samplemap)
         # the x and y number of cells in gm$maps$samplemap
         # y is Row is Lat. Selected by r1, r2.
         # x is Col is Lon. Selected by c1, c2.
@@ -77,22 +75,22 @@ MARsampling <-
             gmarea = gmarea,
             revbbox = revbbox
         )
-        # need bind_rows because number of columns are not the same
-        outdf = do.call(dplyr::bind_rows, lapply(outlist, as.data.frame))
+        # use rbind to avoid importing dplyr
+        outdf = do.call(rbind, lapply(outlist, as.data.frame, stringsAsFactors = FALSE))
         # return bounding boxes as well
         outdf$extent = unlist(lapply(bboxlist, paste0, collapse = ';'))
         if (revbbox) {
             outdf$extent = paste0('-', outdf$extent)
         } # mark reverse selections
         # set outdf as a marsamp class
-        class(outdf) <- c("data.frame", "marsamp") # marsampling output class
+        class(outdf) <- c(class(outdf), "marsamp") # marsampling output class
         attr(outdf, 'scheme') <- scheme
         return(outdf)
     }
 
 # scheme based probfunc
 .prob_sample <- function(xx) {
-    pp = dgeom(xx * 2, prob = 0.5)
+    pp = stats::dgeom(xx * 2, prob = 0.5)
     return(pp / sum(pp))
 }
 
@@ -164,7 +162,7 @@ MARsampling <-
             ncells <-
                 sapply(lapply(
                     bblist,
-                    rowcol_cellid,
+                    .rowcol_cellid,
                     mm = gm$maps,
                     revbbox = revbbox
                 ),
@@ -177,7 +175,7 @@ MARsampling <-
                 tncells <-
                     sapply(lapply(
                         tbblist,
-                        rowcol_cellid,
+                        .rowcol_cellid,
                         mm = gm$maps,
                         revbbox = revbbox
                     ),
@@ -188,7 +186,7 @@ MARsampling <-
                 ncells <-
                     sapply(lapply(
                         bblist,
-                        rowcol_cellid,
+                        .rowcol_cellid,
                         mm = gm$maps,
                         revbbox = revbbox
                     ),
@@ -209,7 +207,7 @@ MARsampling <-
     grDevices::dev.flush()
     plot(gm$maps)
     for (ii in seq_along(bblist)) {
-        plot(rowcol_extent(gm$maps, bblist[[ii]]),
+        plot(.rowcol_extent(gm$maps, bblist[[ii]]),
              add = T,
              col = 'black')
         Sys.sleep(pause)

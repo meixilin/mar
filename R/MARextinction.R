@@ -1,5 +1,18 @@
 # not a reverse function of MARsampling. Here the operation is on a cell level but MARsampling circles the grid with boxes
 
+#' Title
+#'
+#' @param gm
+#' @param scheme
+#' @param nrep
+#' @param xfrac
+#' @param animate
+#' @param myseed
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------
     # set seed if specified
@@ -9,7 +22,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     # match schemes (default to random)
     scheme = match.arg(scheme)
     # calculate and store raster area in the given gm$maps$samplemap
-    gmarea = areaofraster(gm$maps$samplemap)
+    gmarea = .areaofraster(gm$maps$samplemap)
     # the point where most samples are available (for inwards / outwards sampling)
     maxids <- raster::which.max(gm$maps$samplemap)
     if (length(maxids) > 1) {
@@ -27,7 +40,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     # calculate area and genetic diversity in each extant cell list
     outlist <- lapply(seq_along(extlist), function(ii) {
         outl <- lapply(extlist[[ii]], mutdiv.cells, gm = gm, gmarea = gmarea)
-        out <- do.call(rbind, lapply(outl, as.data.frame))
+        out <- do.call(rbind, lapply(outl, as.data.frame, stringsAsFactors = FALSE))
         # append end theta (zero in all)
         out[nrow(out)+1, ] <- rep(0, ncol(out))
         out$repid <- ii # replicate id
@@ -36,7 +49,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     outdf <- do.call(rbind, outlist)
 
     # set outdf as a marsamp class
-    class(outdf) <- c("data.frame", "marextinct") # marextinction output class
+    class(outdf) <- c(class(outdf), "marextinct") # marextinction output class
     attr(outdf, 'scheme') <- scheme
     return(outdf)
 }

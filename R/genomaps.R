@@ -9,10 +9,31 @@
         genotype = genotype,
         ploidy = ploidy
     )
-    class(obj) <- "margeno"
+    class(obj) <- c(class(obj), "margeno")
     return(obj)
 }
 
+#' Create a margeno object
+#'
+#' @param sample.id Character or integer vector of unique sample IDs
+#' @param variant.id Integer vector of unique variant IDs
+#' @param position Integer vector of variant positions
+#' @param chromosome Character or integer vector of chromosome IDs
+#' @param genotype Matrix of genotypes, where rows represent samples and columns represent variants. Each value represents the number of alternative alleles.
+#' @param ploidy Numeric value of ploidy. *Warning* ploidy other than 2 can be used, but result interpretation is not guaranteed.
+#'
+#' @return A margeno object
+#' @export
+#'
+#' @examples
+#' # Example usage
+#' sample_id <- c("sample1", "sample2", "sample3")
+#' variant_id <- 1:3
+#' position <- c(100, 200, 300)
+#' chromosome <- c("chr1", "chr1", "chr2")
+#' genotype <- matrix(c(0, 1, 0, 1, 1, 1), nrow = 3, ncol = 2, byrow = TRUE)
+#' ploidy <- 2
+#' margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
 margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploidy) {
     # validate data class
     stopifnot(class(sample.id) %in% c("character", "integer"))
@@ -77,6 +98,7 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 }
 
 # define the plotting method for marmaps
+# methods(class = "marmaps") > [1] plot
 plot.marmaps <- function(marmaps) {
     plot(raster::extent(marmaps$samplemap), xlab = 'lon', ylab = 'lat')
     plot(marmaps$samplemap, add = T)
@@ -92,11 +114,21 @@ plot.marmaps <- function(marmaps) {
         samplemap = samplemap,
         cellid = cellid
     )
-    class(obj) <- "marmaps"
+    class(obj) <- c(class(obj), "marmaps")
     return(obj)
 }
 
 # Main marmaps function
+#' Title
+#'
+#' @param lonlatdf
+#' @param mapres
+#' @param mapcrs
+#'
+#' @return
+#' @export
+#'
+#' @examples
 marmaps <- function(lonlatdf, mapres, mapcrs) {
     # unpack lonlatdf
     stopifnot(class(lonlatdf) == "data.frame" & ncol(lonlatdf) == 3)
@@ -146,15 +178,24 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
 .new_genomaps <- function(geno, maps) {
     obj <- list(geno = geno,
                 maps = maps)
-    class(obj) <- "genomaps"
+    class(obj) <- c(class(obj), "genomaps")
     attr(obj, "genolen") <- .get_genodata(geno, "num.variant")
     return(obj)
 }
 
+#' Title
+#'
+#' @param geno
+#' @param maps
+#'
+#' @return
+#' @export
+#'
+#' @examples
 genomaps <- function(geno, maps) {
     # validate inputs
-    stopifnot(class(geno) == "margeno")
-    stopifnot(class(maps) == "marmaps")
+    stopifnot("margeno" %in% class(geno))
+    stopifnot("marmaps" %in% class(maps))
     stopifnot(all(geno$sample.id == maps$sample.id))
 
     # create object

@@ -8,12 +8,16 @@ Maintainer: Meixi Lin <22927483+meixilin@users.noreply.github.com>
 Description: Fitting Mutations-Area Relationships using population genomic samples of a species.
 License: MIT + file LICENSE
 Depends:
-    R (>= 3.3.0)
+    R (>= 3.5.0)
 biocViews:
 Imports:
     magrittr,
     raster,
     sars,
+    sads,
+    bbmle,
+    matrixStats,
     SeqArray (>= 1.28.0)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
+Roxygen: list(markdown = TRUE)

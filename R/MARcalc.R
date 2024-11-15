@@ -2,6 +2,16 @@
 .Mtype = c("M", "E", "thetaw", "thetapi")
 .Atype = c("A", "Asq")
 
+#' Title
+#'
+#' @param mardf
+#' @param Mtype
+#' @param Atype
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MARcalc <- function(mardf, Mtype = .Mtype, Atype = .Atype) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
@@ -34,10 +44,10 @@ MARcalc <- function(mardf, Mtype = .Mtype, Atype = .Atype) {
         marsum <- summary(mar)
         outdf <- list(
             model = marsum$Model,
-            c = marsum$Parameters[1, "Estimate"],
-            z = marsum$Parameters[2, "Estimate"],
-            c_p = marsum$Parameters[1, "Pr(>|t|)"],
-            z_p = marsum$Parameters[2, "Pr(>|t|)"],
+            c = marsum$Parameters[[1, "Estimate"]],
+            z = marsum$Parameters[[2, "Estimate"]],
+            c_p = marsum$Parameters[[1, "Pr(>|t|)"]],
+            z_p = marsum$Parameters[[2, "Pr(>|t|)"]],
             R2_adj = marsum$R2a
         )
         return(outdf)
@@ -50,12 +60,23 @@ MARcalc <- function(mardf, Mtype = .Mtype, Atype = .Atype) {
 }
 
 # for MARPIPELINE
+#' Title
+#'
+#' @param mardf
+#' @param verbose
+#' @param return_mar
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MARcalc_all <- function(mardf, verbose = TRUE, return_mar = FALSE) {
     message(paste0("MAR built from scheme: ", attr(mardf, "scheme")))
     MA <- expand.grid(M = .Mtype, A = .Atype, stringsAsFactors = FALSE)
     mars <- apply(MA, 1, function(x) MARcalc(mardf, x[1], x[2]))
     names(mars) <- apply(MA, 1, paste, collapse = "_")
-    marsummary <- cbind(MA, do.call(rbind, lapply(mars, .marsummary)))
+    marsuml <- lapply(mars, .marsummary)
+    marsummary <- cbind(MA, do.call(rbind, lapply(marsuml, as.data.frame, stringsAsFactors = FALSE)))
     if (verbose) {
         print(marsummary)
     }
@@ -64,7 +85,7 @@ MARcalc_all <- function(mardf, verbose = TRUE, return_mar = FALSE) {
     } else {
         output <- marsummary
     }
-    class(output) <- "marcalc"
+    class(output) <- c(class(output), "marcalc")
     return(output)
 }
 
