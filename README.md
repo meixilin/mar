@@ -33,3 +33,20 @@ library(mar)
 library(raster)
 MARPIPELINE(name = "example", workdir = "./", genofile = "genome.tsv", lonlatfile = "lonlat.csv", saveobj = TRUE)
 ```
+
+## Preparing input data
+
+### Genotype Data
+
+- The pipeline requires bi-allelic SNP genotype data.
+    - Example `bcftools` command: `bcftools view -m2 -M2 -v snps ${VCF}`
+- The genotype data must not contain any missing values.
+    - You can use tools like [beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute missing data.
+    - You can also filter the genotype data to retain only sites without missing data, e.g., `bcftools view -i 'N_MISSING == 0' ${VCF}`.
+- It works best with diploid genotype data, but can handle any ploidy as long as it is consistent across all samples. Use caution when interpreting results for non-diploid data.
+    - If heterozygous genotypes are not confidently called, you can force the data to be haploid (`option_geno$ploidy = 1`) by converting heterozygous genotypes to the alternative allele. Use caution when interpreting results.
+- If the reference genome is divergent from the species/population of interest, set the major allele as the reference allele to avoid issues with ancestral state identification.
+
+### Geographic data
+
+- Every sample with genotype data must have pairing longitude and latitude data.
