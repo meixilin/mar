@@ -1,12 +1,29 @@
-# matrix validators
+# matrix validators. Also validates that there are no invariant sites
 .valid_genotype <- function(genotype, ploidy) {
     # if (ploidy != 2) {
     #     warning(paste0("ploidy = ", ploidy, " != 2, be careful with the interpretation of the results"))
     # }
     # 0 = HomRef, 1 = Het, 2 = HomAlt
     valid_vars <- seq(0, ploidy)
-    stopifnot(is.matrix(genotype))
-    stopifnot(all(unique(as.vector(genotype)) %in% valid_vars))
+    all_vars <- unique(as.vector(genotype))
+    AC <- matrixStats::rowSums2(genotype)
+    # number of sampled lineages
+    xN = ncol(genotype)*ploidy
+    if (!is.matrix(genotype)) {
+        stop("genotype must be a matrix")
+    }
+    if (!all(all_vars %in% valid_vars)) {
+        badvars = all_vars[!all_vars %in% valid_vars]
+        stop(paste0("genotype contains ", length(badvars), " unique invalid values: ", toString(head(badvars)), "..."))
+    }
+    if (any(AC == 0)) {
+        badac = which(AC == 0)
+        stop(paste0("genotype is homozygous reference at ", length(badac), " locations: ", toString(head(badac)), "..."))
+    }
+    if (any(AC == xN)) {
+        badac = which(AC == xN)
+        stop(paste0("genotype is homozygous alternative at ", length(badac), " locations: ", toString(head(badac)), "..."))
+    }
     return(invisible())
 }
 

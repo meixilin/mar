@@ -32,20 +32,19 @@ MARsadsfs <- function(AC, N, ploidy, sad_models = .sad_models) {
     })
 
     # Evaluate SAD models together with SFS and AC (not the best stats but works for now)
-    allsfs <- c(sadsfs, list(neutralsfs), list(datasfs))
-    names(allsfs) <- c(.sad_models, "neutral", "data")
+    allsfs <- c(list(datasfs), list(neutralsfs), sadsfs)
+    names(allsfs) <- c("data", "neutral", sad_models)
     allpreds <- c(lapply(sadpreds, function(x) x$abund), list(sort(neutralAC, decreasing = TRUE)))
-    names(allpreds) <- c(.sad_models, "neutral")
+    names(allpreds) <- c(sad_models, "neutral")
 
     ll_list <- sapply(allsfs, function(model) ll_sfs(model = model, data = datasfs))
     cor_list <- sapply(allpreds, function(model) stats::cor(model, rAC))
-    statdf <- data.frame(model = c(.sad_models, "neutral", "data"),
+    statdf <- data.frame(model = c(sad_models, "neutral", "data"),
                          logLik = unname(ll_list),
-                         corr = c(cor_list, NA))
+                         corr = c(cor_list, NA),
+                         stringsAsFactors = FALSE)
 
-    sfsdf <- .sfsl2df(allsfs)
-
-    output <- list(sfsdf = sfsdf,
+    output <- list(sfs = allsfs, # list of sfs class objects
                    statdf = statdf,
                    AICtabs = AICtabs)
 
@@ -169,7 +168,7 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
 
 # sfs list to dataframe
 .sfsl2df <- function(sfsl) {
-    outdf = data.frame(matrix(nrow = length(sfsl[[1]]), ncol = length(sfsl) + 1))
+    outdf = data.frame(matrix(nrow = length(sfsl[[1]]), ncol = length(sfsl) + 1), stringsAsFactors = FALSE)
     colnames(outdf) = c("AC", names(sfsl))
     outdf[,1] = as.integer(names(sfsl[[1]]))
     for (ii in seq_along(sfsl)) {

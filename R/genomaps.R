@@ -97,15 +97,6 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
     return(rr)
 }
 
-# define the plotting method for marmaps
-# methods(class = "marmaps") > [1] plot
-plot.marmaps <- function(marmaps) {
-    plot(raster::extent(marmaps$samplemap), xlab = 'lon', ylab = 'lat')
-    plot(marmaps$samplemap, add = T)
-    points(marmaps$lonlat)
-    return(invisible())
-}
-
 # Constructor for marmaps class
 .new_marmaps <- function(sample.id, lonlat, samplemap, cellid) {
     obj <- list(

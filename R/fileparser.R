@@ -49,7 +49,9 @@
 }
 
 # only allow files without headers, just the genotype matrix. row is SNPs, column is samples, value is the amount of alternative alleles.
-.read_genotype <- function(geno.fn, ploidy, het2hom) {
+# Not allowing het2hom as the script has been updated to match ploidy.
+# If want to use het2hom, manually convert the genotype matrix and set ploidy to one.
+.read_genotype <- function(geno.fn, ploidy) {
     # read first line to guess the format
     delim <- .firstline(geno.fn)
     # not allow row or column names
@@ -57,15 +59,14 @@
     df <- as.matrix(df)
     dimnames(df) <- NULL
     # check that the data only contains 0,1,...,ploidy
-    .valid_genotype(df, ploidy)
-    # if convert het to hom
-    if (het2hom) {
-        # convert all values to 0/1
-        message("converting heterozygotes to homozygotes")
-        print(table(as.vector(df)))
-        df = apply(df, 2, function(xx) ifelse(xx > 1, 1, xx))
-        print(table(as.vector(df)))
-    }
+    # .valid_genotype(df, ploidy)
+    # if (het2hom) {
+    #     # convert all values to 0/1
+    #     message("converting heterozygotes to homozygotes")
+    #     print(table(as.vector(df)))
+    #     df = apply(df, 2, function(xx) ifelse(xx > 1, 1, xx))
+    #     print(table(as.vector(df)))
+    # }
     .valid_genotype(df, ploidy)
     return(df)
 }
@@ -100,18 +101,17 @@
 #' @param samp.fn
 #' @param pos.fn
 #' @param ploidy
-#' @param het2hom
 #'
 #' @return
 #' @export
 #'
 #' @examples
-text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2, het2hom = FALSE) {
+text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # check if geno.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
     stopifnot(any(sapply(txt.ext, function(xx) grepl(xx, geno.fn))))
     # read txt file
-    genotype <- .read_genotype(geno.fn, ploidy, het2hom)
+    genotype <- .read_genotype(geno.fn, ploidy)
     # read sample file if exists
     if (!is.null(samp.fn)) {
         sample.id <- .read_column(samp.fn)
@@ -156,6 +156,7 @@ vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
     # assign name if gds.fn is not provided
     if (is.null(gds.fn)) {
         gds.fn <- paste0(.strip_ext(vcf.fn, vcf.ext), ".gds")
+        message(paste0("Output GDS file name not provided. Using default: ", gds.fn, ". Working directory: ", getwd()))
     }
     # create gds file
     SeqArray::seqVCF2GDS(vcf.fn, gds.fn)
@@ -186,6 +187,7 @@ plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
     # assign name if gds.fn is not provided
     if (is.null(gds.fn)) {
         gds.fn <- paste0(.strip_ext(bed.fn, ".bed"), ".gds")
+        message(paste0("Output GDS file name not provided. Using default: ", gds.fn, ". Working directory: ", getwd()))
     }
     # create gds file
     SeqArray::seqBED2GDS(bed.fn, fam.fn, bim.fn, gds.fn)
@@ -208,7 +210,7 @@ plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
 #' @export
 #'
 #' @examples
-lonlat_parser <- function(lonlat.fn, mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84") {
+lonlat_parser <- function(lonlat.fn) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
     stopifnot(any(sapply(txt.ext, function(xx) grepl(xx, lonlat.fn))))
