@@ -13,8 +13,8 @@
     legend(location, legend = as.expression(equation), bty = "n", text.col = .anncol)
 }
 
-.ann_marsadsfs <- function(aa, rr, location) {
-    legend(location, legend = paste0("AIC = ", round(aa, 2), "\nr = ", round(rr, 2)), bty = "n")
+.ann_marsadsfs <- function(aa, ll, location) {
+    legend(location, legend = paste0("AIC = ", round(aa, 2), "\nLL = ", round(ll, 2)), bty = "n")
 }
 
 # define the plotting method for marmaps
@@ -38,7 +38,14 @@ plot.marmaps <- function(obj) {
     return(invisible())
 }
 
-
+#' Title
+#'
+#' @param obj
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot.sfs <- function(obj, ...) {
     data <- as.vector(obj)
     bins <- as.integer(names(obj))
@@ -126,14 +133,14 @@ plot.marextinct <- function(obj, z = NULL, Mtype = .Mtype, Atype = .Atype) {
 }
 
 
-.pipe_plot.marsadsfs <- function(obj) {
+.pipe_plot.marsadsfs <- function(obj, AICtabs) {
     old_par <- par(no.readonly = T)
     par(mfrow = c(ceiling(length(obj$sfs) / 2), 2), mar = c(5.1, 4.1, 2.1, 2.1))
     for (ii in seq_along(obj$sfs)) {
         mname = names(obj$sfs)[ii]
         plot.sfs(obj$sfs[[ii]], col = .catcol[ii], border = NA, main = mname)
-        .ann_marsadsfs(aa = obj$AICtabs$AIC[attr(obj$AICtabs, "row.names") == mname],
-                       rr = obj$statdf[obj$statdf$model == mname, 'corr'], location = "topright")
+        .ann_marsadsfs(aa = AICtabs$AIC[attr(AICtabs, "row.names") == mname],
+                       ll = obj$statdf[obj$statdf$model == mname, 'logLik'], location = "topright")
     }
     par(old_par)
 }

@@ -1,54 +1,66 @@
 # fit sad models (sorted alphabetically)
 .sad_models <- c("bs", "geom", "lnorm", "ls", "mzsm", "weibull")
 
-
-#' Title
-#'
-#' @param AC
-#' @param N
-#' @param ploidy
-#' @param sad_models
-#'
-#' @return
-#' @export
-#'
-#' @examples
-MARsadsfs <- function(AC, N, ploidy, sad_models = .sad_models) {
-    # build SFS and expected SFS
-    lenAC <- length(AC)
-    datasfs <- sfs(AC, N, ploidy)
-    neutralsfs <- expsfs(lenAC, N, ploidy)
-    neutralAC <- .sfs2AC(neutralsfs)
-    rAC <- sort(AC, decreasing =  TRUE) # ranked AC
-
-    # build SAD models
+MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) {
+    AC <- .get_AC(gm$geno)
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
     sadms <- lapply(sad_models, function(x) sads::fitsad(AC, x))
+    names(sadms) <- sad_models
     AICtabs <- bbmle::AICtab(sadms, base = TRUE, logLik = TRUE, mnames = sad_models)
-    # TODO: This sometimes take random amount of time to complete?
-    sadpreds <- lapply(sadms, sads::radpred) # this is the AC equivalent
-    sadsfs <- lapply(sadpreds, function(x) {
-        osfs <- sfs(AC = round(x$abund), N = N, ploidy = ploidy)
-        return(osfs)
-    })
+    if (predict) {
+        sadsfss <- lapply(sadms, function(x) .sadpred(x, N, ploidy, folded))
+    } else {
+        sadsfss <- NULL
+    }
+    output <- list(sadms = sadms, AICtabs = AICtabs, sadsfss = sadsfss)
+    class(output) <- c(class(output), "marsad")
+    return(output)
+}
 
-    # Evaluate SAD models together with SFS and AC (not the best stats but works for now)
-    allsfs <- c(list(datasfs), list(neutralsfs), sadsfs)
-    names(allsfs) <- c("data", "neutral", sad_models)
-    allpreds <- c(lapply(sadpreds, function(x) x$abund), list(sort(neutralAC, decreasing = TRUE)))
-    names(allpreds) <- c(sad_models, "neutral")
+# TODO: I used pfunc() instead of qfunc() as described in sads package as the interest is in SFS.
+# Not sure if it makes sense
+.sadpred <- function(sadm, N, ploidy, folded) {
+    sad <- sadm@sad
+    xN <- N*ploidy
+    S <- length(sadm@data$x) # length of AC
+    J <- sum(sadm@data$x) # total number of individuals
+    mycoef <- as.list(bbmle::coef(sadm))
+    psad <- switch(sad,
+        bs = sads::pbs,
+        geom = stats::pgeom,
+        lnorm = stats::plnorm,
+        ls = sads::pls,
+        mzsm = sads::pmzsm,
+        weibull = stats::pweibull
+    )
+    plist <- do.call(psad, c(list(q = 1:(xN-1)), mycoef)) # q = 1:(xN-1)
+    pbins <- c(plist,1) - c(0,plist)
+    stopifnot(sum(pbins) == 1) # sanity check
+    raw_sfs <- c(0, pbins * S) # need to add zero as xN is the same as zero when folded
+    sadsfs <- .new_sfs(raw_sfs, folded, nozero = TRUE)
+    return(sadsfs)
+}
 
-    ll_list <- sapply(allsfs, function(model) ll_sfs(model = model, data = datasfs))
-    cor_list <- sapply(allpreds, function(model) stats::cor(model, rAC))
-    statdf <- data.frame(model = c(sad_models, "neutral", "data"),
+.pipe_sadsfs <- function(gm, marsad, genosfs, folded) {
+    AC <- .get_AC(gm$geno)
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
+    neutralsfs <- expsfs(lenAC = length(AC), N = N, ploidy = ploidy, folded = folded)
+    allsfs <- list(genosfs, neutralsfs)
+    names(allsfs) <- c("data", "neutral")
+    # if SAD predicted
+    if (!is.null(marsad$sadsfss)) {
+        allsfs <- c(allsfs, marsad$sadsfss)
+    }
+    # compare by logLik
+    ll_list <- sapply(allsfs, function(model) ll_sfs(model = model, data = genosfs))
+    statdf <- data.frame(model = names(allsfs),
                          logLik = unname(ll_list),
-                         corr = c(cor_list, NA),
                          stringsAsFactors = FALSE)
-
+    # return list of statdf and allsfs
     output <- list(sfs = allsfs, # list of sfs class objects
-                   statdf = statdf,
-                   AICtabs = AICtabs)
-
-    class(output) <- c(class(output), "marsadsfs")
+                   statdf = statdf)
     return(output)
 }
 
@@ -141,6 +153,7 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
 }
 
 # convert a SFS back to AC vector (rank abundance data to some extent)
+# NOT USED AND BUGGY
 .sfs2AC <- function(vect) {
     M = round(sum(vect))
     oAC <- vector()
@@ -182,7 +195,7 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
     if (data == 0 | model == 0) {
         out = 0
     } else {
-        out = - model + log(model) * data - log(gamma(data + 1))
+        out = - model + log(model) * data - lgamma(data + 1)
     }
     return(out)
 }

@@ -9,7 +9,7 @@ MARPIPELINE(name = name, workdir = workdir, genofile = genofile, lonlatfile = lo
 
 obj <- MARsadsfs(AC, N = 290, ploidy = 2)
 
-AC <- mar:::.get_AC(gm$geno)
+AC0 <- mar:::.get_AC(gm$geno)
 N = 290
 ploidy = 2
 
@@ -27,7 +27,7 @@ yy = rad(rmzsm(n = 240, J = vars[1], theta = vars[2]))
 
 # load genomaps
 setwd(workdir)
-load("gm_joshua2.rda")
+load("gm_joshua.rda")
 load("marsadsfs_joshua3.rda")
 load("mardflist_joshua3.rda")
 load("marlist_joshua3.rda")

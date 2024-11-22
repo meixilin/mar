@@ -70,7 +70,7 @@ MARPIPELINE <- function(name,
                         filetype = c('text', 'vcf', 'plink'),
                         option_geno = list(ploidy = 2, maxsnps = 1000000),
                         option_map = list(mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84"),
-                        option_sadsfs = list(sad_models = .sad_models),
+                        option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
                         option_marext = list(scheme = .MARsampling_schemes, nrep = 10, quorum = FALSE, animate = FALSE, myseed = NULL),
                         marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
                         saveobj = FALSE) {
@@ -80,7 +80,7 @@ MARPIPELINE <- function(name,
     ofn <- list(
         data = c("genodata", "mapsdata"),
         gm = c("gm"),
-        sfs = c("sfslist"),
+        sfs = c("genosfs", "marsad", "sadsfs"),
         mar = c("mardflist", "marlist"),
         ext = c("extdflist", "extlist")
     )
@@ -162,12 +162,17 @@ MARPIPELINE <- function(name,
     if ("sfs" %in% marsteps) {
         message("MARPIPELINE fitting SAD models and calculating SFS ...")
         .required_objects("gm", ofn, outfile)
-        AC <- .get_AC(gm$geno) # allele counts used for SAD and SFS
-        sfslist <- MARsadsfs(AC, N = length(gm$maps$sample.id), ploidy = option_geno$ploidy, sad_models = option_sadsfs$sad_models)
+        genosfs <- sfs(AC = .get_AC(gm$geno),
+                       N = length(gm$maps$sample.id),
+                       ploidy = gm$geno$ploidy,
+                       folded = option_sadsfs$folded)
+        # fit SAD models
+        marsad <- MARsad(gm = gm, sad_models = option_sadsfs$sad_models, folded = option_sadsfs$folded)
         message("SAD models AIC:")
-        print(sfslist$AICtabs)
+        print(marsad$AICtabs)
+        sadsfs <- .pipe_sadsfs(gm, marsad, genosfs, folded = option_sadsfs$folded)
         message("SAD model predictions compared with data in SFS:")
-        print(sfslist$statdf)
+        print(sadsfs$statdf)
     }
 
 # MARsampling ------------------------------------------------------------------
@@ -216,7 +221,7 @@ MARPIPELINE <- function(name,
         }
         if ("sfs" %in% marsteps) {
             .pdf_plot(name, "sfs", 8, 9)
-            .pipe_plot.marsadsfs(sfslist)
+            .pipe_plot.marsadsfs(sadsfs, marsad$AICtabs)
             dev.off()
         }
         if ("mar" %in% marsteps) {
