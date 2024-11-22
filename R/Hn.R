@@ -7,6 +7,7 @@
 #' @author Feng Li, Department of Statistics, Stockholm University, Sweden.
 #' @note Created: Wed May 30 10:51:32 CEST 2012;
 #'       Current: Wed May 30 10:51:37 CEST 2012.
+#'       Source: https://github.com/feng-li/flutils/blob/master/R/math__hamonic.R
 #' @export
 Hn <- function(n)
 {

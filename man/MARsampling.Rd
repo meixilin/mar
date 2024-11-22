@@ -8,17 +8,20 @@ MARsampling(
   gm,
   scheme = .MARsampling_schemes,
   nrep = 10,
+  xfrac = 0.01,
   quorum = FALSE,
   animate = FALSE,
   myseed = NULL
 )
 }
 \arguments{
-\item{gm}{a [genemaps] object created by [genemaps()]}
+\item{gm}{a \link{genomaps} object created by \code{\link[=genomaps]{genomaps()}}}
 
-\item{scheme}{sampling schemes for spatial data. allowed are \code{\link{.MARsampling_schemes}}.}
+\item{scheme}{sampling schemes for spatial data. allowed are random, inwards, outwards, southnorth, northsouth.}
 
 \item{nrep}{number of replicates.}
+
+\item{xfrac}{fraction of the range to use for the step size in the sampling scheme.}
 
 \item{quorum}{require all sampling grid to have samples. default is FALSE.}
 
@@ -27,7 +30,7 @@ MARsampling(
 \item{myseed}{set seed for reproducibility. default is NULL.}
 }
 \value{
-a [marsamp] object. consist of a data frame.
+a \link{marsamp} object. consist of a data frame.
 }
 \description{
 MAR sampling wrapper function

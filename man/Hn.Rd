@@ -17,7 +17,7 @@ Harmonic number
 }
 \note{
 Created: Wed May 30 10:51:32 CEST 2012;
-      Current: Wed May 30 10:51:37 CEST 2012.
+Current: Wed May 30 10:51:37 CEST 2012.
 }
 \author{
 Feng Li, Department of Statistics, Stockholm University, Sweden.

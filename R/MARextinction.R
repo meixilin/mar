@@ -1,18 +1,23 @@
-# not a reverse function of MARsampling. Here the operation is on a cell level but MARsampling circles the grid with boxes
-
-#' Title
+#' Simulate the mutations-area relationship (MAR) extinction process
 #'
-#' @param gm
-#' @param scheme
-#' @param nrep
-#' @param xfrac
-#' @param animate
-#' @param myseed
+#' This function performs a simulated extinction process on a map of genomic samples, similar to the
+#' MARsampling function, but with the extinction happening at the cell level rather than
+#' circling the grid with boxes. The function returns a data frame containing the area and
+#' diversity metrics for each step of the extinction process.
 #'
-#' @return
+#' @param gm A genomaps object.
+#' @param scheme The sampling scheme to use for the extinction process. Default is "random", allowed values are `r toString(.MARsampling_schemes)`.
+#' @param nrep The number of extinction replicates to perform. Default is 10.
+#' @param xfrac The fraction of cells to be randomly removed at each extinction step. Default is 0.01 or one raster cell if there are less than 100 cells.
+#' @param animate If TRUE, the function will animate the extinction process. Default is FALSE.
+#' @param myseed An optional seed value to ensure reproducibility. Implemented as `set.seed(myseed)`. Default is NULL.
+#'
+#' @return A data frame containing the area and diversity metrics for each step of the extinction process.
 #' @export
 #'
 #' @examples
+#' mar_extinct <- MARextinction(gm)
+#'
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------
     # set seed if specified

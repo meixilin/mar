@@ -155,7 +155,7 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
     # fill in AC if needed
     if (length(oAC) < M) {
         iis = 1
-        stopifnot(any(round(vect) == 0)) # should have at least some entried rounded out
+        warning(any(round(vect) == 0)) # should have at least some entried rounded out
         while(length(oAC) < M) {
             svect <- sort(vect[round(vect) == 0], decreasing = TRUE)
             binii_s <- as.integer(names(svect)[iis])

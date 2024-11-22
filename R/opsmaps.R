@@ -32,7 +32,9 @@
 # subset samples by cellids
 .cellid_sample <- function(mm, cellid) {
     stopifnot(length(cellid) > 0)
-    sampleid <- mm$sample.id[mm$cellid %in% cellid]
+    # use numeric indexing as genotype matrix has no dimnames
+    sampleid <- which(mm$cellid %in% cellid)
+    stopifnot(length(sampleid) > 0)
     return(sampleid)
 }
 

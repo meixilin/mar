@@ -93,19 +93,29 @@
     return(df)
 }
 
-# genotype txt/csv parser, with or without chromosome and position information
-# default ploidy is 2
-#' Title
+#' Parse text files containing genotype data
 #'
-#' @param geno.fn
-#' @param samp.fn
-#' @param pos.fn
-#' @param ploidy
+#' Reads genotype data from text files (txt, csv, tsv) along with optional sample IDs and position information
 #'
-#' @return
+#' @param geno.fn Path to genotype file. Must be a txt/csv/tsv file (can be gzipped). Should contain a matrix where rows are SNPs and columns are samples, with values representing count of alternative alleles
+#' @param samp.fn Optional path to sample ID file. Must be a single column file with no header
+#' @param pos.fn Optional path to position file. Must have header with CHR/CHROM and POS columns
+#' @param ploidy Integer specifying the ploidy level of the samples (default: 2)
+#'
+#' @return A margeno object containing the parsed genotype data and associated information
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' # Basic usage with just genotype file
+#' geno <- text_parser("genotypes.txt")
+#'
+#' # With sample IDs and positions
+#' geno <- text_parser("genotypes.txt", "samples.txt", "positions.txt")
+#'
+#' # For haploid data
+#' geno <- text_parser("genotypes.txt", ploidy=1)
+#' }
 text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # check if geno.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
@@ -138,17 +148,29 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     return(margeno)
 }
 
-# vcf parser
-#' Title
+#' Convert VCF file to GDS format
 #'
-#' @param vcf.fn
-#' @param gds.fn
-#' @param opengds
+#' This function converts a VCF (Variant Call Format) file to GDS (Genomic Data Structure) format
+#' using SeqArray package.
 #'
-#' @return
+#' @param vcf.fn Path to the input VCF file. Can be either .vcf or .vcf.gz format
+#' @param gds.fn Optional. Path for the output GDS file. If NULL, will use the same name as vcf file
+#'               with .gds extension
+#' @param opengds Logical. If TRUE, opens and returns the GDS file handle. If FALSE, returns the
+#'                path to the created GDS file. Default is FALSE
+#'
+#' @return If opengds=TRUE, returns an opened GDS file connection. If opengds=FALSE, returns the
+#'         path to the created GDS file as a character string
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' # Convert VCF to GDS
+#' gds_file <- vcf_parser("input.vcf")
+#'
+#' # Convert and open GDS file
+#' gds_conn <- vcf_parser("input.vcf.gz", opengds=TRUE)
+#' }
 vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
     # check if vcf.fn is a valid vcf file
     vcf.ext <- c(".vcf", ".vcf.gz")
@@ -168,17 +190,29 @@ vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
     }
 }
 
-# plink parser
-#' Title
+#' Convert PLINK binary files to GDS format
 #'
-#' @param plink.fn
-#' @param gds.fn
-#' @param opengds
+#' This function converts PLINK binary files (.bed, .bim, .fam) to GDS (Genomic Data Structure) format
+#' using SeqArray package.
 #'
-#' @return
+#' @param plink.fn Base name of PLINK files (without .bed/.bim/.fam extension)
+#' @param gds.fn Optional. Path for the output GDS file. If NULL, will use the same name as PLINK files
+#'               with .gds extension
+#' @param opengds Logical. If TRUE, opens and returns the GDS file handle. If FALSE, returns the
+#'                path to the created GDS file. Default is FALSE
+#'
+#' @return If opengds=TRUE, returns an opened GDS file connection. If opengds=FALSE, returns the
+#'         path to the created GDS file as a character string
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' # Convert PLINK files to GDS
+#' gds_file <- plink_parser("dataset")
+#'
+#' # Convert and open GDS file
+#' gds_conn <- plink_parser("dataset", opengds=TRUE)
+#' }
 plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
     # add suffix to plink.fn
     bed.fn <- paste0(plink.fn, ".bed")
@@ -199,17 +233,24 @@ plink_parser <- function(plink.fn, gds.fn = NULL, opengds = FALSE) {
     }
 }
 
-# lonlat file parser
-#' Title
+#' Parse longitude/latitude coordinates from text file
 #'
-#' @param lonlat.fn
-#' @param mapres
-#' @param mapcrs
+#' Reads a file containing sample IDs with their corresponding longitude and latitude coordinates.
+#' The input file must have a header with columns: ID, LON/LONGITUDE, LAT/LATITUDE (in that order).
+#' While coordinates do not need to be in "+proj=longlat +datum=WGS84" projection, the WGS84 projection was used in testing..
+#' Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
 #'
-#' @return
+#' @param lonlat.fn Path to input file (txt/csv/tsv, can be gzipped) containing coordinates. No missing values allowed.
+#'
+#' @return A data frame containing sample IDs and their corresponding longitude/latitude coordinates.
+#'         Returns error if coordinates contain missing values or incorrect number of columns.
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' # Read coordinates from file
+#' coords <- lonlat_parser("sample_locations.txt")
+#' }
 lonlat_parser <- function(lonlat.fn) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")

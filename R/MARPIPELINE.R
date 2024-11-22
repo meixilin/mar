@@ -1,21 +1,67 @@
-#' MARPIPELINE wrapper function
+#' Main pipeline function. Run MAR (mutations-area relationship) Analysis Pipeline
 #'
-#' @param name
-#' @param workdir
-#' @param genofile
-#' @param lonlatfile
-#' @param extra_file
-#' @param filetype
-#' @param option_geno
-#' @param option_map
-#' @param option_marext
-#' @param marsteps
-#' @param saveobj
+#' @description
+#' MARPIPELINE performs a complete MAR analysis workflow, including data loading,
+#' building `genomaps` object, Species Abundance Distribution (SAD) fitting, Site Frequency
+#' Spectrum (SFS) calculation, sampling of geographical areas to build MAR, and extinction simulations given MAR predictions.
 #'
-#' @return
-#' @export
+#' @param name Required.Character string. Base name for output files.
+#' @param workdir Required. Character string. Working directory path where outputs will be saved. Need to be created before running the pipeline.
+#' @param genofile Required. Character string. Path to input genomic data file. Full path to the file is required.
+#' @param lonlatfile Character string. Path to file containing longitude/latitude coordinates. Full path to the file is required.
+#' @param extra_file List containing optional input files:
+#'   \itemize{
+#'     \item samplefile: Path to sample metadata file
+#'     \item posfile: Path to variant position file
+#'     \item subsample: Path to file with sample IDs to subset
+#'     \item subvariant: Path to file with variant IDs to subset
+#'   }
+#' @param filetype Character string. Input genomic file format: 'text', 'vcf', or 'plink'.
+#' @param option_geno List of genomic data options:
+#'   \itemize{
+#'     \item ploidy: Ploidy level of samples (default: 2)
+#'     \item maxsnps: Maximum number of SNPs to analyze (default: 1000000)
+#'   }
+#' @param option_map List of mapping options:
+#'   \itemize{
+#'     \item mapres: Map resolution
+#'     \item mapcrs: Coordinate reference system (default: WGS84)
+#'   }
+#' @param option_sadsfs List of SAD/SFS analysis options:
+#'   \itemize{
+#'     \item sad_models: SAD models to fit
+#'   }
+#' @param option_marext List of MAR/extinction analysis options:
+#'   \itemize{
+#'     \item scheme: Sampling schemes to use
+#'     \item nrep: Number of replicates
+#'     \item quorum: Logical; use quorum sampling
+#'     \item animate: Logical; create animation
+#'     \item myseed: Random seed for reproducibility
+#'   }
+#' @param marsteps Character vector specifying which analysis steps to run:
+#'   "data", "gm", "sfs", "mar", "ext", "plot"
+#' @param saveobj Logical. Whether to save intermediate objects as .rda files.
+#'
+#' @return Returns invisibly. Creates output files in working directory:
+#'   \itemize{
+#'     \item PDF plots for selected analysis steps
+#'     \item .rda files with analysis objects if saveobj=TRUE
+#'   }
 #'
 #' @examples
+#' \dontrun{
+#' MARPIPELINE(
+#'   name = "myanalysis",
+#'   workdir = "path/to/output",
+#'   genofile = "path/to/genotype.vcf",
+#'   lonlatfile = "path/to/coordinates.txt",
+#'   filetype = "vcf",
+#'   marsteps = c("data", "gm", "sfs", "mar", "plot")
+#' )
+#' }
+#'
+#' @export
 MARPIPELINE <- function(name,
                         workdir,
                         genofile,
@@ -63,7 +109,7 @@ MARPIPELINE <- function(name,
         )
 
         # mapdata is a list of sample.id and matrix of lonlat
-        mapsdata <- lonlat_parser(lonlatfile, mapres = option_map$mapres, mapcrs = option_map$mapcrs)
+        mapsdata <- lonlat_parser(lonlatfile)
     }
 
 # Filter data and construct genomaps object ------------------------------------
@@ -99,8 +145,9 @@ MARPIPELINE <- function(name,
 
         # convert SeqArray object to margeno object after filtering
         if (filetype != "text") {
-            tempgeno <- .seqarray2margeno(tempgeno)
-            SeqArray::seqClose(genodata)
+            tempgeno0 <- .seqarray2margeno(tempgeno)
+            SeqArray::seqClose(tempgeno)
+            tempgeno <- tempgeno0
         }
 
         # construct genomaps object

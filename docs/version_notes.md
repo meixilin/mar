@@ -149,17 +149,28 @@ Test output:
 * Fix the `class(obj)` to keep the original class.
 * Add dependencies.
 
+# v0.1.1
+
+* Remove `het2hom` option as it conflicts with `ploidy` option.
+* Add plotting options.
+* Add manual pages.
+* Add checks for all reference or all alternative SNPs.
+
 # Did not use but tried
 
 * Considered using `SeqArray` as the main framework for `genomaps` but it would require reading from disk constantly.
     * Now only use `SeqArray` to read plink and vcf files.
+* Add support for MAC instead of AC
+* Consider using SeqArray more extensively
 
 # TODO
 
-* Add `sfs` functionality for genotypes
+* DONE Add `sfs` functionality for genotypes
 * Add missing data handling for `mutdiv`
-* Update `MARextinction` to match `MARsampling`
-* Update `MARPIPELINE`
+* DONE Update `MARextinction` to match `MARsampling`
+* DONE Update `MARPIPELINE`
+* DONE Add automatic plotting and data summary
+
 
 # Notes
 

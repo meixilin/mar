@@ -1,7 +1,7 @@
 Package: mar
 Type: Package
 Title: Fitting Mutations-Area Relationships using population genomic samples of a species
-Version: 0.1.0
+Version: 0.1.1
 Date: 2024-11-09
 Author: Moi Exposito-Alonso, Meixi Lin
 Maintainer: Meixi Lin <22927483+meixilin@users.noreply.github.com>
