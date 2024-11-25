@@ -71,7 +71,7 @@ MARPIPELINE <- function(name,
                         option_geno = list(ploidy = 2, maxsnps = 1000000),
                         option_map = list(mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84"),
                         option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
-                        option_marext = list(scheme = .MARsampling_schemes, nrep = 10, quorum = FALSE, animate = FALSE, myseed = NULL),
+                        option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum = FALSE, animate = FALSE, myseed = NULL),
                         marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
                         saveobj = FALSE) {
 # Define some variables --------------------------------------------------------

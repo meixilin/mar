@@ -89,7 +89,7 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
     stopifnot(class(variant.id) == "integer")
     stopifnot(class(position) == "integer" | is.null(position))
     stopifnot(class(chromosome) %in% c("character", "integer") | is.null(position))
-    stopifnot(class(genotype) == "matrix")
+    stopifnot("matrix" %in% class(genotype))
     stopifnot(class(ploidy) == "numeric")
 
     # validate data dimensions

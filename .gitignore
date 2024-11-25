@@ -12,6 +12,7 @@ tests/yeaman
 tests/testthat/testdata/*.rds
 tests/testthat/testdata/*.rda
 tests/testthat/testdata/1001g
+tests/testthat/testdata/bost
 tests/testthat/testdata/fileparser
 tests/testthat/MARPIPELINE
 *.pdf
