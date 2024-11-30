@@ -3,3 +3,4 @@
 tests/testthat/testdata
 .lintr
 ^LICENSE\.md$
+^data-raw$
