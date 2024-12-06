@@ -14,24 +14,25 @@ import h5py, numpy, pandas
 f = h5py.File('1001_SNP_MATRIX/imputed_snps_binary.hdf5','r')
 
 # Check sample id and cleanup accessions
-lonlat = pandas.read_csv('1001_accessions.csv', delimiter=',', usecols=[0,5,6], quotechar='"', header=None)
+lonlat = pandas.read_csv('1001_accessions.csv', delimiter=',', usecols=[0,3,5,6], quotechar='"', header=None)
+lonlat.columns = ['ID','CNTY','LAT', 'LON']
 # Check that the csv file is the same as the hd5 file
 accessions = f['accessions'][:].astype(int)
-if not numpy.array_equal(lonlat.iloc[:, 0].values, accessions):
+if not numpy.array_equal(lonlat['ID'].values, accessions):
 	raise ValueError("Accession numbers in csv and hdf5 file do not match")
-# Check what accessions does not have lonlat
-lonlatna = lonlat[lonlat.isna().any(axis=1)]
-print(lonlatna)
-# nasampidx = (array([439, 499, 501, 503]),)
-nasampidx = numpy.where(numpy.isin(accessions, lonlatna[0].values))
-accessions = numpy.delete(accessions, nasampidx)
+# Remove samples with missing coordinates and samples in USA, CAN and JPN
+lonlatbad = lonlat[lonlat.isna().any(axis=1) | lonlat['CNTY'].isin(['USA', 'CAN', 'JPN'])]
+print(lonlatbad) # 131 samples
+# badsampidx = (array([439, 499, 501, 503]),)
+badsampidx = numpy.where(numpy.isin(accessions, lonlatbad['ID'].values))
+accessions = numpy.delete(accessions, badsampidx)
 # Write sample ids
 numpy.savetxt('1001g_accessions.txt', accessions, fmt='%d')
 # Write lonlat data
-lonlat = lonlat.dropna(axis=0, how='any')
-lonlat.columns = ['ID', 'LAT', 'LON']
-lonlat = lonlat[['ID', 'LON', 'LAT']]
-lonlat.to_csv('1001g_lonlat.txt', index=False, header=True, sep='\t')
+lonlatgood = lonlat[~lonlat['ID'].isin(lonlatbad['ID'])][['ID', 'LON', 'LAT']]
+if not numpy.array_equal(lonlatgood['ID'].values, accessions):
+	raise ValueError("Accession numbers in csv and hdf5 file do not match")
+lonlatgood.to_csv('1001g_lonlat.txt', index=False, header=True, sep='\t')
 
 # Get all SNP positions for all chromosomes (len=10709949)
 positions = f['positions'][:]
@@ -44,13 +45,13 @@ nsnps = 10000
 randidx = numpy.random.choice(chr1end, size = nsnps, replace = False)
 # Check the SNPs that are homozygous after removing the samples with missing coordinates
 for ii, idx in enumerate(randidx):
-	snps = numpy.delete(f['snps'][idx], nasampidx)
+	snps = numpy.delete(f['snps'][idx], badsampidx)
 	if numpy.sum(snps) == 0 or numpy.sum(snps) == len(snps):
 		while numpy.sum(snps) == 0 or numpy.sum(snps) == len(snps):
 			print((ii, idx))
 			notrandidx = numpy.setdiff1d(numpy.arange(chr1end), randidx)
 			idx = numpy.random.choice(notrandidx, size=1, replace=False)[0]
-			snps = numpy.delete(f['snps'][idx], nasampidx)
+			snps = numpy.delete(f['snps'][idx], badsampidx)
 		randidx[ii] = idx
 randidx = numpy.sort(randidx)
 if len(numpy.unique(randidx)) != nsnps:
@@ -69,7 +70,7 @@ randsnps = f['snps'][randidx]
 print(numpy.unique(randsnps, return_counts = True))
 
 # Remove the SNPs belonging to the samples with missing coordinates
-randsnps = numpy.delete(randsnps, nasampidx, axis=1)
+randsnps = numpy.delete(randsnps, badsampidx, axis=1)
 # Check the SNPs that are homozygous after removing the samples with missing coordinates
 randac = numpy.sum(randsnps, axis=1)
 print(numpy.unique(randac, return_counts = True))

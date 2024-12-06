@@ -10,7 +10,7 @@ genodata <- mar::text_parser(
 )
 
 mapsdata <- mar::lonlat_parser('1001g_lonlat.txt')
-mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84")
+mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "OGC:CRS84")
 
 gm1001g <- mar::genomaps(genodata, mapsdata)
 
