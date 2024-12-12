@@ -27,28 +27,28 @@
 #' @export
 #'
 #' @examples
-plot.marmaps <- function(obj) {
+plot.marmaps <- function(x, ...) {
     old_par <- par(no.readonly = T)
     par(mar = c(5.1, 4.1, 4.1, 4.1))
-    raster::plot(raster::extent(obj$samplemap), xlab = 'lon', ylab = 'lat')
-    raster::plot(obj$samplemap, add = T, legend = F)
-    points(obj$lonlat)
-    raster::plot(obj$samplemap, add = T, legend.only = T, legend.mar = 3, legend.args = list(text = 'n'))
+    raster::plot(raster::extent(x$samplemap), xlab = 'lon', ylab = 'lat')
+    raster::plot(x$samplemap, add = T, legend = F)
+    points(x$lonlat)
+    raster::plot(x$samplemap, add = T, legend.only = T, legend.mar = 3, legend.args = list(text = 'n'))
     par(old_par)
     return(invisible())
 }
 
 #' Title
 #'
-#' @param obj
+#' @param x
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plot.sfs <- function(obj, ...) {
-    data <- as.vector(obj)
-    bins <- as.integer(names(obj))
+plot.sfs <- function(x, ...) {
+    data <- as.vector(x)
+    bins <- as.integer(names(x))
     graphics::barplot(data ~ bins, xlab = "Allele Count", ylab = "Number of Alleles", ...)
     return(invisible())
 }
@@ -56,7 +56,7 @@ plot.sfs <- function(obj, ...) {
 # this also works for classes belonging to marextinct (also a sampling process)
 #' Title
 #'
-#' @param obj
+#' @param x
 #' @param c
 #' @param z
 #' @param Mtype
@@ -67,11 +67,10 @@ plot.sfs <- function(obj, ...) {
 #' @export
 #'
 #' @examples
-plot.marsamp <- function(obj, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, logscale = FALSE) {
+plot.marsamp <- function(x, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, logscale = FALSE, ...) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
-    # remove NA or zero data
-    tmpdf = obj[, c(Atype, Mtype)]
+    tmpdf = x[, c(Atype, Mtype)]
     tmpdf = tmpdf[(tmpdf[,Mtype] > 0 & !is.na(tmpdf[,Mtype])), ]
     # previously had a check for length(unique(tmpdf[,Mtype])) < 4
     if (nrow(tmpdf) == 0) {
@@ -80,14 +79,14 @@ plot.marsamp <- function(obj, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype
     } else {
         # plot
         if (logscale) {
-            graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], log = 'xy', xlab = Atype, ylab = Mtype)
+            graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], log = 'xy', xlab = Atype, ylab = Mtype, ...)
             # log(M) = log(c) + A*z
             if(!is.null(c) & !is.null(z)) {
                 abline(a = c, b = z, col = .anncol)
                 .ann_marsamp(c, z, location = "topright")
             }
         } else{
-            graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype)
+            graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
             # M = c*A^z
             if (!is.null(c) & !is.null(z)) {
                 curve(c * x^z, add = TRUE, col = .anncol)
@@ -100,7 +99,7 @@ plot.marsamp <- function(obj, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype
 
 #' Title
 #'
-#' @param obj
+#' @param x
 #' @param z
 #' @param Mtype
 #' @param Atype
@@ -109,11 +108,11 @@ plot.marsamp <- function(obj, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype
 #' @export
 #'
 #' @examples
-plot.marextinct <- function(obj, z = NULL, Mtype = .Mtype, Atype = .Atype) {
+plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
     # remove NA or zero data
-    tmpdf = obj[, c(Atype, Mtype)]
+    tmpdf = x[, c(Atype, Mtype)]
     tmpdf = tmpdf[(tmpdf[,Mtype] > 0 & !is.na(tmpdf[,Mtype])), ]
     # generate area loss data
     a_per = 1 - tmpdf[, Atype]/max(tmpdf[, Atype])

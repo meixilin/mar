@@ -18,7 +18,7 @@ MARsampling <-
              scheme = .MARsampling_schemes,
              nrep = 10,
              xfrac = 0.01,
-             quorum = FALSE,
+             quorum = TRUE,
              animate = FALSE,
              myseed = NULL) {
         # set seed if specified

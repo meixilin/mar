@@ -1,6 +1,17 @@
 # fit sad models (sorted alphabetically)
 .sad_models <- c("bs", "geom", "lnorm", "ls", "mzsm", "weibull")
 
+#' Title
+#'
+#' @param gm
+#' @param sad_models
+#' @param predict
+#' @param folded
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) {
     AC <- .get_AC(gm$geno)
     N <- length(gm$maps$sample.id)

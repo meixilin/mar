@@ -172,8 +172,8 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
 #' gds_conn <- vcf_parser("input.vcf.gz", opengds=TRUE)
 #' }
 vcf_parser <- function(vcf.fn, gds.fn = NULL, opengds = FALSE) {
-    # check if vcf.fn is a valid vcf file
-    vcf.ext <- c(".vcf", ".vcf.gz")
+    # check if vcf.fn is a valid vcf file. used '.gz' here for marApp compatibility
+    vcf.ext <- c(".vcf", ".vcf.gz", ".gz")
     stopifnot(any(sapply(vcf.ext, function(xx) grepl(xx, vcf.fn))))
     # assign name if gds.fn is not provided
     if (is.null(gds.fn)) {

@@ -16,7 +16,9 @@
 #' @export
 #'
 #' @examples
-#' mar_extinct <- MARextinction(gm)
+#' \dontrun{
+#' extdf <- MARextinction(gm1001g)
+#' }
 #'
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------
@@ -48,6 +50,8 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
         out <- do.call(rbind, lapply(outl, as.data.frame, stringsAsFactors = FALSE))
         # append end theta (zero in all)
         out[nrow(out)+1, ] <- rep(0, ncol(out))
+        # append extlist as well
+        out$extl <- c(unlist(lapply(extlist[[ii]], paste0, collapse = ';')), "")
         out$repid <- ii # replicate id
         return(out)
     })
@@ -137,15 +141,11 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
 
 .animate_MARextinction <- function(gm, extl, pause = 0.2) {
     grDevices::dev.flush()
-    tempmaps <- gm$maps
-    tempids <- 1:raster::ncell(tempmaps$samplemap)
+    plot.marmaps(gm$maps)
+    rr <- gm$maps$samplemap; values(rr) <- NA
     for (ii in seq_along(extl)) {
-        tempmaps$samplemap[setdiff(tempids, extl[[ii]])] <- NA
-        tempmaps$lonlat = gm$maps$lonlat[gm$maps$cellid %in% extl[[ii]], ]
-        if (!is.matrix(tempmaps$lonlat)) {
-            tempmaps$lonlat = matrix(tempmaps$lonlat, ncol = 2)
-        }
-        plot(tempmaps)
+        rr[setdiff(gm$maps$cellid, extl[[ii]])] <- 1
+        raster::plot(rr, add = T, col = 'black', legend = FALSE)
         Sys.sleep(pause)
     }
     return(invisible())

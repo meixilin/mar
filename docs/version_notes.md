@@ -155,6 +155,16 @@ Test output:
 * Add plotting options.
 * Add manual pages.
 * Add checks for all reference or all alternative SNPs.
+* Used for Kristy's MARPIPELINE outputs.
+
+# v0.1.2
+
+* Updates to match marApp usage.
+* Small bug fixes.
+* Add `extlist` to extinction output.
+* Update extinction plotting methods, avoids cluttering.
+* Set default `quorum` to `TRUE` (to match 2022 results).
+* Add print methods.
 
 # Did not use but tried
 

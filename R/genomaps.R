@@ -65,10 +65,10 @@
 
 #' Create a margeno object
 #'
-#' @param sample.id Character or integer vector of unique sample IDs
+#' @param sample.id Character or integer or numeric vector of unique sample IDs
 #' @param variant.id Integer vector of unique variant IDs
-#' @param position Integer vector of variant positions
-#' @param chromosome Character or integer vector of chromosome IDs
+#' @param position Integer vector of variant positions. Or NULL.
+#' @param chromosome Character or integer vector of chromosome IDs. Or NULL.
 #' @param genotype Matrix of genotypes, where rows represent samples and columns represent variants. Each value represents the number of alternative alleles.
 #' @param ploidy Numeric value of ploidy. *Warning* ploidy other than 2 can be used, but result interpretation is not guaranteed.
 #'
@@ -78,17 +78,18 @@
 #' @examples
 #' sample_id <- c("sample1", "sample2", "sample3")
 #' variant_id <- 1:4
-#' position <- c(100, 200, 300, 400)
+#' position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
 #' chromosome <- c("chr1", "chr1", "chr1", "chr2")
-#' genotype <- matrix(sample(0:2, 12, replace = TRUE), nrow = 4, ncol = 3)
+#' position <- NULL; chromosome <- NULL # if no position or chromosome
+#' genotype <- matrix(c(1,2,0,0,1,1,2,0,1,2,2,1), nrow = 4, ncol = 3)
 #' ploidy <- 2
 #' margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
 margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploidy) {
     # validate data class
-    stopifnot(class(sample.id) %in% c("character", "integer"))
+    stopifnot(class(sample.id) %in% c("character", "integer", "numeric"))
     stopifnot(class(variant.id) == "integer")
     stopifnot(class(position) == "integer" | is.null(position))
-    stopifnot(class(chromosome) %in% c("character", "integer") | is.null(position))
+    stopifnot(class(chromosome) %in% c("character", "integer") | is.null(chromosome))
     stopifnot("matrix" %in% class(genotype))
     stopifnot(class(ploidy) == "numeric")
 
@@ -120,7 +121,7 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 #' Create a marmaps object
 #'
 #' @param lonlatdf A data frame with three columns: sample ID, longitude, and latitude.
-#' @param mapres Optional numeric value for the map resolution. If not provided, it will be automatically calculated.
+#' @param mapres Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.
 #' @param mapcrs A character string specifying the coordinate reference system (CRS) for the map.
 #'
 #' @return A marmaps object.
@@ -128,9 +129,10 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 #'
 #' @examples
 #' lonlatdf <- data.frame(
-#'     sample_id = c("sample1", "sample2", "sample3"),
+#'     id = c("sample1", "sample2", "sample3"),
 #'     longitude = c(-122.1, -121.9, -122.0),
-#'     latitude = c(37.8, 37.7, 37.9)
+#'     latitude = c(37.8, 37.7, 37.9),
+#'     stringsAsFactors = FALSE
 #' )
 #' marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:4326")
 marmaps <- function(lonlatdf, mapres, mapcrs) {
@@ -140,7 +142,7 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
     lonlat <- as.matrix(lonlatdf[,2:3])
 
     # Validate inputs
-    stopifnot(class(sample.id) %in% c("character", "integer"))
+    stopifnot(class(sample.id) %in% c("character", "integer", "numeric"))
     stopifnot(is.matrix(lonlat))
     .valid_lonlat(lonlat)
     stopifnot(length(sample.id) == nrow(lonlat))
@@ -191,16 +193,18 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
 #' @examples
 #' sample_id <- c("sample1", "sample2", "sample3")
 #' variant_id <- 1:4
-#' position <- c(100, 200, 300, 400)
+#' position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
 #' chromosome <- c("chr1", "chr1", "chr1", "chr2")
-#' genotype <- matrix(sample(0:2, 12, replace = TRUE), nrow = 4, ncol = 3)
+#' position <- NULL; chromosome <- NULL # if no position or chromosome
+#' genotype <- matrix(c(1,2,0,0,1,1,2,0,1,2,2,1), nrow = 4, ncol = 3)
 #' ploidy <- 2
 #' geno <- margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
 #'
 #' lonlatdf <- data.frame(
-#'     sample_id = c("sample1", "sample2", "sample3"),
+#'     id = sample_id,
 #'     longitude = c(-122.1, -121.9, -122.0),
-#'     latitude = c(37.8, 37.7, 37.9)
+#'     latitude = c(37.8, 37.7, 37.9),
+#'     stringsAsFactors = FALSE
 #' )
 #' maps <- marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:4326")
 #'

@@ -14,12 +14,22 @@ library(devtools)
 install_github("meixilin/mar")
 ```
 
+Or in bash:
+
+```bash
+R CMD INSTALL --preclean --no-multiarch --with-keep.source mar
+```
+
 ### Troubleshooting
 
 We are working on a stable release. If you encounter issues with installation above, try manually installing these dependencies before installing `mar`:
 
 ```R
-install.packages(c("magrittr", "raster", "SeqArray", "dplyr", "sars"))
+# not devtools
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("SeqArray")
+install.packages(c("raster", "sars", "sads", "matrixStats"))
 ```
 
 Use of `SeqArray` version >= 1.28.0 is **required** (there was a bug in the previous version that impacts plink file importing).
