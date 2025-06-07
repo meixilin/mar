@@ -24,7 +24,7 @@ mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
     }
     # locate cellids from bbox
     cellids <- .rowcol_cellid(gm$maps, bbox, revbbox = revbbox)
-    out <- mutdiv.cellids(gm, gmarea, cellids, Asq)
+    out <- .mutdiv.cellids(gm, gmarea, cellids, Asq)
     return(out)
 }
 
@@ -43,22 +43,11 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
     resrow = raster::res(gm$maps$samplemap)[1]; rescol = raster::res(gm$maps$samplemap)[2]
     # calculate area by size of bounding box
     Asq <- .areaofsquare(length(cellids), ncol = 1, resrow, rescol)
-    out <- mutdiv.cellids(gm, gmarea, cellids, Asq)
+    out <- .mutdiv.cellids(gm, gmarea, cellids, Asq)
     return(out)
 }
 
-#' Title
-#'
-#' @param gm
-#' @param gmarea
-#' @param cellids
-#' @param Asq
-#'
-#' @return
-#' @export
-#'
-#' @examples
-mutdiv.cellids <- function(gm, gmarea, cellids, Asq) {
+.mutdiv.cellids <- function(gm, gmarea, cellids, Asq) {
     # if no cells
     if (length(cellids) == 0) {
         out <- list(N = NA, M = NA, E = NA, thetaw = NA, thetapi = NA, A = NA, Asq = Asq)
@@ -103,7 +92,7 @@ mutdiv.cellids <- function(gm, gmarea, cellids, Asq) {
     P <- AC/xN
     # compute diversity, Theta Waterson and Theta Pi (pairwise)
     if (xN > 1 & M > 0) {
-        thetaw <- M / (Hn(xN-1) * L)
+        thetaw <- M / (.Hn(xN-1) * L)
         thetapi <- (xN/(xN-1)) * sum(2 * P * (1 - P), na.rm = T) / L
     } else {
         thetaw <- 0

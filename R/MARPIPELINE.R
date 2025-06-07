@@ -69,7 +69,7 @@ MARPIPELINE <- function(name,
                         extra_file = list(samplefile = NULL, posfile = NULL, subsample = NULL, subvariant = NULL),
                         filetype = c('text', 'vcf', 'plink'),
                         option_geno = list(ploidy = 2, maxsnps = 1000000),
-                        option_map = list(mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84"),
+                        option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
                         option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
                         option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum = TRUE, animate = FALSE, myseed = NULL),
                         marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
@@ -128,7 +128,7 @@ MARPIPELINE <- function(name,
             message("Subsetting samples ...")
             subsamples <- .read_column(extra_file$subsample)
             tempgeno <- .filter_genosample(tempgeno, subsamples)
-            mapsdata <- mapsdata[mapsdata$id %in% subsamples, ]
+            mapsdata <- mapsdata[mapsdata[, 1] %in% subsamples, ]
         }
         # subset variants if needed
         if (!is.null(extra_file$subvariant)) {

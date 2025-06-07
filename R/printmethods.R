@@ -18,8 +18,8 @@ print.margeno <- function(x, ...) {
     cat("head of sampleid, variantid, position, chromosome, genotype:\n")
     AC <- rowSums(head(x$genotype))
     df <- cbind(head(data.frame(variant.id = x$variant.id,
-                                position = ifelse(is.null(x$position), NA, x$position),
-                                chromosome = ifelse(is.null(x$chromosome), NA, x$chromosome))),
+                                position = .null_check(x$position),
+                                chromosome = .null_check(x$chromosome))),
                 AC,
                 x$genotype[1:min(6, nrow(x$genotype)),1:min(6, ncol(x$genotype))])
     colnames(df)[5:length(colnames(df))] <- head(x$sample.id)
@@ -48,3 +48,12 @@ print.marmaps <- function(x, ...) {
     print(head(data.frame(sample.id = x$sample.id, longitude = x$lonlat[,1], latitude = x$lonlat[,2])))
     return(invisible())
 }
+
+.null_check <- function(x) {
+    if(is.null(x)) {
+        return(NA)
+    } else {
+        return(x)
+    }
+}
+

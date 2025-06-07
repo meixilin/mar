@@ -75,9 +75,19 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     return(output)
 }
 
-# allele counts
-.get_AC <- function(gg) {
-    AC <- matrixStats::rowSums2(gg$genotype)
+# generate per-cell genotype table
+.genotype_bycell <- function(gm) {
+    cellids = gm$maps$cellid
+    ploidy = gm$geno$ploidy
+    geno = sapply(unique(cellids), function(g) {
+        matrixStats::rowMaxs(gm$geno$genotype, cols = which(cellids == g))
+    })
+    return(geno)
+}
+
+# allele counts in matrix
+.get_AC <- function(mt) {
+    AC <- matrixStats::rowSums2(mt)
     # stop if there are any NAs or warn if fully zero ACs (not a SNP in this dataset)
     stopifnot(all(!is.na(AC)))
     if (any(AC == 0)) {
@@ -157,7 +167,7 @@ sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
 #' @examples
 expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
     xN = N*ploidy
-    theta = lenAC / Hn(xN) # scale theta
+    theta = lenAC / .Hn(xN) # scale theta
     expsfs = c(0, theta/(1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)
