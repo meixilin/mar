@@ -1,14 +1,17 @@
-# print methods for mar objects
-
-#' Print methods for margeno
+#' Print Method for margeno Objects
 #'
-#' @param x
-#' @param ...
+#' Displays a summary of genetic data including sample counts, genomic sites,
+#' and a preview of the genotype matrix
 #'
-#' @return
+#' @param x An object of class "margeno" containing genetic data
+#' @param ... Additional arguments passed to print
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' print(gm1001g$geno)
+
 print.margeno <- function(x, ...) {
     cat("margeno object\n")
     cat("    number of samples: ", length(x$sample.id), "\n")
@@ -27,15 +30,20 @@ print.margeno <- function(x, ...) {
     return(invisible())
 }
 
-#' Print methods for marmaps
+#' Print Method for marmaps Objects
 #'
-#' @param x
-#' @param ...
+#' Displays a summary of spatial mapping data including sample counts,
+#' geographic ranges, and a preview of sample locations
 #'
-#' @return
+#' @param x An object of class "marmaps" containing mapping information
+#' @param ... Additional arguments passed to print
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' # Create and print a marmaps object
+#' print(gm1001g$maps)
 print.marmaps <- function(x, ...) {
     cat("marmaps object\n")
     cat("    number of samples: ", length(x$sample.id), "\n")

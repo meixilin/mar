@@ -166,12 +166,19 @@ Test output:
 * Set default `quorum` to `TRUE` (to match 2022 results).
 * Add print methods.
 
+# v0.1.3
+
+* Removed some exported functions.
+* Updated all documentations.
+* After updating marApp, will be stably released as v0.2.0.
+
 # Did not use but tried
 
 * Considered using `SeqArray` as the main framework for `genomaps` but it would require reading from disk constantly.
     * Now only use `SeqArray` to read plink and vcf files.
 * Add support for MAC instead of AC
 * Consider using SeqArray more extensively
+* Add theoretical expectations for MAR. Not included in this release.
 
 # TODO
 

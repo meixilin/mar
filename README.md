@@ -20,6 +20,12 @@ Or in bash:
 R CMD INSTALL --preclean --no-multiarch --with-keep.source mar
 ```
 
+### Updating package
+
+```R
+devtools::document()
+```
+
 ### Troubleshooting
 
 We are working on a stable release. If you encounter issues with installation above, try manually installing these dependencies before installing `mar`:
@@ -60,3 +66,6 @@ MARPIPELINE(name = "example", workdir = "./", genofile = "genome.tsv", lonlatfil
 ### Geographic data
 
 - Every sample with genotype data must have pairing longitude and latitude data.
+- File format should be tab-delimited or comma-delimited with header (ID, LON/LONGITUDE, LAT/LATITUDE)
+- Only three columns are allowed (ID, LON/LONGITUDE, LAT/LATITUDE)
+- Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.

@@ -18,6 +18,6 @@ Imports:
     matrixStats,
     SeqArray (>= 1.28.0)
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 LazyData: true

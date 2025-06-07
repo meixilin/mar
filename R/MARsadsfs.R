@@ -1,17 +1,22 @@
 # fit sad models (sorted alphabetically)
 .sad_models <- c("bs", "geom", "lnorm", "ls", "mzsm", "weibull")
 
-#' Title
+#' Fit Species Abundance Distribution (SAD) Models to Genotype Data
 #'
-#' @param gm
-#' @param sad_models
-#' @param predict
-#' @param folded
+#' @param gm A genotype matrix object containing genetic data
+#' @param sad_models Vector of SAD model names to fit. Default uses internal mar:::.sad_models
+#' @param predict Logical, whether to predict SFS from fitted SAD models. Default TRUE
+#' @param folded Logical, whether to fold the SFS. Default TRUE
 #'
-#' @return
+#' @return A list with S3 class "marsad" containing:
+#'   \item{sadms}{List of fitted SAD models}
+#'   \item{AICtabs}{AIC table comparing model fits}
+#'   \item{sadsfss}{Predicted site frequency spectra if predict=TRUE}
 #' @export
 #'
 #' @examples
+#' # Fit SAD models to genotype data in gm1001g
+#' sad_fit <- MARsad(gm1001g)
 MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) {
     AC <- .get_AC(gm$geno)
     N <- length(gm$maps$sample.id)
@@ -128,19 +133,22 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     return(vect)
 }
 
-# not allowing filter at this stage. All filters should be done at step "gm"
-#' Title
+#' Calculate Site Frequency Spectrum
 #'
-#' @param AC
-#' @param N
-#' @param ploidy
-#' @param folded
-#' @param nozero
+#' @param AC Vector of allele counts
+#' @param N Number of samples
+#' @param ploidy Ploidy level of the organism
+#' @param folded Logical, whether to fold the spectrum. Default TRUE
+#' @param nozero Logical, whether to remove zero counts. Default TRUE
 #'
-#' @return
+#' @return An object of class "sfs" containing the site frequency spectrum
 #' @export
 #'
 #' @examples
+#' # Calculate SFS from allele counts
+#' allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
+#' sfs_result <- sfs(allele_counts, N=50, ploidy=2)
+
 sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
     xN = N*ploidy
     if (any(AC > xN)) {
@@ -152,52 +160,27 @@ sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
     return(vect)
 }
 
-# generate expected SFS for given SNPs surveyed (lenAC) and number of samples (N)
-#' Title
+#' Generate Expected Site Frequency Spectrum
 #'
-#' @param lenAC
-#' @param N
-#' @param ploidy
-#' @param folded
-#' @param nozero
+#' @param lenAC Length of allele count vector. In other words, total number of SNPs surveyed.
+#' @param N Number of samples
+#' @param ploidy Ploidy level of the organism
+#' @param folded Logical, whether to fold the spectrum. Default TRUE
+#' @param nozero Logical, whether to remove zero counts. Default TRUE
 #'
-#' @return
+#' @return An object of class "sfs" containing the expected site frequency spectrum
 #' @export
 #'
 #' @examples
+#' # Generate expected SFS
+#' exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
+
 expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
     xN = N*ploidy
     theta = lenAC / .Hn(xN) # scale theta
     expsfs = c(0, theta/(1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)
-}
-
-# convert a SFS back to AC vector (rank abundance data to some extent)
-# NOT USED AND BUGGY
-.sfs2AC <- function(vect) {
-    M = round(sum(vect))
-    oAC <- vector()
-    for(ii in seq_along(vect)) {
-        binii = as.integer(names(vect)[ii])
-        nii = round(vect[ii])
-        if (nii > 0) {
-            oAC <- c(oAC, rep(binii, times = nii))
-        }
-    }
-
-    # fill in AC if needed
-    if (length(oAC) < M) {
-        iis = 1
-        warning(any(round(vect) == 0)) # should have at least some entried rounded out
-        while(length(oAC) < M) {
-            svect <- sort(vect[round(vect) == 0], decreasing = TRUE)
-            binii_s <- as.integer(names(svect)[iis])
-            oAC <- c(oAC, binii_s)
-            iis = iis + 1
-        }
-    }
-    return(oAC)
 }
 
 # sfs list to dataframe
@@ -223,17 +206,20 @@ expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
 
 .ll_per_bin <- Vectorize(..ll_per_bin)
 
-# < 0 and NA test have been tested in the sfs data construction phase
-#' Title
+#' Calculate Log-Likelihood Between Model and Data SFS
 #'
-#' @param model
-#' @param data
-#' @param missing_model_cutoff
+#' @param model An object of class "sfs" containing model predictions
+#' @param data An object of class "sfs" containing observed data
+#' @param missing_model_cutoff Threshold for warning about SFS entries that are zeros in the model but non-zero in the data. Default 1e-6.
 #'
-#' @return
+#' @return Log-likelihood value comparing model to data
 #' @export
 #'
 #' @examples
+#' # Calculate log-likelihood between model and data SFS
+#' model_sfs <- expsfs(lenAC=1000, N=50, ploidy=2)
+#' data_sfs <- sfs(AC=c(1,1,0,2,0,1,1,0,0,2,30), N=50, ploidy=2)
+#' ll <- ll_sfs(model_sfs, data_sfs)
 ll_sfs <- function(model, data, missing_model_cutoff = 1e-6) {
     stopifnot("sfs" %in% c(class(model), class(data)))
     stopifnot(length(model) == length(data)) # same length

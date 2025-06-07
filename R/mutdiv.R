@@ -1,16 +1,24 @@
-# combine area and genetic diversity calculation in a gridded bounding box
-# bbox should be c(r1, r2, c1, c2).
-#' Title
+#' Calculate Genetic Diversity in a Gridded Bounding Box
 #'
-#' @param gm
-#' @param gmarea
-#' @param bbox
-#' @param revbbox
+#' @param gm A genomaps object containing genetic data and geographic informations, created by [genomaps()] function.
+#' @param gmarea Raster file that contains area size of each cell
+#' @param bbox Numeric vector of length 4 specifying the bounding box coordinates c(r1, r2, c1, c2)
+#' @param revbbox Logical, whether to reverse/invert the bounding box selection. Default FALSE
 #'
-#' @return
+#' @return A list containing:
+#'   \item{N}{Number of samples}
+#'   \item{M}{Number of segregating sites}
+#'   \item{E}{Number of endemic segregating sites}
+#'   \item{thetaw}{Watterson's theta estimate}
+#'   \item{thetapi}{Pi (pairwise) diversity estimate}
+#'   \item{A}{Total area with data}
+#'   \item{Asq}{Area of the bounding box square}
 #' @export
 #'
 #' @examples
+#' # Calculate mutation diversity in a 10x10 grid region
+#' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
+#' div <- mutdiv.gridded(gm1001g, gmarea, bbox=c(1,10,2,8))
 mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
     stopifnot(length(bbox) == 4)
     r1 = bbox[1]; r2 = bbox[2]; c1 = bbox[3]; c2 = bbox[4]
@@ -28,17 +36,30 @@ mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
     return(out)
 }
 
-# for extinction simulation
-#' Title
+#' Calculate Genetic Diversity for Specified Cells
 #'
-#' @param gm
-#' @param gmarea
-#' @param cellids
+#' Calculates genetic diversity metrics for a specific set of cells. This function is particularly
+#' useful for extinction simulations.
 #'
-#' @return
+#' @param gm A genomaps object containing genetic data and geographic informations, created by [genomaps()] function.
+#' @param gmarea Raster file that contains area size of each cell
+#' @param cellids Vector of cell IDs to analyze
+#'
+#' @return A list containing:
+#'   \item{N}{Number of samples}
+#'   \item{M}{Number of segregating sites}
+#'   \item{E}{Number of endemic segregating sites}
+#'   \item{thetaw}{Watterson's theta estimate}
+#'   \item{thetapi}{Pi (pairwise) diversity estimate}
+#'   \item{A}{Total area with data}
+#'   \item{Asq}{Area of the cells being analyzed}
 #' @export
 #'
 #' @examples
+#' # Calculate genetic diversity for a specific set of cells
+#' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
+#' cell_ids <- c(613,726,727)
+#' div <- mutdiv.cells(gm1001g, gmarea, cellids=cell_ids)
 mutdiv.cells <- function(gm, gmarea, cellids) {
     resrow = raster::res(gm$maps$samplemap)[1]; rescol = raster::res(gm$maps$samplemap)[2]
     # calculate area by size of bounding box

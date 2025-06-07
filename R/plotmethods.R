@@ -19,14 +19,18 @@
 
 # define the plotting method for marmaps
 # methods(class = "marmaps") > [1] plot
-#' Title
+#' Plot Method for marmaps Class
 #'
-#' @param marmaps
+#' Creates a spatial plot of sample locations and density
 #'
-#' @return
+#' @param x An object of class "marmaps" containing sample mapping information
+#' @param ... Additional arguments passed to plot
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' plot(gm1001g$maps)
 plot.marmaps <- function(x, ...) {
     old_par <- par(no.readonly = T)
     par(mar = c(5.1, 4.1, 4.1, 4.1))
@@ -38,14 +42,19 @@ plot.marmaps <- function(x, ...) {
     return(invisible())
 }
 
-#' Title
+#' Plot Method for Site Frequency Spectrum
 #'
-#' @param x
+#' Creates a barplot of the site frequency spectrum
 #'
-#' @return
+#' @param x An object of class "sfs" containing site frequency spectrum data
+#' @param ... Additional arguments passed to barplot
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' sfs_object <- sfs(AC=c(1,1,0,2,0,1,1,0,0,2,30), N=50, ploidy=2)
+#' plot(sfs_object)
 plot.sfs <- function(x, ...) {
     data <- as.vector(x)
     bins <- as.integer(names(x))
@@ -54,19 +63,23 @@ plot.sfs <- function(x, ...) {
 }
 
 # this also works for classes belonging to marextinct (also a sampling process)
-#' Title
+#' Plot Method for Mutations-Area Relationship sample data
 #'
-#' @param x
-#' @param c
-#' @param z
-#' @param Mtype
-#' @param Atype
-#' @param logscale
+#' Creates a plot of genetic diversity against area, optionally with fitted power law
 #'
-#' @return
+#' @param x A data frame containing sampling data
+#' @param c Intercept parameter of fitted power law curve
+#' @param z Slope parameter of fitted power law curve
+#' @param Mtype Type of genetic diversity metric to plot
+#' @param Atype Type of area metric to plot
+#' @param logscale Logical, whether to plot on log-log scale
+#' @param ... Additional arguments passed to plot
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' plot(marsamp_object, c=0.5, z=0.25)
 plot.marsamp <- function(x, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, logscale = FALSE, ...) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
@@ -97,17 +110,20 @@ plot.marsamp <- function(x, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, 
     return(invisible())
 }
 
-#' Title
+#' Plot Method for Mutations Extinction Curves
 #'
-#' @param x
-#' @param z
-#' @param Mtype
-#' @param Atype
+#' Creates a plot showing relationship between area loss and genetic diversity loss
 #'
-#' @return
+#' @param x A data frame containing extinction data
+#' @param z Fitted extinction curve parameter
+#' @param Mtype Type of genetic diversity metric to plot
+#' @param Atype Type of area metric to plot
+#'
+#' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
+#' plot(marextinct_object, z=0.25)
 plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
