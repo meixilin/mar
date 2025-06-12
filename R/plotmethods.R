@@ -9,7 +9,7 @@
 }
 
 .ann_marextinct <- function(z, location) {
-    equation <- bquote(m == 1 - (1-a)^.(round(z,2)))
+    equation <- bquote(m == (1-a)^.(round(z,2)))
     legend(location, legend = as.expression(equation), bty = "n", text.col = .anncol)
 }
 
@@ -32,13 +32,13 @@
 #' @examples
 #' plot(gm1001g$maps)
 plot.marmaps <- function(x, ...) {
-    old_par <- par(no.readonly = T)
-    par(mar = c(5.1, 4.1, 4.1, 4.1))
+    # old_par <- par(no.readonly = T)
+    # par(mar = c(5.1, 4.1, 4.1, 4.1))
     raster::plot(raster::extent(x$samplemap), xlab = 'lon', ylab = 'lat')
     raster::plot(x$samplemap, add = T, legend = F)
     points(x$lonlat)
     raster::plot(x$samplemap, add = T, legend.only = T, legend.mar = 3, legend.args = list(text = 'n'))
-    par(old_par)
+    # par(old_par)
     return(invisible())
 }
 
@@ -132,16 +132,16 @@ plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype) {
     tmpdf = tmpdf[(tmpdf[,Mtype] > 0 & !is.na(tmpdf[,Mtype])), ]
     # generate area loss data
     a_per = 1 - tmpdf[, Atype]/max(tmpdf[, Atype])
-    m_per = 1- tmpdf[, Mtype]/max(tmpdf[, Mtype])
+    m_per = tmpdf[, Mtype]/max(tmpdf[, Mtype])
     # previously had a check for length(unique(tmpdf[,Mtype])) < 4
     if (nrow(tmpdf) == 0) {
         stop(paste0("MAR for Mtype = ", Mtype, ", Atype = ", Atype, " cannot be plotted"))
     }
     # plot
     # m_per = 1 - (1-a_per)^z
-    graphics::plot(x = a_per, y = m_per, xlab = paste0("% of ", Atype, " lost"), ylab = paste0("% of ", Mtype, " lost"))
+    graphics::plot(x = a_per, y = m_per, xlab = paste0("% of ", Atype, " lost"), ylab = paste0("% of ", Mtype, " remained"))
     if (!is.null(z)) {
-        curve(1-(1-x)^z, add = TRUE, col = .anncol)
+        curve((1-x)^z, add = TRUE, col = .anncol)
         .ann_marextinct(z, location = "topright")
     }
     return(invisible())

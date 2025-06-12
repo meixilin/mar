@@ -90,9 +90,9 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     return(geno)
 }
 
-# allele counts in matrix
-.get_AC <- function(mt) {
-    AC <- matrixStats::rowSums2(mt)
+# allele counts (revert to earlier)
+.get_AC <- function(gg) {
+    AC <- matrixStats::rowSums2(gg$genotype)
     # stop if there are any NAs or warn if fully zero ACs (not a SNP in this dataset)
     stopifnot(all(!is.na(AC)))
     if (any(AC == 0)) {
