@@ -9,7 +9,7 @@
 }
 
 .ann_marextinct <- function(z, location) {
-    equation <- bquote(m == (1-a)^.(round(z,2)))
+    equation <- bquote((1-m) == (1-a)^.(round(z,2)))
     legend(location, legend = as.expression(equation), bty = "n", text.col = .anncol)
 }
 

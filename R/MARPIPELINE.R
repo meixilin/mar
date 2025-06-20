@@ -5,47 +5,49 @@
 #' building `genomaps` object, Species Abundance Distribution (SAD) fitting, Site Frequency
 #' Spectrum (SFS) calculation, sampling of geographical areas to build MAR, and extinction simulations given MAR predictions.
 #'
-#' @param name Required.Character string. Base name for output files.
+#' @param name Required. Character string. Base name for output files.
 #' @param workdir Required. Character string. Working directory path where outputs will be saved. Need to be created before running the pipeline.
 #' @param genofile Required. Character string. Path to input genomic data file. Full path to the file is required.
-#' @param lonlatfile Character string. Path to file containing longitude/latitude coordinates. Full path to the file is required.
-#' @param extra_file List containing optional input files:
-#'   \itemize{
-#'     \item samplefile: Path to sample metadata file
-#'     \item posfile: Path to variant position file
-#'     \item subsample: Path to file with sample IDs to subset
-#'     \item subvariant: Path to file with variant IDs to subset
-#'   }
-#' @param filetype Character string. Input genomic file format: 'text', 'vcf', or 'plink'.
-#' @param option_geno List of genomic data options:
+#' @param lonlatfile Required. Character string. Path to file containing longitude/latitude coordinates. Full path to the file is required.
+#' @param samplefile Optional. Character string. Path to sample metadata file. Only used if filetype is 'text'.
+#' @param posfile Optional. Character string. Path to variant position file. Only used if filetype is 'text'.
+#' @param subsamplefile Optional. Character string. Path to file with sample IDs to subset.
+#' @param subvariantfile Optional. Character string. Path to file with variant IDs to subset.
+#' @param filetype Optional. Character string. Input genomic file format: 'text', 'vcf', or 'plink'. Default is 'text'.
+#' @param randseed Optional. Integer. Random seed for reproducibility in steps mar and ext. Default is NULL.
+#' @param option_geno List of genomic data options. Must provide complete list with all elements:
 #'   \itemize{
 #'     \item ploidy: Ploidy level of samples (default: 2)
 #'     \item maxsnps: Maximum number of SNPs to analyze (default: 1000000)
 #'   }
-#' @param option_map List of mapping options:
+#' @param option_map List of mapping options. Must provide complete list with all elements:
 #'   \itemize{
 #'     \item mapres: Map resolution
 #'     \item mapcrs: Coordinate reference system (default: WGS84)
 #'   }
-#' @param option_sadsfs List of SAD/SFS analysis options:
+#' @param option_sadsfs List of SAD/SFS analysis options. Must provide complete list with all elements:
 #'   \itemize{
 #'     \item sad_models: SAD models to fit
+#'     \item folded: Whether to use folded spectrum (default: TRUE)
 #'   }
-#' @param option_marext List of MAR/extinction analysis options:
+#' @param option_marext List of MAR/extinction analysis options. Must provide complete list with all elements:
 #'   \itemize{
 #'     \item scheme: Sampling schemes to use
-#'     \item nrep: Number of replicates
-#'     \item quorum: Logical; use quorum sampling
-#'     \item animate: Logical; create animation
-#'     \item myseed: Random seed for reproducibility
+#'     \item nrep: Number of replicates (default: 10)
+#'     \item xfrac: Fraction for sampling (default: 0.01)
+#'     \item quorum: Logical; require all MAR sampling boundaries to have at least one sample (default: TRUE)
+#'     \item animate: Logical; create animation (default: FALSE)
 #'   }
 #' @param marsteps Character vector specifying which analysis steps to run:
 #'   "data", "gm", "sfs", "mar", "ext", "plot"
 #' @param saveobj Logical. Whether to save intermediate objects as .rda files.
 #'
+#' @note All option lists (option_geno, option_map, option_sadsfs, option_marext) must be provided
+#' with their complete set of elements. Partial lists are not supported.
+#'
 #' @return Returns invisibly. Creates output files in working directory:
 #'   \itemize{
-#'     \item PDF plots for selected analysis steps
+#'     \item PDF plots for selected analysis steps if plot is in marsteps
 #'     \item .rda files with analysis objects if saveobj=TRUE
 #'   }
 #'
@@ -57,6 +59,11 @@
 #'   genofile = "path/to/genotype.vcf",
 #'   lonlatfile = "path/to/coordinates.txt",
 #'   filetype = "vcf",
+#'   option_geno = list(ploidy = 2, maxsnps = 1000000),
+#'   option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
+#'   option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
+#'   option_marext = list(scheme = .MARsampling_schemes, nrep = 10,
+#'                       xfrac = 0.01, quorum = TRUE, animate = FALSE),
 #'   marsteps = c("data", "gm", "sfs", "mar", "plot")
 #' )
 #' }
@@ -66,12 +73,16 @@ MARPIPELINE <- function(name,
                         workdir,
                         genofile,
                         lonlatfile,
-                        extra_file = list(samplefile = NULL, posfile = NULL, subsample = NULL, subvariant = NULL),
+                        samplefile = NULL,
+                        posfile = NULL,
+                        subsamplefile = NULL,
+                        subvariantfile = NULL,
                         filetype = c('text', 'vcf', 'plink'),
+                        randseed = NULL,
                         option_geno = list(ploidy = 2, maxsnps = 1000000),
                         option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
                         option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
-                        option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum = TRUE, animate = FALSE, myseed = NULL),
+                        option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum = TRUE, animate = FALSE),
                         marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
                         saveobj = FALSE) {
 # Define some variables --------------------------------------------------------
@@ -84,6 +95,8 @@ MARPIPELINE <- function(name,
         mar = c("mardflist", "marlist"),
         ext = c("extdflist", "extlist")
     )
+    # combine the options into a single extra_file list
+    extra_file <- list(samplefile = samplefile, posfile = posfile, subsample = subsamplefile, subvariant = subvariantfile)
 
 # Check and file setup ---------------------------------------------------------
     message(paste0("MARPIPELINE starts at ", Sys.time(), "."))
@@ -184,7 +197,7 @@ MARPIPELINE <- function(name,
         mardflist <- lapply(option_marext$scheme, function(scheme) {
             message(paste0("Sampling scheme: ", scheme))
             MARsampling(gm = gm, scheme = scheme, nrep = option_marext$nrep, xfrac = option_marext$xfrac,
-                        quorum = option_marext$quorum, animate = option_marext$animate, myseed = option_marext$myseed)
+                        quorum = option_marext$quorum, animate = option_marext$animate, myseed = randseed)
         })
         names(mardflist) <- option_marext$scheme
 
@@ -201,7 +214,7 @@ MARPIPELINE <- function(name,
         # Create extinction scheme
         extdflist <- lapply(option_marext$scheme, function(scheme) {
             message(paste0("Extinction scheme: ", scheme))
-            MARextinction(gm = gm, scheme = scheme, nrep = option_marext$nrep, xfrac = option_marext$xfrac, animate = option_marext$animate, myseed = option_marext$myseed)
+            MARextinction(gm = gm, scheme = scheme, nrep = option_marext$nrep, xfrac = option_marext$xfrac, animate = option_marext$animate, myseed = randseed)
         })
         names(extdflist) <- option_marext$scheme
 

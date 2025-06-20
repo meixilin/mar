@@ -7,6 +7,7 @@ mar.Rproj
 
 .DS_Store
 .lintr
+docs/
 test/*
 tests/yeaman
 tests/testthat/testdata/*.rds
