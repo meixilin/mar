@@ -69,3 +69,6 @@ MARPIPELINE(name = "example", workdir = "./", genofile = "genome.tsv", lonlatfil
 - File format should be tab-delimited or comma-delimited with header (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Only three columns are allowed (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
+
+
+~ test test ~
