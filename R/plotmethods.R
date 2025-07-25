@@ -130,9 +130,9 @@ plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype) {
     # remove NA or zero data
     tmpdf = x[, c(Atype, Mtype)]
     tmpdf = tmpdf[(tmpdf[,Mtype] > 0 & !is.na(tmpdf[,Mtype])), ]
-    # generate area loss data
-    a_per = 1 - tmpdf[, Atype]/max(tmpdf[, Atype])
-    m_per = tmpdf[, Mtype]/max(tmpdf[, Mtype])
+    # generate area loss data (scale by the first value not the max value)
+    a_per = 1 - tmpdf[, Atype]/(tmpdf[1, Atype])
+    m_per = tmpdf[, Mtype]/(tmpdf[1, Mtype])
     # previously had a check for length(unique(tmpdf[,Mtype])) < 4
     if (nrow(tmpdf) == 0) {
         stop(paste0("MAR for Mtype = ", Mtype, ", Atype = ", Atype, " cannot be plotted"))

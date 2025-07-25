@@ -18,7 +18,7 @@ print.margeno <- function(x, ...) {
     cat("    number of genomic sites: ", length(x$variant.id), "\n")
     cat("    ploidy: ", x$ploidy, "\n")
     cat("\n")
-    cat("head of sampleid, variantid, position, chromosome, genotype:\n")
+    cat("head of variantid, position, chromosome, genotype:\n")
     AC <- rowSums(head(x$genotype))
     df <- cbind(head(data.frame(variant.id = x$variant.id,
                                 position = .null_check(x$position),
