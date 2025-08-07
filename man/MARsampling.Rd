@@ -30,7 +30,7 @@ MARsampling(
 \item{myseed}{set seed for reproducibility. default is NULL.}
 }
 \value{
-a \link{marsamp} object. consist of a data frame.
+a \code{marsamp} object. consist of a data frame.
 }
 \description{
 MAR sampling wrapper function

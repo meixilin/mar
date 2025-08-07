@@ -10,7 +10,7 @@
 #' @param animate play an animation of the sampling boxes. default is FALSE.
 #' @param myseed set seed for reproducibility. default is NULL.
 #'
-#' @return a [marsamp] object. consist of a data frame.
+#' @return a `marsamp` object. consist of a data frame.
 #' @export
 #'
 MARsampling <-

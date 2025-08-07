@@ -79,7 +79,9 @@ plot.sfs <- function(x, ...) {
 #' @export
 #'
 #' @examples
-#' plot(marsamp_object, c=0.5, z=0.25)
+#' \dontrun{
+#'     plot(marsamp_object, c=0.5, z=0.25)
+#' }
 plot.marsamp <- function(x, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, logscale = FALSE, ...) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
@@ -118,13 +120,16 @@ plot.marsamp <- function(x, c = NULL, z = NULL, Mtype = .Mtype, Atype = .Atype, 
 #' @param z Fitted extinction curve parameter
 #' @param Mtype Type of genetic diversity metric to plot
 #' @param Atype Type of area metric to plot
+#' @param ... Additional arguments passed to plot
 #'
 #' @return Invisibly returns NULL
 #' @export
 #'
 #' @examples
-#' plot(marextinct_object, z=0.25)
-plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype) {
+#' \dontrun{
+#'     plot(marextinct_object, z=0.25)
+#' }
+plot.marextinct <- function(x, z = NULL, Mtype = .Mtype, Atype = .Atype, ...) {
     Mtype = match.arg(Mtype)
     Atype = match.arg(Atype)
     # remove NA or zero data

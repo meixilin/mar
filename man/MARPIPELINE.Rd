@@ -9,61 +9,67 @@ MARPIPELINE(
   workdir,
   genofile,
   lonlatfile,
-  extra_file = list(samplefile = NULL, posfile = NULL, subsample = NULL, subvariant =
-    NULL),
+  samplefile = NULL,
+  posfile = NULL,
+  subsamplefile = NULL,
+  subvariantfile = NULL,
   filetype = c("text", "vcf", "plink"),
+  randseed = NULL,
   option_geno = list(ploidy = 2, maxsnps = 1e+06),
   option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
   option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
   option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum =
-    TRUE, animate = FALSE, myseed = NULL),
+    TRUE, animate = FALSE),
   marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
   saveobj = FALSE
 )
 }
 \arguments{
-\item{name}{Required.Character string. Base name for output files.}
+\item{name}{Required. Character string. Base name for output files.}
 
 \item{workdir}{Required. Character string. Working directory path where outputs will be saved. Need to be created before running the pipeline.}
 
 \item{genofile}{Required. Character string. Path to input genomic data file. Full path to the file is required.}
 
-\item{lonlatfile}{Character string. Path to file containing longitude/latitude coordinates. Full path to the file is required.}
+\item{lonlatfile}{Required. Character string. Path to file containing longitude/latitude coordinates. Full path to the file is required.}
 
-\item{extra_file}{List containing optional input files:
-\itemize{
-\item samplefile: Path to sample metadata file
-\item posfile: Path to variant position file
-\item subsample: Path to file with sample IDs to subset
-\item subvariant: Path to file with variant IDs to subset
-}}
+\item{samplefile}{Optional. Character string. Path to sample metadata file. Only used if filetype is 'text'.}
 
-\item{filetype}{Character string. Input genomic file format: 'text', 'vcf', or 'plink'.}
+\item{posfile}{Optional. Character string. Path to variant position file. Only used if filetype is 'text'.}
 
-\item{option_geno}{List of genomic data options:
+\item{subsamplefile}{Optional. Character string. Path to file with sample IDs to subset.}
+
+\item{subvariantfile}{Optional. Character string. Path to file with variant IDs to subset.}
+
+\item{filetype}{Optional. Character string. Input genomic file format: 'text', 'vcf', or 'plink'. Default is 'text'.}
+
+\item{randseed}{Optional. Integer. Random seed for reproducibility in steps mar and ext. Default is NULL.}
+
+\item{option_geno}{List of genomic data options. Must provide complete list with all elements:
 \itemize{
 \item ploidy: Ploidy level of samples (default: 2)
 \item maxsnps: Maximum number of SNPs to analyze (default: 1000000)
 }}
 
-\item{option_map}{List of mapping options:
+\item{option_map}{List of mapping options. Must provide complete list with all elements:
 \itemize{
 \item mapres: Map resolution
 \item mapcrs: Coordinate reference system (default: WGS84)
 }}
 
-\item{option_sadsfs}{List of SAD/SFS analysis options:
+\item{option_sadsfs}{List of SAD/SFS analysis options. Must provide complete list with all elements:
 \itemize{
 \item sad_models: SAD models to fit
+\item folded: Whether to use folded spectrum (default: TRUE)
 }}
 
-\item{option_marext}{List of MAR/extinction analysis options:
+\item{option_marext}{List of MAR/extinction analysis options. Must provide complete list with all elements:
 \itemize{
 \item scheme: Sampling schemes to use
-\item nrep: Number of replicates
-\item quorum: Logical; use quorum sampling
-\item animate: Logical; create animation
-\item myseed: Random seed for reproducibility
+\item nrep: Number of replicates (default: 10)
+\item xfrac: Fraction for sampling (default: 0.01)
+\item quorum: Logical; require all MAR sampling boundaries to have at least one sample (default: TRUE)
+\item animate: Logical; create animation (default: FALSE)
 }}
 
 \item{marsteps}{Character vector specifying which analysis steps to run:
@@ -74,7 +80,7 @@ MARPIPELINE(
 \value{
 Returns invisibly. Creates output files in working directory:
 \itemize{
-\item PDF plots for selected analysis steps
+\item PDF plots for selected analysis steps if plot is in marsteps
 \item .rda files with analysis objects if saveobj=TRUE
 }
 }
@@ -82,6 +88,10 @@ Returns invisibly. Creates output files in working directory:
 MARPIPELINE performs a complete MAR analysis workflow, including data loading,
 building \code{genomaps} object, Species Abundance Distribution (SAD) fitting, Site Frequency
 Spectrum (SFS) calculation, sampling of geographical areas to build MAR, and extinction simulations given MAR predictions.
+}
+\note{
+All option lists (option_geno, option_map, option_sadsfs, option_marext) must be provided
+with their complete set of elements. Partial lists are not supported.
 }
 \examples{
 \dontrun{
@@ -91,6 +101,11 @@ MARPIPELINE(
   genofile = "path/to/genotype.vcf",
   lonlatfile = "path/to/coordinates.txt",
   filetype = "vcf",
+  option_geno = list(ploidy = 2, maxsnps = 1000000),
+  option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
+  option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
+  option_marext = list(scheme = .MARsampling_schemes, nrep = 10,
+                      xfrac = 0.01, quorum = TRUE, animate = FALSE),
   marsteps = c("data", "gm", "sfs", "mar", "plot")
 )
 }

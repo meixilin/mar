@@ -4,7 +4,7 @@
 \alias{plot.marextinct}
 \title{Plot Method for Mutations Extinction Curves}
 \usage{
-\method{plot}{marextinct}(x, z = NULL, Mtype = .Mtype, Atype = .Atype)
+\method{plot}{marextinct}(x, z = NULL, Mtype = .Mtype, Atype = .Atype, ...)
 }
 \arguments{
 \item{x}{A data frame containing extinction data}
@@ -14,6 +14,8 @@
 \item{Mtype}{Type of genetic diversity metric to plot}
 
 \item{Atype}{Type of area metric to plot}
+
+\item{...}{Additional arguments passed to plot}
 }
 \value{
 Invisibly returns NULL
@@ -22,5 +24,7 @@ Invisibly returns NULL
 Creates a plot showing relationship between area loss and genetic diversity loss
 }
 \examples{
-plot(marextinct_object, z=0.25)
+\dontrun{
+    plot(marextinct_object, z=0.25)
+}
 }

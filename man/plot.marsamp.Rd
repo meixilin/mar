@@ -36,5 +36,7 @@ Invisibly returns NULL
 Creates a plot of genetic diversity against area, optionally with fitted power law
 }
 \examples{
-plot(marsamp_object, c=0.5, z=0.25)
+\dontrun{
+    plot(marsamp_object, c=0.5, z=0.25)
+}
 }

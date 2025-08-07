@@ -1,17 +1,15 @@
-# MAR: Mutations-Area Relationship Analysis
+# `mar`: Mutations-Area Relationship Analysis
 
 ## Overview
-MAR is an R package that enables the reconstruction of Mutations-Area Relationships using spatially distributed genome variation data. This tool helps researchers analyze how genetic mutations accumulate across geographic space within a species.
+`mar` is an R package that enables the reconstruction of Mutations-Area Relationships using spatially distributed genome variation data. This tool helps researchers analyze how genetic mutations accumulate across geographic space within a species.
 
 ## Installation
-
-### Development Version
 
 To install the development version with all dependencies:
 
 ```R
 library(devtools)
-install_github("meixilin/mar")
+devtools::install_github("meixilin/mar")
 ```
 
 Or in bash:
@@ -20,18 +18,11 @@ Or in bash:
 R CMD INSTALL --preclean --no-multiarch --with-keep.source mar
 ```
 
-### Updating package
-
-```R
-devtools::document()
-```
-
 ### Troubleshooting
 
-We are working on a stable release. If you encounter issues with installation above, try manually installing these dependencies before installing `mar`:
+If you encounter issues with installation above, try manually installing these dependencies before installing `mar`:
 
 ```R
-# not devtools
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("SeqArray")
@@ -40,17 +31,56 @@ install.packages(c("raster", "sars", "sads", "matrixStats"))
 
 Use of `SeqArray` version >= 1.28.0 is **required** (there was a bug in the previous version that impacts plink file importing).
 
+If the above tricks do not work, please open an issue on GitHub.
+
 ## Minimal working example
 
-A minimal working example is provided in the `tests/example` folder. This is a dummy data and does not contain any real data. To run the example, simply run:
+### MARPIPELINE
+
+For running `MARPIPELINE`, example genotype and coordinate files are provided in `inst/extdata` folder.
+This is a dummy data for demonstration purposes. To run the example, simply run:
 
 ```R
 library(mar)
 library(raster)
-MARPIPELINE(name = "example", workdir = "./", genofile = "genome.tsv", lonlatfile = "lonlat.csv", saveobj = TRUE)
+
+genofile <- system.file("extdata", "genome.tsv", package = "mar")
+lonlatfile <- system.file("extdata", "lonlat.csv", package = "mar")
+
+MARPIPELINE(name = "example", workdir = "./", genofile = genofile, lonlatfile = lonlatfile, saveobj = TRUE)
+```
+
+### Step-by-step analysis
+
+For running individual steps, an example `genomaps` object is provided as `mar::gm1001g`.
+
+Main analysis steps can be run step by step:
+
+```R
+library(mar)
+
+# Fit SAD models
+marsad <- MARsad(gm = gm1001g, sad_models = c("lnorm", "ls"), folded = TRUE)
+
+# Sample to build MAR
+mardf <- MARsampling(gm = gm1001g, scheme = "random")
+
+# Calculate MAR
+MARcalc(mardf = mardf)
+
+# Simulate extinction
+extdf <- MARextinction(gm = gm1001g, scheme = "random")
+
+# Calculate extinction-based MAR
+MARcalc(mardf = extdf)
 ```
 
 ## Preparing input data
+
+The `mar` package performs extensive checks on the input data to ensure that the results are reliable and interpretable.
+Please make sure to check the `inst/extdata` folder for example files.
+
+Here are the list of checks that are performed, and some tips on how to prepare the data:
 
 ### Genotype Data
 
@@ -69,6 +99,3 @@ MARPIPELINE(name = "example", workdir = "./", genofile = "genome.tsv", lonlatfil
 - File format should be tab-delimited or comma-delimited with header (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Only three columns are allowed (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
-
-
-~ test test ~
