@@ -29,6 +29,16 @@ BiocManager::install("SeqArray")
 install.packages(c("raster", "sars", "sads", "matrixStats"))
 ```
 
+Or using `conda` / `mamba`:
+
+```bash
+mamba create --yes --name mar r-base r-devtools zlib libzlib gdal r-terra r-curl bioconda::bioconductor-seqarray
+mamba activate mar
+R
+library(devtools)
+devtools::install_github("meixilin/mar")
+```
+
 Use of `SeqArray` version >= 1.28.0 is **required** (there was a bug in the previous version that impacts plink file importing).
 
 If the above tricks do not work, please open an issue on GitHub.
