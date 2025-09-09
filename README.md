@@ -1,5 +1,12 @@
 # `mar`: Mutations-Area Relationship Analysis
 
+<!-- badges: start -->
+![GitHub R package version](https://img.shields.io/github/r-package/v/meixilin/mar)
+[![R-CMD-check](https://github.com/r-lib/gert/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/gert/actions/workflows/R-CMD-check.yaml)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-green)
+<!-- badges: end -->
+
 ## Overview
 `mar` is an R package that enables the reconstruction of Mutations-Area Relationships using spatially distributed genome variation data. This tool helps researchers analyze how genetic mutations accumulate across geographic space within a species.
 
