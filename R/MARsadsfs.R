@@ -62,7 +62,7 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     AC <- .get_AC(gm$geno)
     N <- length(gm$maps$sample.id)
     ploidy <- gm$geno$ploidy
-    neutralsfs <- expsfs(lenAC = length(AC), N = N, ploidy = ploidy, folded = folded)
+    neutralsfs <- expsfs(gm = gm, folded = folded)
     allsfs <- list(genosfs, neutralsfs)
     names(allsfs) <- c("data", "neutral")
     # if SAD predicted

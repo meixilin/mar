@@ -15,7 +15,27 @@
 
 # marmaps class
 # create marmaps object
+
+# reproject coordinates from the input CRS (incrs) into the map CRS (mapcrs)
+# so that resolution, extent, and cell assignment are all computed in map units
+.reproject_lonlat <- function(lonlat, incrs, mapcrs) {
+    # skip when the coordinates are already in the target CRS
+    if (identical(incrs, mapcrs)) {
+        return(lonlat)
+    }
+    pts <- terra::vect(lonlat, type = "points", crs = incrs)
+    pts <- terra::project(pts, mapcrs)
+    out <- terra::crds(pts)
+    colnames(out) <- colnames(lonlat)
+    # guard against coordinates that fall outside the target projection
+    stopifnot(all(is.finite(out)))
+    return(out)
+}
+
 # resolution determination inspired from: https://www.sciencedirect.com/science/article/pii/S0098300405002657 (eq. 12)
+# NOTE: `lonlat`/`lonlatr` must already be expressed in the map CRS units (see
+# .reproject_lonlat), otherwise the returned resolution will be in the wrong
+# units once the map projection differs from the input coordinate CRS.
 .lonlat_res <- function(lonlat, lonlatr) {
     aa <- apply(lonlatr, 2, diff)
     area <- aa[1] * aa[2]
@@ -25,7 +45,7 @@
     return(out)
 }
 
-# these two functions can be used to create `raster_samples` equivalent
+# create raster based on lonlat object
 .lonlat_raster <- function(lonlat, lonlatr, mapres, mapcrs) {
     # raster ext respects only xmin and ymax when resolution is specified
     # calculate the extent of the raster
@@ -129,6 +149,10 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 #' @param lonlatdf A data frame with three columns: sample ID, longitude, and latitude.
 #' @param mapres Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.
 #' @param mapcrs A character string specifying the coordinate reference system (CRS) for the map.
+#' @param incrs A character string specifying the CRS of the input coordinates in `lonlatdf`.
+#'   Defaults to "EPSG:4326" (WGS84 longitude/latitude). When `incrs` differs from `mapcrs`,
+#'   the coordinates are reprojected into `mapcrs` before the resolution, extent, and cell
+#'   assignment are computed, so those stay consistent with the map units.
 #'
 #' @return A marmaps object.
 #' @export
@@ -140,8 +164,18 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 #'     latitude = c(37.8, 37.7, 37.9),
 #'     stringsAsFactors = FALSE
 #' )
-#' marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:4326")
-marmaps <- function(lonlatdf, mapres, mapcrs) {
+#' # input is WGS84 lon/lat, reprojected to an equal-area map
+#' marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8857", incrs = "EPSG:4326")
+#'
+#' # input coordinates already in the target projection (no reprojection)
+#' lonlatdf <- data.frame(
+#'     id = c("sample1", "sample2", "sample3"),
+#'     x = c(100, 200, 400),
+#'     y = c(37.8, 37.7, 37.9),
+#'     stringsAsFactors = FALSE
+#' )
+#' marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8859", incrs = "EPSG:8859")
+marmaps <- function(lonlatdf, mapres, mapcrs, incrs = "EPSG:4326") {
     # unpack lonlatdf
     stopifnot(class(lonlatdf) == "data.frame" & ncol(lonlatdf) == 3)
     sample.id <- lonlatdf[[1]]
@@ -154,6 +188,11 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
     stopifnot(length(sample.id) == nrow(lonlat))
     stopifnot(is.null(mapres) | is.numeric(mapres))
     stopifnot(is.character(mapcrs))
+    stopifnot(is.character(incrs))
+
+    # Reproject coordinates into the map CRS so that resolution, extent, and
+    # cell assignment are all computed consistently in the map units
+    lonlat <- .reproject_lonlat(lonlat, incrs, mapcrs)
 
     # Calculate map resolution if not provided
     lonlatr <- apply(lonlat, 2, range)
@@ -177,8 +216,8 @@ marmaps <- function(lonlatdf, mapres, mapcrs) {
     )
 
     message("number of samples: ", length(sample.id))
-    message("longitude range: [", lonlatr[1, 1], ", ", lonlatr[2, 1], "]")
-    message("latitude range: [", lonlatr[1, 2], ", ", lonlatr[2, 2], "]")
+    message("x range (", mapcrs, "): [", lonlatr[1, 1], ", ", lonlatr[2, 1], "]")
+    message("y range (", mapcrs, "): [", lonlatr[1, 2], ", ", lonlatr[2, 2], "]")
     message("map resolution: ", mapres)
 
     return(output)

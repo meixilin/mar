@@ -146,11 +146,10 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     grDevices::dev.flush()
     plot.marmaps(gm$maps)
     rr <- gm$maps$samplemap
-    values(rr) <- NA
+    terra::values(rr) <- NA
     for (ii in seq_along(extl)) {
         rr[setdiff(gm$maps$cellid, extl[[ii]])] <- 1
         terra::plot(rr, add = T, col = "black", legend = FALSE)
         Sys.sleep(pause)
     }
-    return(invisible())
 }

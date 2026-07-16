@@ -39,8 +39,8 @@ MARsampling <-
         # the maximum size box can become
         minrange <- min(latrange, lonrange)
         # the point where most samples are available (for inwards / outwards sampling)
-        maxrc <- as.data.frame(terra::which.max(gm$maps$samplemap))
-        r0c0 <- c(maxrc$row[1], maxrc$col[1])
+        maxrc <- terra::where.max(gm$maps$samplemap) # can have multiple rows when tied
+        r0c0 <- terra::rowColFromCell(gm$maps$samplemap, maxrc[1, 'cell'])
         # find right stepsize
         mystep <- ifelse(minrange > 100, ceiling(minrange * xfrac), 1)
         sidesize <- seq(1, minrange, by = mystep)
@@ -236,12 +236,9 @@ MARsampling <-
 # animate the sampling results
 .animate_MARsampling <- function(gm, bblist, pause = 0.2) {
     grDevices::dev.flush()
-    terra::plot(gm$maps)
+    plot.marmaps(gm$maps)
     for (ii in seq_along(bblist)) {
-        terra::plot(.rowcol_extent(gm$maps, bblist[[ii]]),
-            add = T,
-            col = "black"
-        )
+        terra::plot(.rowcol_extent(gm$maps, bblist[[ii]]), add = T)
         Sys.sleep(pause)
     }
 }

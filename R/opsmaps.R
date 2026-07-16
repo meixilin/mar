@@ -71,6 +71,6 @@
     # create an extent from mm$samplemap
     # When x is a Raster* object, you can pass four additional arguments to crop the
     # extent: r1, r2, c1, c2, representing the first and last row and column number
-    out <- out <- terra::ext(bbox[1], bbox[2], bbox[3], bbox[4])
+    out <- terra::ext(mm$samplemap, cells = terra::cellFromRowCol(mm$samplemap, bbox[1:2], bbox[3:4]))
     return(out)
 }
