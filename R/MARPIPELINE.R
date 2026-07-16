@@ -54,17 +54,19 @@
 #' @examples
 #' \dontrun{
 #' MARPIPELINE(
-#'   name = "myanalysis",
-#'   workdir = "path/to/output",
-#'   genofile = "path/to/genotype.vcf",
-#'   lonlatfile = "path/to/coordinates.txt",
-#'   filetype = "vcf",
-#'   option_geno = list(ploidy = 2, maxsnps = 1000000),
-#'   option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
-#'   option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
-#'   option_marext = list(scheme = .MARsampling_schemes, nrep = 10,
-#'                       xfrac = 0.01, quorum = TRUE, animate = FALSE),
-#'   marsteps = c("data", "gm", "sfs", "mar", "plot")
+#'     name = "myanalysis",
+#'     workdir = "path/to/output",
+#'     genofile = "path/to/genotype.vcf",
+#'     lonlatfile = "path/to/coordinates.txt",
+#'     filetype = "vcf",
+#'     option_geno = list(ploidy = 2, maxsnps = 1000000),
+#'     option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
+#'     option_sadsfs = list(sad_models = .sad_models, folded = TRUE),
+#'     option_marext = list(
+#'         scheme = .MARsampling_schemes, nrep = 10,
+#'         xfrac = 0.01, quorum = TRUE, animate = FALSE
+#'     ),
+#'     marsteps = c("data", "gm", "sfs", "mar", "plot")
 #' )
 #' }
 #'
@@ -77,7 +79,7 @@ MARPIPELINE <- function(name,
                         posfile = NULL,
                         subsamplefile = NULL,
                         subvariantfile = NULL,
-                        filetype = c('text', 'vcf', 'plink'),
+                        filetype = c("text", "vcf", "plink"),
                         randseed = NULL,
                         option_geno = list(ploidy = 2, maxsnps = 1000000),
                         option_map = list(mapres = NULL, mapcrs = "OGC:CRS84"),
@@ -85,7 +87,7 @@ MARPIPELINE <- function(name,
                         option_marext = list(scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, quorum = TRUE, animate = FALSE),
                         marsteps = c("data", "gm", "sfs", "mar", "ext", "plot"),
                         saveobj = FALSE) {
-# Define some variables --------------------------------------------------------
+    # Define some variables --------------------------------------------------------
     options(warn = 1) # print warning as they occur
     # all potential output files (and objects)
     ofn <- list(
@@ -98,7 +100,7 @@ MARPIPELINE <- function(name,
     # combine the options into a single extra_file list
     extra_file <- list(samplefile = samplefile, posfile = posfile, subsample = subsamplefile, subvariant = subvariantfile)
 
-# Check and file setup ---------------------------------------------------------
+    # Check and file setup ---------------------------------------------------------
     message(paste0("MARPIPELINE starts at ", Sys.time(), "."))
     print(utils::sessionInfo())
     filetype <- match.arg(filetype)
@@ -110,13 +112,15 @@ MARPIPELINE <- function(name,
 
     setwd(workdir) # change to working directory
 
-# Load data --------------------------------------------------------------------
+    # Load data --------------------------------------------------------------------
     if ("data" %in% marsteps) {
         message("MARPIPELINE loading genomic and geographic data ...")
         # genodata can be either margeno or a character pointing to gds file
         genodata <- switch(filetype,
-            text = text_parser(genofile, samp.fn = extra_file$samplefile, pos.fn = extra_file$posfile,
-                               ploidy = option_geno$ploidy),
+            text = text_parser(genofile,
+                samp.fn = extra_file$samplefile, pos.fn = extra_file$posfile,
+                ploidy = option_geno$ploidy
+            ),
             vcf = vcf_parser(genofile),
             plink = plink_parser(genofile)
         )
@@ -125,7 +129,7 @@ MARPIPELINE <- function(name,
         mapsdata <- lonlat_parser(lonlatfile)
     }
 
-# Filter data and construct genomaps object ------------------------------------
+    # Filter data and construct genomaps object ------------------------------------
     if ("gm" %in% marsteps) {
         message("MARPIPELINE constructing genomaps object ...")
         .required_objects("data", ofn, outfile) # requires output from "data" step
@@ -171,14 +175,16 @@ MARPIPELINE <- function(name,
         rm(tempgeno, tempmaps)
     }
 
-# Build SAR / SFS --------------------------------------------------------------
+    # Build SAR / SFS --------------------------------------------------------------
     if ("sfs" %in% marsteps) {
         message("MARPIPELINE fitting SAD models and calculating SFS ...")
         .required_objects("gm", ofn, outfile)
-        genosfs <- sfs(AC = .get_AC(gm$geno),
-                       N = length(gm$maps$sample.id),
-                       ploidy = gm$geno$ploidy,
-                       folded = option_sadsfs$folded)
+        genosfs <- sfs(
+            AC = .get_AC(gm$geno),
+            N = length(gm$maps$sample.id),
+            ploidy = gm$geno$ploidy,
+            folded = option_sadsfs$folded
+        )
         # fit SAD models
         marsad <- MARsad(gm = gm, sad_models = option_sadsfs$sad_models, folded = option_sadsfs$folded)
         message("SAD models AIC:")
@@ -188,7 +194,7 @@ MARPIPELINE <- function(name,
         print(sadsfs$statdf)
     }
 
-# MARsampling ------------------------------------------------------------------
+    # MARsampling ------------------------------------------------------------------
     if ("mar" %in% marsteps) {
         message("MARPIPELINE sampling the MAR distribution ...")
         .required_objects("gm", ofn, outfile) # requires output from "gm" step
@@ -196,8 +202,10 @@ MARPIPELINE <- function(name,
         # Create sampling
         mardflist <- lapply(option_marext$scheme, function(scheme) {
             message(paste0("Sampling scheme: ", scheme))
-            MARsampling(gm = gm, scheme = scheme, nrep = option_marext$nrep, xfrac = option_marext$xfrac,
-                        quorum = option_marext$quorum, animate = option_marext$animate, myseed = randseed)
+            MARsampling(
+                gm = gm, scheme = scheme, nrep = option_marext$nrep, xfrac = option_marext$xfrac,
+                quorum = option_marext$quorum, animate = option_marext$animate, myseed = randseed
+            )
         })
         names(mardflist) <- option_marext$scheme
 
@@ -206,7 +214,7 @@ MARPIPELINE <- function(name,
         names(marlist) <- option_marext$scheme
     }
 
-# MARextinction simulation -----------------------------------------------------
+    # MARextinction simulation -----------------------------------------------------
     if ("ext" %in% marsteps) {
         message("MARPIPELINE simulating extinction of distribution cells ...")
         .required_objects("gm", ofn, outfile) # requires output from "gm" step
@@ -223,7 +231,7 @@ MARPIPELINE <- function(name,
         names(extlist) <- option_marext$scheme
     }
 
-# Plotting of given steps ------------------------------------------------------
+    # Plotting of given steps ------------------------------------------------------
     # To avoid issues with file versions, only plot if relevant step is run
     if ("plot" %in% marsteps) {
         message("MARPIPELINE plotting ...")
@@ -253,7 +261,7 @@ MARPIPELINE <- function(name,
         }
     }
 
-# Save data and exit -----------------------------------------------------------
+    # Save data and exit -----------------------------------------------------------
     if (saveobj) {
         message("MARPIPELINE saving objects ...")
         for (ii in setdiff(marsteps, "plot")) {
@@ -320,7 +328,7 @@ MARPIPELINE <- function(name,
         obj <- ofn[[marstep]][ii]
         ofile <- outfile[[marstep]][ii]
 
-        if(!exists(obj, envir = parent.frame())) {
+        if (!exists(obj, envir = parent.frame())) {
             stopifnot(file.exists(ofile))
             message(paste0("loaded ", ofile, " as ", obj))
             load(ofile, envir = parent.frame())

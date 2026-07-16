@@ -80,7 +80,7 @@ MARsampling <-
             outdf$extent <- paste0("-", outdf$extent)
         } # mark reverse selections
         # set outdf as a marsamp class
-        class(outdf) <- c(class(outdf), "marsamp") # marsampling output class
+        class(outdf) <- c("marsamp", class(outdf)) # marsampling output class
         attr(outdf, "scheme") <- scheme
         return(outdf)
     }

@@ -56,7 +56,7 @@ chrposfile <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 # and automatically determine the map resolution following equation 12 in (Hengl 2006)
 # Optional: for alternative resolution and map projection, see Appendix S1: customize projection and map resolution
 mapsdata <- mar::lonlat_parser(lonlatfile)
-mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "EPSG:8857")
+mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "EPSG:8857") #should be able to get read of this line now!
 print(mapsdata)
 # Optional: to inspect the reference map created
 plot(mapsdata)

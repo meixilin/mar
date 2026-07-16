@@ -4,18 +4,18 @@
 \alias{expsfs}
 \title{Generate Expected Site Frequency Spectrum}
 \usage{
-expsfs(lenAC, N, ploidy, folded = TRUE, nozero = TRUE)
+expsfs(gm, folded = TRUE, nozero = TRUE)
 }
 \arguments{
+\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
+
+\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
+
 \item{lenAC}{Length of allele count vector. In other words, total number of SNPs surveyed.}
 
 \item{N}{Number of samples}
 
 \item{ploidy}{Ploidy level of the organism}
-
-\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
-
-\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
 }
 \value{
 An object of class "sfs" containing the expected site frequency spectrum

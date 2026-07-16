@@ -104,7 +104,7 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
     ploidy <- .get_genodata(gm$geno, "ploidy")
     # subset ids
     if (is.null(sampleid)) {
-        sampleid = 1:(dim(gm$geno$genotype)[2])
+        sampleid <- 1:(dim(gm$geno$genotype)[2])
     }
 
     # number of samples (need to scale by ploidy)
@@ -124,7 +124,7 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
         # total pairwise difference / total pairwise comparison
         thetapi <- sum(2 * AC * (xN - AC)) / sum(xN * (xN - 1))
         # Segregating sites / sum of all possible harmonic numbers of xN
-        thetaw <- M / sum(.Hn(xN-1))
+        thetaw <- M / sum(.Hn(xN - 1))
     } else {
         thetaw <- 0
         thetapi <- 0
@@ -133,10 +133,12 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
     E <- sum(AC > 0 & oAC == 0)
 
     # return a list
-    out <- list(N = N,
-                M = M,
-                E = E,
-                thetaw = thetaw,
-                thetapi = thetapi)
+    out <- list(
+        N = N,
+        M = M,
+        E = E,
+        thetaw = thetaw,
+        thetapi = thetapi
+    )
     return(out)
 }

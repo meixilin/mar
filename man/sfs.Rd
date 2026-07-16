@@ -4,18 +4,18 @@
 \alias{sfs}
 \title{Calculate Site Frequency Spectrum}
 \usage{
-sfs(AC, N, ploidy, folded = TRUE, nozero = TRUE)
+sfs(gm, folded = TRUE, nozero = TRUE)
 }
 \arguments{
+\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
+
+\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
+
 \item{AC}{Vector of allele counts}
 
 \item{N}{Number of samples}
 
 \item{ploidy}{Ploidy level of the organism}
-
-\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
-
-\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
 }
 \value{
 An object of class "sfs" containing the site frequency spectrum
