@@ -38,7 +38,7 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
 # Not sure if it makes sense
 .sadpred <- function(sadm, N, ploidy, folded) {
     sad <- sadm@sad
-    xN <- N*ploidy
+    xN <- N * ploidy
     S <- length(sadm@data$x) # length of AC
     J <- sum(sadm@data$x) # total number of individuals
     mycoef <- as.list(bbmle::coef(sadm))
@@ -50,8 +50,8 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
         mzsm = sads::pmzsm,
         weibull = stats::pweibull
     )
-    plist <- do.call(psad, c(list(q = 1:(xN-1)), mycoef)) # q = 1:(xN-1)
-    pbins <- c(plist,1) - c(0,plist)
+    plist <- do.call(psad, c(list(q = 1:(xN - 1)), mycoef)) # q = 1:(xN-1)
+    pbins <- c(plist, 1) - c(0, plist)
     stopifnot(sum(pbins) == 1) # sanity check
     raw_sfs <- c(0, pbins * S) # need to add zero as xN is the same as zero when folded
     sadsfs <- .new_sfs(raw_sfs, folded, nozero = TRUE)
@@ -71,20 +71,24 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     }
     # compare by logLik
     ll_list <- sapply(allsfs, function(model) ll_sfs(model = model, data = genosfs))
-    statdf <- data.frame(model = names(allsfs),
-                         logLik = unname(ll_list),
-                         stringsAsFactors = FALSE)
+    statdf <- data.frame(
+        model = names(allsfs),
+        logLik = unname(ll_list),
+        stringsAsFactors = FALSE
+    )
     # return list of statdf and allsfs
-    output <- list(sfs = allsfs, # list of sfs class objects
-                   statdf = statdf)
+    output <- list(
+        sfs = allsfs, # list of sfs class objects
+        statdf = statdf
+    )
     return(output)
 }
 
 # generate per-cell genotype table
 .genotype_bycell <- function(gm) {
-    cellids = gm$maps$cellid
-    ploidy = gm$geno$ploidy
-    geno = sapply(unique(cellids), function(g) {
+    cellids <- gm$maps$cellid
+    ploidy <- gm$geno$ploidy
+    geno <- sapply(unique(cellids), function(g) {
         matrixStats::rowMaxs(gm$geno$genotype, cols = which(cellids == g))
     })
     return(geno)
@@ -92,10 +96,10 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
 
 # SFS operations
 .foldsfs <- function(vect) {
-    flen = floor(length(vect)/2)
-    fvect = (vect + rev(vect))[1:flen]
-    if(length(vect) %% 2 == 1) {
-        fvect = c(fvect, vect[flen+1])
+    flen <- floor(length(vect) / 2)
+    fvect <- (vect + rev(vect))[1:flen]
+    if (length(vect) %% 2 == 1) {
+        fvect <- c(fvect, vect[flen + 1])
     }
     return(fvect)
 }
@@ -113,7 +117,7 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
         vect <- vect[-1] # always fold first
         names(vect) <- 1:length(vect)
     } else {
-        names(vect) <- 0:(length(vect)-1)
+        names(vect) <- 0:(length(vect) - 1)
     }
     class(vect) <- c(class(vect), "sfs")
     attr(vect, "folded") <- folded
@@ -143,7 +147,7 @@ sfs <- function(gm, folded = FALSE, nozero = TRUE) {
     N = length(gm$maps$sample.id)
     ploidy = gm$geno$ploidy
 
-    xN = N*ploidy
+    xN <- N * ploidy
     if (any(AC > xN)) {
         warning(paste0(sum(AC > xN), " SNPs had allele counts exceeding N*ploidy"))
     }
@@ -181,11 +185,11 @@ expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
 
 # sfs list to dataframe
 .sfsl2df <- function(sfsl) {
-    outdf = data.frame(matrix(nrow = length(sfsl[[1]]), ncol = length(sfsl) + 1), stringsAsFactors = FALSE)
-    colnames(outdf) = c("AC", names(sfsl))
-    outdf[,1] = as.integer(names(sfsl[[1]]))
+    outdf <- data.frame(matrix(nrow = length(sfsl[[1]]), ncol = length(sfsl) + 1), stringsAsFactors = FALSE)
+    colnames(outdf) <- c("AC", names(sfsl))
+    outdf[, 1] <- as.integer(names(sfsl[[1]]))
     for (ii in seq_along(sfsl)) {
-        outdf[, ii+1] = as.vector(sfsl[[ii]])
+        outdf[, ii + 1] <- as.vector(sfsl[[ii]])
     }
     return(outdf)
 }
@@ -193,9 +197,9 @@ expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
 # adapt it from dadi.Inference.ll (Original function available at Gutenkust et al. 2009)
 ..ll_per_bin <- function(model, data) {
     if (data == 0 | model == 0) {
-        out = 0
+        out <- 0
     } else {
-        out = - model + log(model) * data - lgamma(data + 1)
+        out <- -model + log(model) * data - lgamma(data + 1)
     }
     return(out)
 }
@@ -213,16 +217,16 @@ expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
 #'
 #' @examples
 #' # Calculate log-likelihood between model and data SFS
-#' model_sfs <- expsfs(lenAC=1000, N=50, ploidy=2)
-#' data_sfs <- sfs(AC=c(1,1,0,2,0,1,1,0,0,2,30), N=50, ploidy=2)
+#' model_sfs <- expsfs(lenAC = 1000, N = 50, ploidy = 2)
+#' data_sfs <- sfs(AC = c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30), N = 50, ploidy = 2)
 #' ll <- ll_sfs(model_sfs, data_sfs)
 ll_sfs <- function(model, data, missing_model_cutoff = 1e-6) {
     stopifnot("sfs" %in% c(class(model), class(data)))
     stopifnot(length(model) == length(data)) # same length
     stopifnot(all(names(model) == names(data))) # same entries
     # check for zeros in models
-    d0 = data[which(model == 0)]
-    if (sum(d0)/sum(data) > missing_model_cutoff) {
+    d0 <- data[which(model == 0)]
+    if (sum(d0) / sum(data) > missing_model_cutoff) {
         warning(paste0("In ", sprintf("%.2f%%", 100 * sum(d0) / sum(data)), " of data. Model is 0 where data is neither masked nor 0."))
     }
     ll <- sum(.ll_per_bin(model, data))

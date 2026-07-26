@@ -1,7 +1,8 @@
 .valid_lonlat <- function(lonlat) {
-    stopifnot(is.matrix(lonlat))
-    stopifnot(ncol(lonlat) == 2 & nrow(lonlat) > 0)
-    stopifnot(!any(is.na(lonlat)))
+    stopifnot("lonlat must be a matrix" = is.matrix(lonlat))
+    stopifnot("lonlat must be exactly 2 columns" = ncol(lonlat) == 2)
+    stopifnot("lonlat must not be empty" = nrow(lonlat) > 0)
+    stopifnot("lonlat cannot have missing values" = !any(is.na(lonlat)))
     return(invisible())
 }
 
