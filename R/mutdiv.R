@@ -20,7 +20,7 @@
 #' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
 #' div <- mutdiv.gridded(gm1001g, gmarea, bbox = c(1, 10, 2, 8))
 mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
-    stopifnot(length(bbox) == 4)
+    stopifnot("bbox must be length 4" = length(bbox) == 4)
     r1 <- bbox[1]
     r2 <- bbox[2]
     c1 <- bbox[3]

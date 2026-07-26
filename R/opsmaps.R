@@ -1,7 +1,8 @@
 .valid_lonlat <- function(lonlat) {
-    stopifnot(is.matrix(lonlat))
-    stopifnot(ncol(lonlat) == 2 & nrow(lonlat) > 0)
-    stopifnot(!any(is.na(lonlat)))
+    stopifnot("lonlat must be a matrix" = is.matrix(lonlat))
+    stopifnot("lonlat must be exactly 2 columns" = ncol(lonlat) == 2)
+    stopifnot("lonlat must not be empty" = nrow(lonlat) > 0)
+    stopifnot("lonlat cannot have missing values" = !any(is.na(lonlat)))
     return(invisible())
 }
 
@@ -47,7 +48,7 @@
 # bbox should be c(r1, r2, c1, c2).
 # TODO: speed TBD with just using extent_sample function
 .rowcol_cellid <- function(mm, bbox, revbbox = FALSE) {
-    stopifnot(length(bbox) == 4)
+    stopifnot("length of bbox must be 4" = length(bbox) == 4)
     # get the cells
     # cellFromRowColCombine returns the cell numbers obtained by the combination of all row and
     # column numbers supplied as arguments
@@ -67,7 +68,7 @@
 }
 
 .rowcol_extent <- function(mm, bbox) {
-    stopifnot(length(bbox) == 4)
+    stopifnot("length of bbox must be 4" = length(bbox) == 4)
     # create an extent from mm$samplemap
     # When x is a Raster* object, you can pass four additional arguments to crop the
     # extent: r1, r2, c1, c2, representing the first and last row and column number
