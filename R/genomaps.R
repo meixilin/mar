@@ -1,12 +1,18 @@
 # margeno class
 .new_margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploidy) {
     # create object (order determined by SeqArray output)
+    # 2026 update: add an allele count entry so sfs, .calc_theta can all use (if all NA, AC is 0)
+    AC = matrixStats::rowSums2(genotype, na.rm = TRUE)
+    if (any(AC == 0)) {
+        message(paste0("There are ", sum(AC == 0)," invariant sites in the genotype matrix"))
+    }
     obj <- list(
         sample.id = sample.id,
         variant.id = variant.id,
         position = position,
         chromosome = chromosome,
         genotype = genotype,
+        allele_count = AC,
         ploidy = ploidy
     )
     class(obj) <- c(class(obj), "margeno")
@@ -61,7 +67,8 @@
     )
     pts <- terra::vect(lonlat, type = "points", crs = mapcrs)
     rr <- terra::rasterize(pts, baser, fun = length)
-    return(rr)
+    wrr <- terra::wrap(rr, proxy = FALSE)
+    return(wrr)
 }
 
 # Constructor for marmaps class
@@ -76,6 +83,15 @@
     return(obj)
 }
 
+# accessor for the samplemap raster stored in a marmaps object.
+# samplemap is stored wrapped (PackedSpatRaster) so the object can be
+# serialized (save/saveRDS); unwrap it back to a live SpatRaster on read.
+# tolerant of already-unwrapped rasters for backward compatibility.
+.get_samplemap <- function(mm) {
+    sm <- mm$samplemap
+    if (inherits(sm, "PackedSpatRaster")) terra::unwrap(sm) else sm
+}
+
 # genomaps class
 # combine the margeno and marmaps objects
 .new_genomaps <- function(geno, maps) {
@@ -84,7 +100,6 @@
         maps = maps
     )
     class(obj) <- c(class(obj), "genomaps")
-    attr(obj, "genolen") <- .get_genodata(geno, "num.variant")
     return(obj)
 }
 
@@ -175,7 +190,7 @@ margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploid
 #'     stringsAsFactors = FALSE
 #' )
 #' marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8859", incrs = "EPSG:8859")
-marmaps <- function(lonlatdf, mapres, mapcrs, incrs = "EPSG:4326") {
+marmaps <- function(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326") {
     # unpack lonlatdf
     stopifnot(class(lonlatdf) == "data.frame" & ncol(lonlatdf) == 3)
     sample.id <- lonlatdf[[1]]
@@ -204,8 +219,11 @@ marmaps <- function(lonlatdf, mapres, mapcrs, incrs = "EPSG:4326") {
     samplemap <- .lonlat_raster(lonlat, lonlatr, mapres, mapcrs)
 
     # Get cell IDs
-    cellid <- terra::cellFromXY(samplemap, lonlat)
+    sm <- terra::unwrap(samplemap)
+    cellid <- terra::cellFromXY(sm, lonlat)
     stopifnot(!any(is.na(cellid))) # stop if lonlat outside of raster
+    # check that the cellid is the same as terra::cells
+    stopifnot('SpatRaster cellid not matching' = all(sort(unique(cellid)) == terra::cells(sm)))
 
     # Create object using constructor
     output <- .new_marmaps(

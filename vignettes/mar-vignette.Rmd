@@ -77,16 +77,6 @@ samplefile <- system.file("extdata", "1001g_accessions.txt", package = "mar")
 chrposfile <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 # Tips: for your own data, change the variables above to the corresponding filepaths
 
-# Read coordinates
-# Tips: lonlat_parser will assume the coordinates are longitude and latitude following ESPG: 4326 (WGS84)
-# and automatically determine the map resolution following equation 12 in (Hengl 2006)
-# Optional: for alternative resolution and map projection, see Appendix S1: customize projection and map resolution
-mapsdata <- mar::lonlat_parser(lonlatfile)
-mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "EPSG:8857")
-print(mapsdata)
-# Optional: to inspect the reference map created
-plot(mapsdata)
-
 # Read genotype
 # Optional: for vcf parsing, see Appendix S2: reading vcf files
 genodata <- mar::text_parser(
@@ -116,10 +106,8 @@ lonlatfile <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
 # Read coordinates
 # Tips: lonlat_parser will assume the coordinates are longitude and latitude following ESPG: 4326 (WGS84) by default
 # and automatically determine the map resolution following equation 12 in (Hengl 2006)
-mapsdata <- mar::lonlat_parser(lonlatfile)
+mapsdata <- lonlat_parser(lonlatfile, mapcrs = 'EPSG:8857')
 
-# To create an equal earth projection so each cell has the same area
-mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "EPSG:8857")
 print(mapsdata)
 # Optional: to inspect the reference map created
 plot(mapsdata)
@@ -136,8 +124,8 @@ After successful importing of genotypes and geographic data, it is now time to c
 object used by all downstream functions.
 
 ```{r genomaps}
-gm1001g <- genomaps(genodata, mapsdata)
-print(gm1001g)
+gm <- genomaps(genodata, mapsdata)
+save(gm, file = 'tempgm.rda')
 ```
 
 

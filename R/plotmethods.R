@@ -32,10 +32,9 @@
 #' @examples
 #' plot(gm1001g$maps)
 plot.marmaps <- function(x, ...) {
-    terra::plot(x$samplemap, plg = list(title = "# of samples"))
+    sm = .get_samplemap(x)
+    terra::plot(sm, plg = list(title = "# of samples"), ...)
     points(x$lonlat, pch = 20, col = "#D3D3D380")
-    # terra::plot(x$samplemap, add = T, legend.only = T, legend.mar = 3, legend.args = list(text = "n"))
-    # par(old_par)
     return(invisible())
 }
 

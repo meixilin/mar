@@ -29,18 +29,21 @@ MARsampling <-
         scheme <- match.arg(scheme)
         # if scheme is inwards, reverse the bounding box
         revbbox <- ifelse(scheme == "inwards", TRUE, FALSE)
-        # calculate and store raster area in the given gm$maps$samplemap
-        gmarea <- .areaofraster(gm$maps$samplemap)
-        # the x and y number of cells in gm$maps$samplemap
+        # unwrap the samplemap raster once for the terra operations below
+        sm <- .get_samplemap(gm$maps)
+        # calculate and store raster area in the given samplemap
+        gmarea <- .areaofraster(sm)
+        # the x and y number of cells in samplemap
         # y is Row is Lat. Selected by r1, r2.
         # x is Col is Lon. Selected by c1, c2.
-        latrange <- dim(gm$maps$samplemap)[1]
-        lonrange <- dim(gm$maps$samplemap)[2]
+        latrange <- dim(sm)[1]
+        lonrange <- dim(sm)[2]
         # the maximum size box can become
         minrange <- min(latrange, lonrange)
         # the point where most samples are available (for inwards / outwards sampling)
-        maxrc <- terra::where.max(gm$maps$samplemap) # can have multiple rows when tied
-        r0c0 <- terra::rowColFromCell(gm$maps$samplemap, maxrc[1, 'cell'])
+        # TODO: user specified central point
+        maxrc <- terra::where.max(sm) # can have multiple rows when tied
+        r0c0 <- terra::rowColFromCell(sm, maxrc[1, 'cell'])
         # find right stepsize
         mystep <- ifelse(minrange > 100, ceiling(minrange * xfrac), 1)
         sidesize <- seq(1, minrange, by = mystep)
@@ -181,7 +184,7 @@ MARsampling <-
         # sample bounding boxes
         # run sampling
         bblist <- .bbsample(ss, nrep, rvars, cvars, rcprob[[1]], rcprob[[2]])
-        # if need to have samples in all bounding boxes, rejection sampling
+        # TODO: cleanup? if need to have samples in all bounding boxes, rejection sampling
         if (quorum) {
             ncells <-
                 sapply(
@@ -237,8 +240,9 @@ MARsampling <-
 .animate_MARsampling <- function(gm, bblist, pause = 0.2) {
     grDevices::dev.flush()
     plot.marmaps(gm$maps)
+    sm <- .get_samplemap(gm$maps)
     for (ii in seq_along(bblist)) {
-        terra::plot(.rowcol_extent(gm$maps, bblist[[ii]]), add = T)
+        terra::plot(terra::ext(sm[bblist[[ii]][1:2], bblist[[ii]][3:4], drop = FALSE]), add = T, legend = FALSE)
         Sys.sleep(pause)
     }
 }

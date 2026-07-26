@@ -28,11 +28,14 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     }
     # match schemes (default to random)
     scheme <- match.arg(scheme)
-    # calculate and store raster area in the given gm$maps$samplemap
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    # unwrap the samplemap raster once for the terra operations below
+    sm <- .get_samplemap(gm$maps)
+    # calculate and store raster area in the given samplemap
+    gmarea <- .areaofraster(sm)
     # the point where most samples are available (for inwards / outwards sampling)
-    maxrc <- as.data.frame(terra::which.max(gm$maps$samplemap))
-    r0c0 <- c(maxrc$row[1], maxrc$col[1])
+    # TODO: user specified central point
+    maxrc <- terra::where.max(sm) # can have multiple rows when tied
+    r0c0 <- terra::rowColFromCell(sm, maxrc[1, 'cell'])
     # End same as MARsampling --------------------------------------------------
     extlist <- .extlist_sample(gm, xfrac, scheme, nrep, r0c0)
 
@@ -55,7 +58,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     outdf <- do.call(rbind, outlist)
 
     # set outdf as a marsamp class
-    class(outdf) <- c(class(outdf), "marextinct") # marextinction output class
+    class(outdf) <- c("marextinct", class(outdf)) # marextinction output class
     attr(outdf, "scheme") <- scheme
     return(outdf)
 }
@@ -96,7 +99,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
 # core sampling function
 .extlist_sample <- function(gm, xfrac, scheme, nrep, r0c0) {
     gridpresent <- sort(unique(gm$maps$cellid))
-    gridrowcol <- terra::rowColFromCell(gm$maps$samplemap, gridpresent)
+    gridrowcol <- terra::rowColFromCell(.get_samplemap(gm$maps), gridpresent)
     # find right stepsize
     mystep <- ifelse(length(gridpresent) > 100, ceiling(length(gridpresent) * xfrac), 1)
     rvars <- gridrowcol[, 1]
@@ -145,11 +148,11 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
 .animate_MARextinction <- function(gm, extl, pause = 0.2) {
     grDevices::dev.flush()
     plot.marmaps(gm$maps)
-    rr <- gm$maps$samplemap
-    terra::values(rr) <- NA
+    sm <- .get_samplemap(gm$maps)
+    terra::values(sm) <- NA
     for (ii in seq_along(extl)) {
-        rr[setdiff(gm$maps$cellid, extl[[ii]])] <- 1
-        terra::plot(rr, add = T, col = "black", legend = FALSE)
+        sm[setdiff(gm$maps$cellid, extl[[ii]])] <- 1
+        terra::plot(sm, add = T, col = "black", legend = FALSE)
         Sys.sleep(pause)
     }
 }

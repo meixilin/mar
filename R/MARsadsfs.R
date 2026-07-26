@@ -90,18 +90,6 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     return(geno)
 }
 
-# allele counts (revert to earlier)
-.get_AC <- function(gg) {
-    AC <- matrixStats::rowSums2(gg$genotype)
-    # stop if there are any NAs or warn if fully zero ACs (not a SNP in this dataset)
-    stopifnot(all(!is.na(AC)))
-    if (any(AC == 0)) {
-        warning(paste0("There are ", sum(AC == 0)," invariant sites in the genotype matrix"))
-        AC <- AC[AC != 0]
-    }
-    return(AC)
-}
-
 # SFS operations
 .foldsfs <- function(vect) {
     flen = floor(length(vect)/2)
@@ -149,8 +137,9 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
 #' allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
 #' sfs_result <- sfs(allele_counts, N=50, ploidy=2)
 
-sfs <- function(gm, folded = TRUE, nozero = TRUE) {
-    AC = .get_AC(gm$geno)
+# set folded = FALSE so the MAR sampling theory could work
+sfs <- function(gm, folded = FALSE, nozero = TRUE) {
+    AC = gm$geno$allele_count
     N = length(gm$maps$sample.id)
     ploidy = gm$geno$ploidy
 
@@ -179,7 +168,7 @@ sfs <- function(gm, folded = TRUE, nozero = TRUE) {
 #' # Generate expected SFS
 #' exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
 
-expsfs <- function(gm, folded = TRUE, nozero = TRUE) {
+expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
     N = length(gm$maps$sample.id)
     ploidy = gm$geno$ploidy
     xN = N*ploidy

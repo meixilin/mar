@@ -244,22 +244,24 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 #' Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
 #'
 #' @param lonlat.fn Path to input file (txt/csv/tsv, can be gzipped) containing coordinates. No missing values allowed.
+#' @inheritDotParams marmaps mapcrs mapres incrs
 #'
-#' @return A data frame containing sample IDs and their corresponding longitude/latitude coordinates.
+#' @return A marmaps object. See [marmaps()].
 #'         Returns error if coordinates contain missing values or incorrect number of columns.
+#' @seealso [marmaps()]
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Read coordinates from file
-#' coords <- lonlat_parser("sample_locations.txt")
+#' # Read coordinates from file, using an equal-area map projection
+#' coords <- lonlat_parser("sample_locations.txt", mapcrs = "EPSG:8857")
 #' }
-lonlat_parser <- function(lonlat.fn) {
+lonlat_parser <- function(lonlat.fn, ...) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
     stopifnot("Invalid file type. Must be txt, csv, or tsv" = any(sapply(txt.ext, function(xx) grepl(xx, lonlat.fn))))
     # read txt file
     lonlatdf <- .read_lonlat(lonlat.fn)
-    marmap <- marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8857")
+    marmap <- marmaps(lonlatdf, ...)
     return(marmap)
 }

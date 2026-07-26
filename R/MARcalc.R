@@ -1,6 +1,6 @@
 # calculate MAR relationship
 .Mtype <- c("M", "E", "thetaw", "thetapi")
-.Atype <- c("A", "Asq")
+.Atype <- c("A", "Asq", "N")
 
 #' Calculate the mutations-area relationship (MAR) using the power-law model
 #'
@@ -9,7 +9,7 @@
 #' and the area metric (e.g. total area, area squared).
 #'
 #' @param mardf A data frame with columns of diversity metric and area.
-#'        Output from \link{MARsampling} or \link{MARextinction}.
+#'        Output from \link{MARsampling}, \link{MARextinction} or \link{MARtheory}.
 #' @param Mtype The diversity metric to use. Default is "M" (richness), allowed values are `r toString(.Mtype)`.
 #' @param Atype The area metric to use. Default is "A" (area), allowed values are `r toString(.Atype)`.
 #'
