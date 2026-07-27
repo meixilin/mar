@@ -1,0 +1,195 @@
+---
+title: "The sampling theory behind MAR"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        toc_depth: 3
+vignette: >
+    %\VignetteIndexEntry{The sampling theory behind MAR}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+editor_options:
+    markdown:
+        wrap: 80
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    fig.align = "center",
+    out.width = "100%"
+)
+devtools::load_all()
+```
+
+# Why does the mutations-area relationship exists? 
+
+Analogous to the species-area relationship arising from the species-abundance distributions (SAD) (Tjørve et al. 2008), the mutations-area relationship arises from the site-frequency spectrum as as a sampling process.
+
+## Some assumptions and the example data
+
+We provide a simulated data that was generated using data-raw/gmexp blah scripts. 
+
+```{python, not run}
+Add the msprime code here. 
+```
+
+You can explore the data here: 
+
+```{r}
+laod gmexp.rda
+```
+
+Note that two key assumptions comes into play when we simulate the data. 
+
+1. individuals are randomly mating, so XX. 
+2. individuals are randomly distributed, so N ~ A (Preston) classical assumptions. 
+
+We need this later for the math. 
+
+
+## What is a site-frequency spectrum? 
+
+Introduce the variables, in a dataset with N samples, L sites, etc. 
+
+We summarize etc, so the x-axis is blah. 
+
+This is similar to the species-abundance distributions blah. 
+
+Caution for a caveat, although technically you can directly fit a species-abundance distribution to a SFS as they are all probability density. But the A key distinction between the SFS and the SAD is the sum of SAD entries is the total number of sampled individuals but the sum of SFS entries is the total number of mutations, which is not related to the total number of sampled individuals.
+To make a direct comparison to SAD, haplotype abundance distribution under the infinite-allele assumption would be more appropriate. 
+
+
+```{r}
+# generate the SFS for gmexp data. 
+```
+
+We do not care the shape of the SFS, in other words, the individuals can be under selection, or have demographic changes. which is why we simulate the exponential growth. 
+
+We can actually test that the shape of the SFS is not neutral with the neutral expectation we shipped. 
+
+```{r}
+
+```
+
+
+## How to build the MAR from a site-frequency spectrum? 
+
+Reiterate the assumptions. 
+
+Now we state the math but in an intuitive and summarizing way, so any undergraduate student taken statistics should be able to know. [link to the hard core math]
+
+
+
+```{}
+```
+
+
+# How does this work in our arabidopsis dataset?
+
+It breaks both assumptions. 
+
+```{r}
+the raw prediction that don't work and over estimates. 
+```
+
+## It acts as a haploid
+
+But if we make it haploid --> fix the first assumption. Theory works better.  
+
+```{r}
+generate haploid-like genomaps
+```
+
+Still it's not matching. 
+
+Plot the N ~ A. 
+
+## Now we move it around so it appears randomly located. 
+
+Plot the N ~ A again. 
+
+It matches perfectly. 
+
+```{}
+```
+
+
+# An important take-away: what does the z value capture?  
+
+In a realistic Three parts: 
+
+1. genotype abundance --> summarized by the SFS
+2. breeding structure --> since we are sampling individually and SFS summarize things by chromosome. when diploid (or polypoid) and inbreeding, SFS sampling breaks. 
+3. spatial structure --> summarized by the N ~ A plot 
+
+
+## If you are really into the math 
+
+When constructing a MAR from the $N \times \theta$ genotype matrix, we randomly sample an area: 
+
+1. $n$ chromosomes are selected randomly given individuals/chromosomes are randomly distributed spatially. 
+2. we want to tally the new total number of segregating sites $S$ in the sampled $n$ chromosomes.
+3. given that we know the allele frequency distribution $\sigma(k)$ of the large/full genotype matrix. 
+4. ultimately, we aim to construct the relationship between $S$ and $n$ (which correlate with area). 
+
+
+### $n = 1$ and $\theta = 1$
+
+In the simplest case of $n = 1$ and $\theta = 1$. 
+Only one allele is sequenced, with allele frequency $k$ out of $N$ total samples.
+Now, $S$ can only take values of 0 or 1, since it's a biallelic allele. 
+
+$$
+S \sim \text{Bernoulli}(k)
+$$
+
+### $n = 1$ and $\theta > 1$
+
+Now, when more than one allele is sequenced, $\theta > 1$. 
+The question becomes that: 
+
+Consider $\theta$ independent Bernoulli trials in which the success probability $p$ is $K/N$, where $K$ is a random variable of the number of alleles at each genomic site. 
+The distribution of $K$ is therefore described in the proportional site-frequency spectrum, which we denote as $K \sim \sigma(k)$. Per definition of SFS, we have $\sum_{1}^{N-1}\sigma(k) = 1$. 
+We aim to find the total number of "success" (having mutations) $S$, across the $\theta$ independent Bernoulli trials.
+
+Therefore, $S$ follows a binomial distribution with the marginal/unconditional success probability $\bar{p}$. 
+
+$$
+S\sim \operatorname{Binom}(\theta,\bar{p})
+$$
+
+### $n > 1$ and $\theta > 1$
+
+When more than one chromosome is sampled $n > 1$, the success probability at each genomic position $i$ is no longer the simple $p = K/N$. Rather, it becomes a hypergeometric distribution. 
+
+For example, in the $i$-th genomic position, there are $K$ mutations out of the $N$ total genotypes.
+The probability of sampling at least one mutation in $i$-th position in the $n$ samples, is therefore noted as:
+
+$$
+P= 1 - \frac{\binom{N-K}{n}}{\binom{N}{n}}
+$$
+$S$ is still a binomial distribution, therefore, the final expectation for $S$ given our assumptions is: 
+
+$$
+\boxed{E[S] = \theta\,\bar{p} = \theta\,\sum_{k=1}^N \sigma(k)\left(1-\frac{\binom{N-k}{n}}{\binom{N}{n}}\right)}
+$$
+$$
+E[M] = L\bar{q} = L\sum_{x=1}^{2N-1} \sigma(x)\left(1-\frac{\binom{2N-x}{2pA}}{\binom{N}{pA}}\right)
+$$
+We are not done yet, there is two other measures of genetic diversity from MARsampling we can predict.
+
+
+$$
+E[\theta_w] = \frac{1}{H_{2pA-1}}\sum_{x=1}^{2N-1} \sigma(x)\left(1-\frac{\binom{2N-x}{2pA}}{\binom{N}{pA}}\right)
+$$
+$$
+E[\theta_\pi] = \frac{2pA}{2pA-1} 2\sum_{x'=1}^{2pA-1}\sigma(x')\frac{x'}{2pA}(1-\frac{x'}{2pA})
+$$
+
+Therefore, the scaling relationship between $S$ and $n$ is only impacted by four factors: 
+$\theta,N,\sigma(k),\max(n)$
+
+
+But you don't have to worry about the math here. 
+

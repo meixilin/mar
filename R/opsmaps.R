@@ -12,6 +12,7 @@
     # check if cells' coefficient of variation too large (different area per cell)
     # not using any na.rm = TRUE here because aa should not have any NA in any cases
     cv <- terra::global(aa, "sd")[1,1] / terra::global(aa, "mean")[1,1] * 100
+    if (is.na(cv)) cv = 0 # TODO: seemed to be a bug in terra::global if all values are the same
     # if cv > tol/100, warn the variation
     if (cv > tol) {
         warning(paste("Given projection distorts area. Area coefficient of variation =", round(cv, 1), "%"))

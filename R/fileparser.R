@@ -127,7 +127,7 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     if (!is.null(samp.fn)) {
         sample.id <- .read_column(samp.fn)
     } else {
-        sample.id <- seq_len(ncol(genotype))
+        sample.id <- NULL
     }
     # read chromosome and position file if exists
     if (!is.null(pos.fn)) {
@@ -139,7 +139,7 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # create margeno object
     margeno <- margeno(
         sample.id = sample.id,
-        variant.id = seq_len(nrow(genotype)), # TODO not allow inputs for variant.id
+        variant.id = NULL, # TODO allow inputs for variant.id
         position = poslist[[2]],
         chromosome = poslist[[1]],
         genotype = genotype,
@@ -214,7 +214,7 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 
     margeno <- margeno(
         sample.id = sample.id,
-        variant.id = seq_len(n_var),
+        variant.id = NULL, # TODO: allow VCF variant id inputs
         position = position,
         chromosome = chromosome,
         genotype = genotype,

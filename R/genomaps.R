@@ -105,35 +105,43 @@
 
 #' Create a margeno object
 #'
-#' @param sample.id Character or integer or numeric vector of unique sample IDs
-#' @param variant.id Integer vector of unique variant IDs
-#' @param position Integer vector of variant positions. Or NULL.
-#' @param chromosome Character or integer vector of chromosome IDs. Or NULL.
 #' @param genotype Matrix of genotypes, where rows represent samples and columns represent variants. Each value represents the number of alternative alleles.
 #' @param ploidy Numeric value of ploidy. *Warning* ploidy other than 2 can be used, but result interpretation is not guaranteed.
+#' @param sample.id Character or integer or numeric vector of unique sample IDs.
+#'   Or NULL (the default), in which case samples are numbered from the genotype columns.
+#' @param variant.id Integer vector of unique variant IDs.
+#'   Or NULL (the default), in which case variants are numbered from the genotype rows.
+#' @param position Integer vector of variant positions. Or NULL.
+#' @param chromosome Character or integer vector of chromosome IDs. Or NULL.
 #'
 #' @return A margeno object
 #' @export
 #'
 #' @examples
-#' sample_id <- c("sample1", "sample2", "sample3")
-#' variant_id <- 1:4
-#' position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
-#' chromosome <- c("chr1", "chr1", "chr1", "chr2")
-#' position <- NULL
-#' chromosome <- NULL # if no position or chromosome
 #' genotype <- matrix(c(1, 2, 0, 0, 1, 1, 2, 0, 1, 2, 2, 1), nrow = 4, ncol = 3)
 #' ploidy <- 2
-#' margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
-margeno <- function(sample.id, variant.id, position, chromosome, genotype, ploidy) {
+#' # only genotype and ploidy are required
+#' margeno(genotype, ploidy)
+#'
+#' # sample.id, variant.id, position and chromosome are all optional
+#' margeno(genotype, ploidy,
+#'     sample.id = c("sample1", "sample2", "sample3"),
+#'     variant.id = 1:4,
+#'     position = as.integer(c(100, 200, 300, 400)), # position has to be integer
+#'     chromosome = c("chr1", "chr1", "chr1", "chr2")
+#' )
+margeno <- function(genotype, ploidy, sample.id = NULL, variant.id = NULL, position = NULL, chromosome = NULL) {
     # validate data class
-    stopifnot(class(sample.id) %in% c("character", "integer", "numeric"))
-    stopifnot(class(variant.id) == "integer")
+    stopifnot(class(sample.id) %in% c("character", "integer", "numeric") | is.null(sample.id))
+    stopifnot(class(variant.id) == "integer" | is.null(variant.id))
     stopifnot(class(position) == "integer" | is.null(position))
     stopifnot(class(chromosome) %in% c("character", "integer") | is.null(chromosome))
     stopifnot("matrix" %in% class(genotype))
     stopifnot(class(ploidy) == "numeric")
 
+    # if not provided, fill in sample.id and variant.id
+    if (is.null(sample.id)) sample.id <- seq_len(ncol(genotype))
+    if (is.null(variant.id)) variant.id <- seq_len(nrow(genotype))
     # validate data dimensions
     stopifnot(anyDuplicated(sample.id) == 0)
     stopifnot(anyDuplicated(variant.id) == 0)
@@ -255,14 +263,9 @@ marmaps <- function(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326") {
 #'
 #' @examples
 #' sample_id <- c("sample1", "sample2", "sample3")
-#' variant_id <- 1:4
-#' position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
-#' chromosome <- c("chr1", "chr1", "chr1", "chr2")
-#' position <- NULL
-#' chromosome <- NULL # if no position or chromosome
 #' genotype <- matrix(c(1, 2, 0, 0, 1, 1, 2, 0, 1, 2, 2, 1), nrow = 4, ncol = 3)
 #' ploidy <- 2
-#' geno <- margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
+#' geno <- margeno(genotype, ploidy, sample.id = sample_id)
 #'
 #' lonlatdf <- data.frame(
 #'     id = sample_id,

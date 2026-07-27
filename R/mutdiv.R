@@ -102,14 +102,16 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
     # number of called alleles (allows missing data now)
     xN <- (N - matrixStats::rowCounts(gm$geno$genotype, cols = sampleid, value = NA_integer_)) * ploidy
 
-    # segregating sites
+    # number of mutations (can be all alternative mutations)
     M <- sum(AC > 0)
+    # segregating sites (polymorphic in the sample)
+    M_seg <- sum(AC > 0 & AC < xN)
     # compute diversity, Theta Waterson and Theta Pi (pairwise)
-    if (sum(xN) > 1 & M > 0) {
+    if (any(xN > 1) & M > 0) {
         # total pairwise difference / total pairwise comparison
         thetapi <- sum(2 * AC * (xN - AC)) / sum(xN * (xN - 1))
-        # Segregating sites / sum of all possible harmonic numbers of xN
-        thetaw <- M / sum(.Hn(xN - 1))
+        # Segregating sites / sum of all possible harmonic numbers of xN (subset to never evaluate .Hn(-1))
+        thetaw <- M_seg / sum(.Hn(xN[xN > 0] - 1))
     } else {
         thetaw <- 0
         thetapi <- 0
