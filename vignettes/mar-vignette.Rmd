@@ -147,7 +147,7 @@ mardf
 # mardf is a marsamp object
 class(mardf)
 # plot the diversity-by-area sampling results (?mar::plot.marsamp)
-plot.marsamp(mardf)
+mar:::plot.marsamp(mardf)
 plot(mardf) # doesn't work but should work
 ```
 
@@ -183,7 +183,7 @@ summary(marfit_pi)
 c = unname(marfit_pi$par['c'])
 z = unname(marfit_pi$par['z'])
 # Plot the fit again
-plot.marsamp(mardf, c = c, z = z, Mtype = 'thetapi', Atype = 'Asq')
+mar:::plot.marsamp(mardf, c = c, z = z, Mtype = 'thetapi', Atype = 'Asq')
 ```
 
 For pipelining 
