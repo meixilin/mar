@@ -70,17 +70,3 @@ MARcalc <- function(mardf, Mtype = .Mtype, Atype = .Atype) {
 
     return(outdf)
 }
-
-.pipe_MARcalc <- function(mardf, verbose = TRUE) {
-    message(paste0("MAR built from scheme: ", attr(mardf, "scheme")))
-    MA <- expand.grid(M = .Mtype, A = .Atype, stringsAsFactors = FALSE)
-    mars <- apply(MA, 1, function(x) MARcalc(mardf, x[1], x[2]))
-    names(mars) <- apply(MA, 1, paste, collapse = "_")
-    marsuml <- lapply(mars, .marsummary)
-    output <- cbind(MA, do.call(rbind, lapply(marsuml, as.data.frame, stringsAsFactors = FALSE)))
-    if (verbose) {
-        print(output)
-    }
-    class(output) <- c(class(output), "marcalc")
-    return(output)
-}

@@ -1,12 +1,3 @@
-# helper functions
-.strip_ext <- function(filename, extensions) {
-    bn <- basename(filename)
-    matchext <- sapply(extensions, function(ext) grepl(paste0(ext, "$"), bn))
-    stopifnot("File extention does not match allowed extintions" = sum(matchext) == 1)
-    bn <- sub(paste0(extensions[matchext], "$"), "", bn)
-    return(bn)
-}
-
 .guess_delim <- function(firstline) {
     tab_count <- length(grep("\t", firstline, fixed = TRUE))
     comma_count <- length(grep(",", firstline, fixed = TRUE))
