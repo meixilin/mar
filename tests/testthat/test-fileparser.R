@@ -118,7 +118,7 @@ test_that("vcf_parser returns a correct data frame", {
 
 test_that("lonlat_parser works correctly", {
     # working case
-    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"))
+    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"), mapcrs ="EPSG:8857")
     lonlat <- data.frame(
         ID = c("Sample1", "Sample2"),
         LONGITUDE = c(-73.935242, -118.243683),

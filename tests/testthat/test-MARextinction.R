@@ -6,7 +6,7 @@ create_test_genomaps <- function() {
     position <- as.integer(c(100, 200, 300))
     chromosome <- c("1", "1", "2")
     genotype <- matrix(c(0,1,2,1,0,2,2,1,0,1,2,0), nrow=3, byrow=TRUE)
-    mg <- margeno(sample.id, variant.id, position, chromosome, genotype, ploidy=2)
+    mg <- margeno(genotype, ploidy = 2, sample.id, variant.id, position, chromosome)
 
     # Create spatial data
     lonlatdf <- data.frame(

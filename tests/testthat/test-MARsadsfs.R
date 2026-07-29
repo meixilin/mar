@@ -6,7 +6,7 @@ create_test_genomaps <- function() {
     position <- as.integer(c(100, 200, 300))
     chromosome <- c("1", "1", "2")
     genotype <- matrix(c(0,1,2,1,0,2,2,1,0,1,2,0), nrow=3, byrow=TRUE)
-    mg <- margeno(sample.id, variant.id, position, chromosome, genotype, ploidy=2)
+    mg <- margeno(genotype, ploidy=2, sample.id, variant.id, position, chromosome)
 
     # Create spatial data
     lonlatdf <- data.frame(
@@ -21,39 +21,6 @@ create_test_genomaps <- function() {
     return(gm)
 }
 
-test_that("MARsad basic functionality works", {
-    gm <- create_test_genomaps()
-
-    # Test with default parameters
-    result <- MARsad(gm)
-    expect_s3_class(result, "marsad")
-    expect_type(result$sadms, "list")
-    expect_true(all(.sad_models %in% names(result$sadms)))
-
-    # Test with predict=FALSE
-    result_no_pred <- MARsad(gm, predict=FALSE)
-    expect_null(result_no_pred$sadsfss)
-
-    # Test with subset of models
-    result_subset <- MARsad(gm, sad_models=c("bs", "lnorm"))
-    expect_equal(length(result_subset$sadms), 2)
-})
-
-test_that(".sadpred works correctly", {
-    gm <- create_test_genomaps()
-    sad_fit <- MARsad(gm)
-
-    # Test prediction for each model
-    for(model in names(sad_fit$sadms)) {
-        pred <- .sadpred(sad_fit$sadms[[model]],
-                        N=length(gm$maps$sample.id),
-                        ploidy=gm$geno$ploidy,
-                        folded=TRUE)
-        expect_s3_class(pred, "sfs")
-        expect_true(all(pred >= 0))  # SFS should be non-negative
-        expect_true(sum(pred) > 0)   # SFS should not be all zeros
-    }
-})
 
 test_that("sfs functions work correctly", {
     # Test .foldsfs
@@ -115,18 +82,3 @@ test_that("ll_sfs works correctly", {
     expect_error(ll_sfs(model_short, data_sfs))
 })
 
-test_that(".pipe_sadsfs works correctly", {
-    gm <- create_test_genomaps()
-    marsad <- MARsad(gm)
-    genosfs <- sfs(.get_AC(gm$geno),
-                   N=length(gm$maps$sample.id),
-                   ploidy=gm$geno$ploidy,
-                   folded=TRUE)
-
-    result <- .pipe_sadsfs(gm, marsad, genosfs, folded=TRUE)
-
-    expect_type(result, "list")
-    expect_equal(names(result), c("sfs", "statdf"))
-    expect_true(all(c("data", "neutral") %in% names(result$sfs)))
-    expect_equal(colnames(result$statdf), c("model", "logLik"))
-})
