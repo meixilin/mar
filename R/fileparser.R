@@ -127,7 +127,7 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     if (!is.null(samp.fn)) {
         sample.id <- .read_column(samp.fn)
     } else {
-        sample.id <- seq_len(ncol(genotype))
+        sample.id <- NULL
     }
     # read chromosome and position file if exists
     if (!is.null(pos.fn)) {
@@ -139,7 +139,7 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # create margeno object
     margeno <- margeno(
         sample.id = sample.id,
-        variant.id = seq_len(nrow(genotype)), # TODO not allow inputs for variant.id
+        variant.id = NULL, # TODO allow inputs for variant.id
         position = poslist[[2]],
         chromosome = poslist[[1]],
         genotype = genotype,
@@ -214,7 +214,7 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 
     margeno <- margeno(
         sample.id = sample.id,
-        variant.id = seq_len(n_var),
+        variant.id = NULL, # TODO: allow VCF variant id inputs
         position = position,
         chromosome = chromosome,
         genotype = genotype,
@@ -244,22 +244,24 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 #' Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
 #'
 #' @param lonlat.fn Path to input file (txt/csv/tsv, can be gzipped) containing coordinates. No missing values allowed.
+#' @inheritDotParams marmaps mapcrs mapres incrs
 #'
-#' @return A data frame containing sample IDs and their corresponding longitude/latitude coordinates.
+#' @return A marmaps object. See [marmaps()].
 #'         Returns error if coordinates contain missing values or incorrect number of columns.
+#' @seealso [marmaps()]
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Read coordinates from file
-#' coords <- lonlat_parser("sample_locations.txt")
+#' # Read coordinates from file, using an equal-area map projection
+#' coords <- lonlat_parser("sample_locations.txt", mapcrs = "EPSG:8857")
 #' }
-lonlat_parser <- function(lonlat.fn) {
+lonlat_parser <- function(lonlat.fn, ...) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
     stopifnot("Invalid file type. Must be txt, csv, or tsv" = any(sapply(txt.ext, function(xx) grepl(xx, lonlat.fn))))
     # read txt file
     lonlatdf <- .read_lonlat(lonlat.fn)
-    marmap <- marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8857")
+    marmap <- marmaps(lonlatdf, ...)
     return(marmap)
 }

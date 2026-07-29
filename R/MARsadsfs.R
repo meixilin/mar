@@ -62,7 +62,7 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     AC <- .get_AC(gm$geno)
     N <- length(gm$maps$sample.id)
     ploidy <- gm$geno$ploidy
-    neutralsfs <- expsfs(lenAC = length(AC), N = N, ploidy = ploidy, folded = folded)
+    neutralsfs <- expsfs(gm = gm, folded = folded)
     allsfs <- list(genosfs, neutralsfs)
     names(allsfs) <- c("data", "neutral")
     # if SAD predicted
@@ -92,18 +92,6 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
         matrixStats::rowMaxs(gm$geno$genotype, cols = which(cellids == g))
     })
     return(geno)
-}
-
-# allele counts (revert to earlier)
-.get_AC <- function(gg) {
-    AC <- matrixStats::rowSums2(gg$genotype)
-    # stop if there are any NAs or warn if fully zero ACs (not a SNP in this dataset)
-    stopifnot("Allele counts cannot have missing values" = all(!is.na(AC)))
-    if (any(AC == 0)) {
-        warning(paste0("There are ", sum(AC == 0), " invariant sites in the genotype matrix"))
-        AC <- AC[AC != 0]
-    }
-    return(AC)
 }
 
 # SFS operations
@@ -150,12 +138,14 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
 #'
 #' @examples
 #' # Calculate SFS from allele counts
-#' allele_counts <- c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30)
-#' sfs_result <- sfs(allele_counts, N = 50, ploidy = 2)
-sfs <- function(gm, folded = TRUE, nozero = TRUE) {
-    AC <- .get_AC(gm$geno)
-    N <- length(gm$maps$sample.id)
-    ploidy <- gm$geno$ploidy
+#' allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
+#' sfs_result <- sfs(allele_counts, N=50, ploidy=2)
+
+# set folded = FALSE so the MAR sampling theory could work
+sfs <- function(gm, folded = FALSE, nozero = TRUE) {
+    AC = gm$geno$allele_count
+    N = length(gm$maps$sample.id)
+    ploidy = gm$geno$ploidy
 
     xN <- N * ploidy
     if (any(AC > xN)) {
@@ -180,14 +170,15 @@ sfs <- function(gm, folded = TRUE, nozero = TRUE) {
 #'
 #' @examples
 #' # Generate expected SFS
-#' exp_sfs <- expsfs(lenAC = 1000, N = 100, ploidy = 2)
-expsfs <- function(gm, folded = TRUE, nozero = TRUE) {
-    N <- length(gm$maps$sample.id)
-    ploidy <- gm$geno$ploidy
-    xN <- N * ploidy
-    lenAC <- nrow(gm$geno$genotype)
-    theta <- lenAC / .Hn(xN) # scale theta
-    expsfs <- c(0, theta / (1:xN)) # need to add 0 as xN is the same as zero when folded
+#' exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
+
+expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
+    N = length(gm$maps$sample.id)
+    ploidy = gm$geno$ploidy
+    xN = N*ploidy
+    lenAC = nrow(gm$geno$genotype)
+    theta = lenAC / .Hn(xN) # scale theta
+    expsfs = c(0, theta/(1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)
 }

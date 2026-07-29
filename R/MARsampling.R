@@ -29,18 +29,26 @@ MARsampling <-
         scheme <- match.arg(scheme)
         # if scheme is inwards, reverse the bounding box
         revbbox <- ifelse(scheme == "inwards", TRUE, FALSE)
-        # calculate and store raster area in the given gm$maps$samplemap
-        gmarea <- .areaofraster(gm$maps$samplemap)
-        # the x and y number of cells in gm$maps$samplemap
+        # unwrap the samplemap raster once for the terra operations below
+        sm <- .get_samplemap(gm$maps)
+        # calculate and store raster area in the given samplemap
+        gmarea <- .areaofraster(sm)
+        # the x and y number of cells in samplemap
         # y is Row is Lat. Selected by r1, r2.
         # x is Col is Lon. Selected by c1, c2.
-        latrange <- dim(gm$maps$samplemap)[1]
-        lonrange <- dim(gm$maps$samplemap)[2]
+        latrange <- dim(sm)[1]
+        lonrange <- dim(sm)[2]
         # the maximum size box can become
         minrange <- min(latrange, lonrange)
         # the point where most samples are available (for inwards / outwards sampling)
-        maxrc <- as.data.frame(terra::which.max(gm$maps$samplemap))
-        r0c0 <- c(maxrc$row[1], maxrc$col[1])
+        # TODO: user specified central point
+        maxrc <- terra::where.max(sm) # can have multiple rows when tied
+        r0c0 <- terra::rowColFromCell(sm, maxrc[1, 'cell'])
+        # calculate and store non-empty cell once, as a summed-area table for O(1) box occupancy queries
+        pres <- !is.na(terra::as.matrix(sm, wide = TRUE))
+        cumocc <- apply(pres, 2, cumsum)
+        cumocc <- t(apply(cumocc, 1, cumsum))
+        cumocc <- rbind(0L, cbind(0L, cumocc))
         # find right stepsize
         mystep <- ifelse(minrange > 100, ceiling(minrange * xfrac), 1)
         sidesize <- seq(1, minrange, by = mystep)
@@ -49,14 +57,14 @@ MARsampling <-
         bboxlist <- lapply(
             sidesize,
             .bblist_sample,
-            gm = gm,
             scheme = scheme,
             nrep = nrep,
             quorum = quorum,
             latrange = latrange,
             lonrange = lonrange,
             r0c0 = r0c0,
-            revbbox = revbbox
+            revbbox = revbbox,
+            cumocc = cumocc
         )
 
         # if need to plot
@@ -70,6 +78,7 @@ MARsampling <-
             mutdiv.gridded,
             gm = gm,
             gmarea = gmarea,
+            sm = sm,
             revbbox = revbbox
         )
         # use rbind to avoid importing dplyr
@@ -126,7 +135,8 @@ MARsampling <-
 }
 
 # sample bounding boxes
-.bbsample <- function(ss, nrep, rvars, cvars, rprob, cprob) {
+# when quorum, restrict sampling jointly to boxes with valid == TRUE (matrix lookup from the summed-area table)
+.bbsample <- function(ss, nrep, rvars, cvars, rprob, cprob, quorum, valid) {
     if (length(rvars) == 0 || length(cvars) == 0) {
         return(list())
     }
@@ -137,9 +147,24 @@ MARsampling <-
     if (!is.null(cprob) && length(cprob) != length(cvars)) {
         cprob <- NULL
     }
-    # allow replacement, so that the probability is respected
-    r1 <- sample(rvars, size = nrep, prob = rprob, replace = TRUE)
-    c1 <- sample(cvars, size = nrep, prob = cprob, replace = TRUE)
+
+    if (quorum) {
+        if (!any(valid)) {
+            warning("Cannot fulfill quorum, try set quorum = FALSE")
+            return(list())
+        }
+        rp <- if (is.null(rprob)) rep(1, length(rvars)) else rprob
+        cp <- if (is.null(cprob)) rep(1, length(cvars)) else cprob
+        probmat <- outer(rp, cp) * valid
+        idx <- sample.int(length(rvars) * length(cvars), size = nrep, prob = as.vector(probmat), replace = TRUE)
+        rc <- arrayInd(idx, dim(probmat))
+        r1 <- rvars[rc[, 1]]
+        c1 <- cvars[rc[, 2]]
+    } else {
+        # allow replacement, so that the probability is respected
+        r1 <- sample(rvars, size = nrep, prob = rprob, replace = TRUE)
+        c1 <- sample(cvars, size = nrep, prob = cprob, replace = TRUE)
+    }
     r2 <- r1 + ss - 1
     c2 <- c1 + ss - 1
 
@@ -153,14 +178,14 @@ MARsampling <-
 # core sampling function
 .bblist_sample <-
     function(ss,
-             gm,
              scheme,
              nrep,
              quorum,
              latrange,
              lonrange,
              r0c0,
-             revbbox) {
+             revbbox,
+             cumocc) {
         # at this sidesize, the available row and column numbers
         # TODO: assumes row = 1, col = 1 of raster is northwest corner.
         # Add row, go south. Add col, go east.
@@ -178,55 +203,17 @@ MARsampling <-
             southnorth = .pole_prob(rvars, from = "S"),
             northsouth = .pole_prob(rvars, from = "N")
         )
-        # sample bounding boxes
-        # run sampling
-        bblist <- .bbsample(ss, nrep, rvars, cvars, rcprob[[1]], rcprob[[2]])
-        # if need to have samples in all bounding boxes, rejection sampling
+        # matrix lookup: occupancy count for every (r1, c1) box of this size, via the summed-area table cumocc
+        valid <- NULL
         if (quorum) {
-            ncells <-
-                sapply(
-                    lapply(
-                        bblist,
-                        .rowcol_cellid,
-                        mm = gm$maps,
-                        revbbox = revbbox
-                    ),
-                    length
-                )
-            ntry <- 0
-            nnrep <- min(nrep * 5, min(latrange, lonrange) - 1)
-            while (any(ncells == 0) & ntry < 50) {
-                tbblist <-
-                    .bbsample(ss, nrep = nnrep, rvars, cvars, rcprob[[1]], rcprob[[2]])
-                tncells <-
-                    sapply(
-                        lapply(
-                            tbblist,
-                            .rowcol_cellid,
-                            mm = gm$maps,
-                            revbbox = revbbox
-                        ),
-                        length
-                    )
-                nnewbb <- min(sum(tncells > 0), sum(ncells == 0))
-                bbids <- which(ncells == 0)[nnewbb]
-                bblist[bbids] <- tbblist[tncells > 0][nnewbb]
-                ncells <-
-                    sapply(
-                        lapply(
-                            bblist,
-                            .rowcol_cellid,
-                            mm = gm$maps,
-                            revbbox = revbbox
-                        ),
-                        length
-                    )
-                ntry <- ntry + 1
+            countmat <- cumocc[rvars + ss, cvars + ss] - cumocc[rvars, cvars + ss] - cumocc[rvars + ss, cvars] + cumocc[rvars, cvars]
+            if (revbbox) {
+                countmat <- cumocc[nrow(cumocc), ncol(cumocc)] - countmat
             }
-            if (ntry >= 50) {
-                warning("Cannot fulfill quorum, try set quorum = FALSE")
-            }
+            valid <- countmat > 0
         }
+        # sample bounding boxes; when quorum, sampling is restricted to valid boxes jointly
+        bblist <- .bbsample(ss, nrep, rvars, cvars, rcprob[[1]], rcprob[[2]], quorum, valid)
         # # check for duplicates (some sampling method generate duplicates)
         # if (any(duplicated(bblist)))
         #     warning('Sampling generated duplicated bounding boxes')
@@ -236,12 +223,10 @@ MARsampling <-
 # animate the sampling results
 .animate_MARsampling <- function(gm, bblist, pause = 0.2) {
     grDevices::dev.flush()
-    terra::plot(gm$maps)
+    plot.marmaps(gm$maps)
+    sm <- .get_samplemap(gm$maps)
     for (ii in seq_along(bblist)) {
-        terra::plot(.rowcol_extent(gm$maps, bblist[[ii]]),
-            add = T,
-            col = "black"
-        )
+        terra::plot(terra::ext(sm[bblist[[ii]][1:2], bblist[[ii]][3:4], drop = FALSE]), add = T, legend = FALSE)
         Sys.sleep(pause)
     }
 }

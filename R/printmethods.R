@@ -19,11 +19,10 @@ print.margeno <- function(x, ...) {
     cat("    ploidy: ", x$ploidy, "\n")
     cat("\n")
     cat("head of variantid, position, chromosome, genotype:\n")
-    AC <- rowSums(head(x$genotype))
     df <- cbind(head(data.frame(variant.id = x$variant.id,
                                 position = .null_check(x$position),
-                                chromosome = .null_check(x$chromosome))),
-                AC,
+                                chromosome = .null_check(x$chromosome),
+                                AC = x$allele_count)),
                 x$genotype[1:min(6, nrow(x$genotype)),1:min(6, ncol(x$genotype))])
     colnames(df)[5:length(colnames(df))] <- head(x$sample.id)
     print(df)

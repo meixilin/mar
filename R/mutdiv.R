@@ -19,24 +19,16 @@
 #' # Calculate mutation diversity in a 10x10 grid region
 #' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
 #' div <- mutdiv.gridded(gm1001g, gmarea, bbox = c(1, 10, 2, 8))
-mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
-    stopifnot("bbox must be length 4" = length(bbox) == 4)
-    r1 <- bbox[1]
-    r2 <- bbox[2]
-    c1 <- bbox[3]
-    c2 <- bbox[4]
-    nrow <- r2 - r1 + 1
-    ncol <- c2 - c1 + 1
-    resrow <- terra::res(gm$maps$samplemap)[1]
-    rescol <- terra::res(gm$maps$samplemap)[2]
-    # calculate area by size of bounding box
-    Asq <- .areaofsquare(nrow, ncol, resrow, rescol)
+mutdiv.gridded <- function(gm, gmarea, sm, bbox, revbbox = FALSE) {
+    stopifnot('Bounding box should be length of 4' = length(bbox) == 4)
+    # calculate area by bounding box using gmarea (so units are interpretable at km)
+    Asq <- sum(gmarea[bbox[1]:bbox[2], bbox[3]:bbox[4]])
     # if reverse bounding box
     if (revbbox) {
-        Asq <- .areaofsquare(dim(gm$maps$samplemap)[1], dim(gm$maps$samplemap)[2], resrow, rescol) - Asq
+        Asq <- terra::global(gmarea, fun = "sum", na.rm = TRUE)[1, 1] - Asq
     }
     # locate cellids from bbox
-    cellids <- .rowcol_cellid(gm$maps, bbox, revbbox = revbbox)
+    cellids <- .rowcol_cellid(sm, bbox, revbbox = revbbox)
     out <- .mutdiv.cellids(gm, gmarea, cellids, Asq)
     return(out)
 }
@@ -57,7 +49,6 @@ mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
 #'   \item{thetaw}{Watterson's theta estimate}
 #'   \item{thetapi}{Pi (pairwise) diversity estimate}
 #'   \item{A}{Total area with data}
-#'   \item{Asq}{Area of the cells being analyzed}
 #' @export
 #'
 #' @examples
@@ -66,18 +57,15 @@ mutdiv.gridded <- function(gm, gmarea, bbox, revbbox = FALSE) {
 #' cell_ids <- c(613, 726, 727)
 #' div <- mutdiv.cells(gm1001g, gmarea, cellids = cell_ids)
 mutdiv.cells <- function(gm, gmarea, cellids) {
-    resrow <- terra::res(gm$maps$samplemap)[1]
-    rescol <- terra::res(gm$maps$samplemap)[2]
-    # calculate area by size of bounding box
-    Asq <- .areaofsquare(length(cellids), ncol = 1, resrow, rescol)
-    out <- .mutdiv.cellids(gm, gmarea, cellids, Asq)
+    # Not calculating Asq as it is very similar to A in MARextinction settings
+    out <- .mutdiv.cellids(gm, gmarea, cellids, NULL)
     return(out)
 }
 
 .mutdiv.cellids <- function(gm, gmarea, cellids, Asq) {
     # if no cells
     if (length(cellids) == 0) {
-        out <- list(N = NA, M = NA, E = NA, thetaw = NA, thetapi = NA, A = NA, Asq = Asq)
+        out <- list(N = NA, M = NA, E = NA, thetaw = NA, thetapi = NA, A = NA)
     } else {
         # calculate area by filled raster
         A <- sum(gmarea[cellids])
@@ -86,11 +74,11 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
         # calculate genetic diversity
         out <- append(
             .calc_theta(gm, sampleids),
-            list(
-                A = A,
-                Asq = Asq
-            )
-        )
+            list(A = A))
+    }
+    # Asq will be appended when called from mutdiv.gridded
+    if (!is.null(Asq)) {
+        out <- append(out, list(Asq = Asq))
     }
     return(out)
 }
@@ -99,9 +87,7 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
 # ploidy does not matter here. although > diploid is not well-defined.
 # TODO: allow L calculations
 .calc_theta <- function(gm, sampleid = NULL) {
-    # get length of genome
-    L <- attr(gm, "genolen")
-    ploidy <- .get_genodata(gm$geno, "ploidy")
+    ploidy <- gm$geno$ploidy
     # subset ids
     if (is.null(sampleid)) {
         sampleid <- 1:(dim(gm$geno$genotype)[2])
@@ -109,22 +95,23 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
 
     # number of samples (need to scale by ploidy)
     N <- length(sampleid) # dim(ingeno)[1]
-    xN <- N * ploidy
 
     AC <- matrixStats::rowSums2(gm$geno$genotype, cols = sampleid, na.rm = TRUE)
-    oAC <- matrixStats::rowSums2(gm$geno$genotype, cols = -sampleid, na.rm = TRUE)
+    oAC <- gm$geno$allele_count - AC
 
     # number of called alleles (allows missing data now)
     xN <- (N - matrixStats::rowCounts(gm$geno$genotype, cols = sampleid, value = NA_integer_)) * ploidy
 
-    # segregating sites
+    # number of mutations (can be all alternative mutations)
     M <- sum(AC > 0)
+    # segregating sites (polymorphic in the sample)
+    M_seg <- sum(AC > 0 & AC < xN)
     # compute diversity, Theta Waterson and Theta Pi (pairwise)
-    if (sum(xN) > 1 & M > 0) {
+    if (any(xN > 1) & M > 0) {
         # total pairwise difference / total pairwise comparison
         thetapi <- sum(2 * AC * (xN - AC)) / sum(xN * (xN - 1))
-        # Segregating sites / sum of all possible harmonic numbers of xN
-        thetaw <- M / sum(.Hn(xN - 1))
+        # Segregating sites / sum of all possible harmonic numbers of xN (subset to never evaluate .Hn(-1))
+        thetaw <- M_seg / sum(.Hn(xN[xN > 0] - 1))
     } else {
         thetaw <- 0
         thetapi <- 0
