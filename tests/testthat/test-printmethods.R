@@ -6,7 +6,7 @@ create_print_margeno <- function() {
     chromosome <- c("1", "2")
     genotype <- matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE)
     ploidy <- 2
-    margeno(sample.id, variant.id, position, chromosome, genotype, ploidy)
+    margeno(genotype, ploidy, sample.id, variant.id, position, chromosome)
 }
 
 create_print_marmaps <- function() {

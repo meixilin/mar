@@ -6,7 +6,7 @@ create_mock_margeno <- function() {
     chromosome <- c("1", "2")
     genotype <- matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE)
     ploidy <- 2
-    return(margeno(sample.id, variant.id, position, chromosome, genotype, ploidy))
+    return(margeno(genotype, ploidy, sample.id, variant.id, position, chromosome))
 }
 
 create_mock_marmaps <- function() {
@@ -54,7 +54,7 @@ test_that("marmaps class works correctly", {
     mm <- create_mock_marmaps()
     expect_s3_class(mm, "marmaps")
     expect_equal(length(mm$sample.id), 3)
-    expect_true(inherits(mm$samplemap, "SpatRaster"))
+    expect_true(inherits(mm$samplemap, "PackedSpatRaster"))
 
     # Test auto resolution calculation
     lonlatdf <- data.frame(
@@ -63,7 +63,8 @@ test_that("marmaps class works correctly", {
         latitude = c(40.73, 34.05)
     )
     mm2 <- marmaps(lonlatdf, mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84")
-    expect_true(is.numeric(terra::values(mm2$samplemap)))
+    r <- terra::unwrap(mm2$samplemap)
+    expect_true(is.numeric(terra::values(r)))
 })
 
 test_that("genomaps class works correctly", {

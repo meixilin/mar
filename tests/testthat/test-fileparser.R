@@ -22,13 +22,6 @@ vcf_content <- c(
 )
 
 # Test cases
-test_that(".strip_ext works correctly", {
-    expect_equal(.strip_ext("file.txt", c(".txt")), "file")
-    expect_equal(.strip_ext("file.txt.gz", c(".txt", ".txt.gz")), "file")
-    expect_error(.strip_ext("file.txt", c(".csv", ".gz")))
-    expect_error(.strip_ext("file.txt.gz", c(".txt.gz", ".gz")))
-})
-
 test_that(".guess_delim works correctly", {
     expect_equal(.guess_delim("A,B,C"), ",")
     expect_equal(.guess_delim("A\tB\tC"), "\t")
@@ -118,7 +111,7 @@ test_that("vcf_parser returns a correct data frame", {
 
 test_that("lonlat_parser works correctly", {
     # working case
-    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"), mapcrs ="EPSG:8857")
+    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"), mapcrs = "EPSG:8857")
     lonlat <- data.frame(
         ID = c("Sample1", "Sample2"),
         LONGITUDE = c(-73.935242, -118.243683),

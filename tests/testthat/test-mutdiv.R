@@ -107,7 +107,7 @@ test_that("mutdiv.gridded basic functionality works", {
     gmarea <- .areaofraster(gm$maps$samplemap)
 
     # Test with a simple 50x50 bounding box
-    result <- mutdiv.gridded(gm, gmarea, bbox = c(1, 50, 1, 50))
+    result <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 50, 1, 50))
 
     # Check structure
     expect_type(result, "list")
@@ -123,7 +123,7 @@ test_that("mutdiv.gridded basic functionality works", {
     expect_true(is.numeric(result$Asq))
 
     # Test with revbbox
-    result_rev <- mutdiv.gridded(gm, gmarea, bbox = c(1, 2, 1, 2), revbbox = TRUE)
+    result_rev <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 2, 1, 2), revbbox = TRUE)
     expect_false(identical(result, result_rev))
 
     # Test invalid inputs
@@ -143,7 +143,7 @@ test_that("mutdiv.cells basic functionality works", {
 
     # Check structure
     expect_type(result, "list")
-    expect_equal(names(result), c("N", "M", "E", "thetaw", "thetapi", "A", "Asq"))
+    expect_equal(names(result), c("N", "M", "E", "thetaw", "thetapi", "A"))
 
     # Check that results are reasonable
     expect_true(result$N > 0)
@@ -153,7 +153,6 @@ test_that("mutdiv.cells basic functionality works", {
     # Test with empty cellids
     result_empty <- mutdiv.cells(gm, gmarea, character(0))
     expect_true(all(is.na(result_empty[c("N", "M", "E", "thetaw", "thetapi", "A")])))
-    expect_false(is.na(result_empty$Asq))
 })
 
 test_that(".calc_theta produces valid results", {

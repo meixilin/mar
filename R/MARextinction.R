@@ -34,8 +34,9 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     gmarea <- .areaofraster(sm)
     # the point where most samples are available (for inwards / outwards sampling)
     # TODO: user specified central point
+    sm <- .as_spatraster(sm)
     maxrc <- terra::where.max(sm) # can have multiple rows when tied
-    r0c0 <- terra::rowColFromCell(sm, maxrc[1, 'cell'])
+    r0c0 <- terra::rowColFromCell(sm, maxrc[1, "cell"])
     # End same as MARsampling --------------------------------------------------
     extlist <- .extlist_sample(gm, xfrac, scheme, nrep, r0c0)
 
