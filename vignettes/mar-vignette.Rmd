@@ -242,7 +242,7 @@ We can use the scaling factors inferred in [4b. Fit the mutations-area relations
 ```{r }
 
 # plot the extinction mar fit
-mar:::plot.marextinct(marext, z = z_M_A)
+plot.marextinct(marext, z = z_M_A)
 ```
 
 **Alternative workflow**:
