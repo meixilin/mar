@@ -143,10 +143,10 @@ margeno <- function(genotype, ploidy, sample.id = NULL, variant.id = NULL, posit
     if (is.null(sample.id)) sample.id <- seq_len(ncol(genotype))
     if (is.null(variant.id)) variant.id <- seq_len(nrow(genotype))
     # validate data dimensions
-    stopifnot(anyDuplicated(sample.id) == 0)
-    stopifnot(anyDuplicated(variant.id) == 0)
-    stopifnot(length(variant.id) == dim(genotype)[1])
-    stopifnot(length(sample.id) == dim(genotype)[2])
+    stopifnot("sample ids must be unique" = anyDuplicated(sample.id) == 0)
+    stopifnot("variant ids must be unique" = anyDuplicated(variant.id) == 0)
+    stopifnot("variant id dimensions do not match genotype matrix" = length(variant.id) == dim(genotype)[1])
+    stopifnot("sample id dimensions do not match genotype matrix" = length(sample.id) == dim(genotype)[2])
 
     # validate genotype
     .valid_genotype(genotype, ploidy)
@@ -205,8 +205,8 @@ marmaps <- function(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326") {
     lonlat <- as.matrix(lonlatdf[, 2:3])
 
     # Validate inputs
-    stopifnot(class(sample.id) %in% c("character", "integer", "numeric"))
-    stopifnot(is.matrix(lonlat))
+    stopifnot("sample ids must be a character, integer, or numeric" = class(sample.id) %in% c("character", "integer", "numeric"))
+    stopifnot("lonlat must be a matrix" = is.matrix(lonlat))
     .valid_lonlat(lonlat)
     stopifnot(length(sample.id) == nrow(lonlat))
     stopifnot(is.null(mapres) | is.numeric(mapres))
@@ -278,9 +278,9 @@ marmaps <- function(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326") {
 #' genomaps(geno, maps)
 genomaps <- function(geno, maps) {
     # validate inputs
-    stopifnot("margeno" %in% class(geno))
-    stopifnot("marmaps" %in% class(maps))
-    stopifnot(all(geno$sample.id == maps$sample.id))
+    stopifnot("geno must be a margeno object" = "margeno" %in% class(geno))
+    stopifnot("maps must be a marmaps object" = "marmaps" %in% class(maps))
+    stopifnot("geno and maps ids must match" = all(geno$sample.id == maps$sample.id))
 
     # create object
     obj <- .new_genomaps(geno, maps)

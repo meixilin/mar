@@ -22,7 +22,8 @@
 #' plot(gm1001g$maps)
 plot.marmaps <- function(x, ...) {
     sm = .get_samplemap(x)
-    terra::plot(sm, plg = list(title = "# of samples"), ...)
+    terra::plot(sm)
+    title("# of samples")
     points(x$lonlat, pch = 20, col = "#D3D3D380")
     return(invisible())
 }

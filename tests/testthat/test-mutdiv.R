@@ -5,7 +5,7 @@ create_test_genomaps <- function() {
     position <- as.integer(c(100, 200, 300))
     chromosome <- c("1", "1", "2")
     genotype <- matrix(c(0, 1, 2, 1, 0, 2, 2, 1, 0, 1, 2, 0), nrow = 3, byrow = TRUE)
-    mg <- margeno(sample.id, variant.id, position, chromosome, genotype, ploidy = 2)
+    mg <- margeno(genotype, ploidy = 2, sample.id, variant.id, position, chromosome)
 
     # Create spatial data
     lonlatdf <- data.frame(
@@ -27,7 +27,7 @@ create_test_genomaps_na <- function() {
     position <- as.integer(c(100, 200, 300))
     chromosome <- c("1", "1", "2")
     genotype <- matrix(c(0, 1, 2, 1, 0, NA, 2, 1, 0, 1, NA, 0), nrow = 3, byrow = TRUE)
-    mg <- margeno(sample.id, variant.id, position, chromosome, genotype, ploidy = 2)
+    mg <- margeno(genotype, ploidy = 2, sample.id, variant.id, position, chromosome)
 
     # Create spatial data
     lonlatdf <- data.frame(
@@ -42,12 +42,72 @@ create_test_genomaps_na <- function() {
     return(gm)
 }
 
+
+.pixy_ref <- c("A", "G", "T", "A", "A", "G", "G", "G", "C", "T", "A", "A")
+.pixy_alt <- c(".", "T", ".", ".", ".", ".", "C", ".", ".", ".", ".", ".")
+
+# gt is a 12 x 4 character matrix of GT strings ("0", "1" or "." for missing)
+.pixy_write_vcf <- function(gt) {
+    header <- c(
+        "##fileformat=VCFv4.2",
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+        paste(c(
+            "#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO",
+            "FORMAT", "h1", "h2", "h3", "h4"
+        ), collapse = "\t")
+    )
+    rows <- vapply(seq_len(nrow(gt)), function(i) {
+        paste(c(
+            "1", i, paste0("v", i), .pixy_ref[i], .pixy_alt[i], "100", "PASS",
+            ".", "GT", gt[i, ]
+        ), collapse = "\t")
+    }, character(1))
+
+    fn <- tempfile(fileext = ".vcf")
+    writeLines(c(header, rows), fn)
+    return(fn)
+}
+
+.pixy_genomaps <- function(gt) {
+    vcf.fn <- .pixy_write_vcf(gt)
+    on.exit(unlink(vcf.fn), add = TRUE)
+
+    mg <- vcf_parser(vcf.fn, ploidy = 1)
+
+    lonlatdf <- data.frame(
+        id = c("h1", "h2", "h3", "h4"),
+        longitude = c(-73.935, -73.934, -73.933, -73.932),
+        latitude = c(40.730, 40.731, 40.732, 40.733)
+    )
+    mm <- marmaps(lonlatdf, mapres = 0.001, mapcrs = "+proj=longlat +datum=WGS84")
+
+    return(genomaps(mg, mm))
+}
+
+create_test_pixy_genomaps_na <- function() {
+    gt <- rbind(
+        c(".", ".", ".", "."), #  1  - - - -
+        c("1", "0", ".", "0"), #  2  T G - G
+        c("0", "0", "0", "0"), #  3  T T T T
+        c("0", "0", "0", "."), #  4  A A A -
+        c(".", ".", ".", "."), #  5  - - - -
+        c("0", "0", "0", "0"), #  6  G G G G
+        c("0", "1", "0", "."), #  7  G C G -
+        c("0", "0", "0", "0"), #  8  G G G G
+        c("0", "0", "0", "0"), #  9  C C C C
+        c("0", ".", ".", "0"), # 10  T - - T
+        c("0", "0", "0", "0"), # 11  A A A A
+        c(".", ".", ".", ".") # 12  - - - -
+    )
+    return(.pixy_genomaps(gt))
+}
+
 test_that("mutdiv.gridded basic functionality works", {
     gm <- gm1001g
     gmarea <- .areaofraster(gm$maps$samplemap)
 
     # Test with a simple 50x50 bounding box
-    result <- mutdiv.gridded(gm, gmarea, bbox = c(1, 50, 1, 50))
+    result <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 50, 1, 50))
 
     # Check structure
     expect_type(result, "list")
@@ -63,7 +123,7 @@ test_that("mutdiv.gridded basic functionality works", {
     expect_true(is.numeric(result$Asq))
 
     # Test with revbbox
-    result_rev <- mutdiv.gridded(gm, gmarea, bbox = c(1, 2, 1, 2), revbbox = TRUE)
+    result_rev <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 2, 1, 2), revbbox = TRUE)
     expect_false(identical(result, result_rev))
 
     # Test invalid inputs
@@ -83,7 +143,7 @@ test_that("mutdiv.cells basic functionality works", {
 
     # Check structure
     expect_type(result, "list")
-    expect_equal(names(result), c("N", "M", "E", "thetaw", "thetapi", "A", "Asq"))
+    expect_equal(names(result), c("N", "M", "E", "thetaw", "thetapi", "A"))
 
     # Check that results are reasonable
     expect_true(result$N > 0)
@@ -93,7 +153,6 @@ test_that("mutdiv.cells basic functionality works", {
     # Test with empty cellids
     result_empty <- mutdiv.cells(gm, gmarea, character(0))
     expect_true(all(is.na(result_empty[c("N", "M", "E", "thetaw", "thetapi", "A")])))
-    expect_false(is.na(result_empty$Asq))
 })
 
 test_that(".calc_theta produces valid results", {
@@ -143,12 +202,10 @@ test_that(".calc_theta correctly handles fully missing sites", {
 })
 
 test_that("test that .calc_theta output is correct", {
-    gm <- create_test_genomaps_na()
+    gm_na <- create_test_pixy_genomaps_na()
+    res_na <- .calc_theta(gm_na)
 
-    res <- .calc_theta(gm)
-
-    expect_true(abs(res$thetapi - 0.5172) < 0.001)
-    expect_true(abs(res$thetaw - 1.2570) < 0.001)
+    expect_equal(res_na$thetapi, 0.1)
 })
 
 

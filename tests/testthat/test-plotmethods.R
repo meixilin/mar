@@ -9,9 +9,7 @@ test_that("plot methods work with gm1001g", {
     expect_invisible(plot(gm1001g$maps))
 
     sfs_obj <- sfs(
-        AC = mar:::.get_AC(gm1001g$geno),
-        N = length(gm1001g$geno$sample.id),
-        ploidy = gm1001g$geno$ploidy
+        gm1001g
     )
     expect_invisible(plot(sfs_obj))
 
