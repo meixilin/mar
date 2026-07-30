@@ -17,62 +17,91 @@ editor_options:
 knitr::opts_chunk$set(
     collapse = TRUE,
     fig.align = "center",
+    fig.width = 6,
+    fig.height = 4.5,
+    dpi = 150,
     out.width = "100%"
 )
 rm(list = ls())
-devtools::load_all()
 ```
 
 # Why does the mutations-area relationship exist?
 
-In macroecology, species-area relationships (SAR) can be described exhaustively from species abundance distributions (SAD) and species spatial distribution (Tjørve et al. 2008), and extensive studies have explored the theoretical relationship between the species abundance distribution and species-area relationship over the past century (Preston 1948, 1962; May 1975; Harte, Kinzig, and Green 1999; Hubbell 2001). Extending this framework in population genetics, we demonstrate that a similar sampling relationship exists between the site frequency spectrum (SFS), a fundamental population genetics summary statistics, and the mutations-area relationship (MAR). 
+In macroecology, species-area relationships (SAR) can be described exhaustively from
+species abundance distributions (SAD) and species spatial distributions (Tjørve et al.
+2008), and extensive studies have explored the theoretical relationship between the two
+over the past century (Preston 1948, 1962; May 1975; Harte, Kinzig, and Green 1999;
+Hubbell 2001). Extending this framework into population genetics, we show that a similar
+sampling relationship exists between the site frequency spectrum (SFS), a fundamental
+population genetics summary statistic, and the mutations-area relationship (MAR).
 
-In this vignette, we first establish the theoretical connection between the SFS and the SAD as scaled probability density functions of species or mutation abundances, and note one small distinction. 
-Then, we introduce the `MARtheory()` function. Assuming that individuals are **randomly mating and randomly distributed** in the population, `MARtheory()` derive the exact mutations-area relationship using only the site frequency spectrum, and the population density $p$, which relates total number of sampled individuals is proportional to area: N = pA (Preston 1962). Without need to know about each individual's specific location, or to run the `MARsampling()` procedures, knowing the SFS, we will have the MAR. `MARtheory()`'s theoretical prediction is then validated using `MARsampling()` on a simulated dataset (`gmexp` data).
+In this vignette, we first establish the theoretical connection between the SFS and the
+SAD as scaled probability densities over abundance classes, and note one small
+distinction. Then we introduce the `MARtheory()` function. Assuming that individuals are
+**randomly mating and randomly distributed** in the population, `MARtheory()` derives the
+exact mutations-area relationship from the site frequency spectrum alone, together with
+the population density $\rho$, which links the number of sampled individuals to area, $N = \rho A$ (Preston 1962). Without knowing any individual's specific location,
+and without running the `MARsampling()` procedure, the SFS deterministically gives us the MAR. We
+then validate `MARtheory()`'s prediction against `MARsampling()` and `MARextinction()` on a simulated dataset (the `gmexp` data).
 
-Next, we show that when the two key assumptions of **random mating and random distributions*8 are violated in real life, in our *gm1001gbidopsis thaliana* 1001G example (`gm1001g` data), how the theory prediction deviates from the `MARsampling()` output. And when we treat the 1001g data as haploid individuals and shuffle the sample locations, `MARtheory()` predicts `MARsampling()` output in a real-life dataset.
+Next, we show what happens when the two key assumptions of **random mating and random
+spatial distribution** are violated in real life, using the *Arabidopsis thaliana* 1001
+Genomes example (the `gm1001g` data): the theoretical prediction and the `MARsampling()`
+output part ways. When we then treat the 1001 Genomes accessions as haploid individuals
+and shuffle their sample locations, `MARtheory()` recovers the `MARsampling()` output in a
+real dataset as well.
 
-In the end, by show that the MAR can be theoretically derived using the SFS, we discuss its profound implication on interpreting the $z$ values for conservation.
+In the end, having shown that the MAR can be derived from the SFS, we discuss what that
+implies for interpreting the $z$ value in conservation genetics.
 
 ## Some assumptions and the example data
 
-We start by simulating 50 diploid individuals sampled from a randomly mating and randomly distributed population that is growing exponentially using the python package `msprime` (code available in `data-raw/gmexp_simulate.py`). We constructed a `genomaps` object for this simulated population (code available in `data-raw/gmexp_rda.R`), and provided it with this package.
+We start by simulating 50 diploid individuals sampled from a randomly mating, randomly
+distributed population growing exponentially, using the python package `msprime` (code
+available in `data-raw/gmexp_simulate.py`). We built a `genomaps` object from that
+simulation (code available in `data-raw/gmexp_rda.R`) and provide it with this package.
 
 You can explore the data here:
 
-```{r explore gmexp}
+```{r explore-gmexp}
+library(mar)
+
 data(gmexp)
 print(gmexp)
 ```
 
-To elaborate on the two key assumptions for deriving the MAR from SFS: 
+To elaborate on the two key assumptions for deriving the MAR from an SFS:
 
 **1. Individuals are randomly mating.** Under random mating an individual is just
 `ploidy` independently drawn gene copies, so *sampling one diploid individual is the same
-as sampling two random chromosomes*. This equivalence allowed us to use the SFS, which is bookkeeping at chromosome level, while actually collecting individuals. 
+as sampling two random chromosomes*. This equivalence is what lets us use the SFS, which
+does its bookkeeping at the chromosome level, while we actually collect individuals.
 
 **2. Individuals are randomly distributed in space.** This is Preston's classical
 assumption, and it is what allows area to stand in for sample size: if individuals are
 scattered at random, a box twice as large holds twice as many of them, so $N \propto A$.
-The `gmexp` coordinates were drawn from a uniform distribution, which we can see by plotting the `marmaps` object stored within the `genomaps` object.
+The `gmexp` coordinates were drawn from a uniform distribution, which we can see by
+plotting the `marmaps` object stored within the `genomaps` object.
 
 ```{r randomloc}
 plot(gmexp$maps)
 ```
 
-Both assumptions are essential for the derivation later. 
-In the *gm1001gbidopsis* section we violate each assumption in turn and
-measure what it costs.
+Both assumptions are essential for the derivation below. In the *Arabidopsis* section we
+violate each one in turn and measure what it costs.
 
-## What is a site-frequency spectrum?
+## What is a site frequency spectrum?
 
-Before we dive into the sampling relationship, we need to explain what is a SFS. 
+Before we get to the sampling relationship, we need to define what an SFS is and what
+notation we will use for it.
 
-Take a genetic dataset with $N$ individuals of ploidy $x$, so there are $xN$
-chromosomes in total, genotyped at $L$ sites. At any one genomic site, count how many of the
-$xN$ chromosomes carry the mutation and call that count $k$. The **site-frequency
-spectrum** (SFS) is the tally of how many sites have $k = 1$ (singletons), how many have $k = 2$, and
-so on. We write the proportional site frequency spectrum as $\sigma(k)$.
+Take a genetic dataset of $N$ individuals with ploidy $x$, so that there are $xN$
+chromosomes in total, genotyped, and contains $L$ biallelic SNP sites. At any one SNP site, count how many of
+the $xN$ chromosomes carry the mutation and call that count $k$. The **site frequency
+spectrum** (SFS) is the tally of how many sites have $k = 1$ (singletons), how many have
+$k = 2$, and so on. We write the proportional site frequency spectrum as $\sigma(k)$, so
+that $\sum_{k=0}^{xN} \sigma(k) = 1$.
+TODO: what is \sigma(k). Give an example that generate SFS, and get sigma(k) by dividing with L.
 
 For `gmexp` that is $L = `r length(gmexp$geno$allele_count)`$ sites spread over
 $xN = `r length(gmexp$maps$sample.id) * gmexp$geno$ploidy`$ chromosomes:
@@ -82,69 +111,78 @@ obs <- sfs(gmexp)
 plot(obs)
 ```
 
-The mutations-area relationship arises from a core principle: the commonness of rarity. Most mutations in a population are rare, and only a few reach high frequencies.
+The mutations-area relationship arises from a core principle: the commonness of rarity.
+Most mutations in a population are rare and only a few reach high frequencies.
+The site frequency spectrum (SFS) captures this distribution of allele frequencies and is a fundamental summary statistic in population genetics. It represents the number of mutations observed at different frequencies within a sample, and its shape is what gives rise to the
+scaling behaviour we see in the MAR. This mirrors the well-known ecological pattern: just
+as the species-area relationship emerges from the species abundance distribution, the
+mutations-area relationship is a consequence of the site frequency spectrum, both rooted
+in the statistical structure of rarity in biological systems.
 
-The site frequency spectrum (SFS) captures this distribution of allele frequencies and is a fundamental summary statistic in population genetics. It represents the number of mutations observed at different frequencies within a sample. The shape of the SFS, which often skewed toward low-frequency variants, is what gives rise to the scaling behavior observed in MAR.
+There is, however, **a key distinction between the SFS and the SAD**. The SAD entries sum
+to the total number of sampled individuals, whereas the SFS entries sum to the total
+number of sites $L$, which is unrelated to how many individuals were sampled. Any
+species-abundance model can be fitted to an SFS, since both are densities over abundance
+classes, but they are not the same object. For a direct comparison to a SAD, a haplotype
+abundance distribution under the infinite-alleles assumption would be more appropriate.
 
-This relationship mirrors a well-known pattern in ecology: just as the species-area relationship (SAR) emerges from the species abundance distribution (SAD), the mutations-area relationship (MAR) is a consequence of the site frequency spectrum (SFS), both rooted in the statistical structure of rarity in biological systems.
-
-However, **a key distinction between the
-SFS and the SAD** is that the sum of SAD entries is the total number of sampled
-individuals, whereas the sum of SFS entries is the total number of mutations, which is
-unrelated to the number of individuals sampled Any species-abundance model can be fitted
-to an SFS, since both are probability densities over abundance classes, but they are not
-the same object. For a direct comparison to a SAD, a haplotype abundance distribution
-under the infinite-alleles assumption would be more appropriate.
-
-Excitingly, the mutations-area relationshp can emerge from any shape of the spectrum as long as the individuals are randomly mating and randomly distributed. The individuals may be under
-selection or have passed through demographic change; we simply take the spectrum as
-given. `gmexp` illustrates this well precisely because it is *not* a population evolving under : it grew
-exponentially, and exponential growth leaves an excess of rare variants. We can check
-that against the neutral expectation the package ships, `expsfs()`:
+Excitingly, the mutations-area relationship emerges from *any* shape of the spectrum, as
+long as individuals are randomly mating and randomly distributed. The population may be
+under selection or may have passed through demographic change; we simply take the
+spectrum as given. `gmexp` illustrates this well precisely because it is *not* a
+constant-size neutral population: it grew exponentially, and exponential growth leaves an
+excess of rare variants. We can check that against the neutral expectation the package
+ships, `expsfs()`:
 
 ```{r neutral}
 plot(obs, expected = gmexp)
 # pass the `log = 'x'` option to inspect the singletons
 plot(obs, expected = gmexp, log = 'x')
-# pass the `log = 'y'` option to inspect the mutation abundance (graphics::plot() will warns about zero-entries)
+# pass the `log = 'y'` option to inspect the mutation abundance
+# (graphics::plot() will warn about the zero entries)
 plot(obs, expected = gmexp, log = 'y')
 ```
 
-Singletons are more common than the
-constant-size neutral model predicts, and high-frequency variants are depleted. That is the
-exponential growth showing up in the spectrum, and it does not interfere with the
-sampling theory as we will show below.
+Singletons are more common than the constant-size neutral model predicts, and
+high-frequency variants are depleted. That is exponential growth showing up in the
+spectrum, and it does not interfere with the sampling theory, as we show next.
 
-## How to build the MAR from a site-frequency spectrum?
+## How to build the MAR from a site frequency spectrum?
 
-### `MARtheory()` implements an analytical sampling process result 
+### `MARtheory()` implements an analytical sampling result
 
 Recall the two assumptions: individuals mate at random, so sampling $n$ chromosomes is
-the same as sampling $n/x$ individuals; and individuals distribute raomdomly in space, so
-sampling a larger area leads to sampling more individuals.
+the same as sampling $j = n/x$ individuals; and individuals are distributed randomly in
+space, so sampling a larger area means sampling more individuals.
 
-Consider a single genomic site at which $k$ of the $xN$ chromosomes carry the mutation $m_i$, and
-suppose we draw $n$ chromosomes. We miss to sample the mutation $m_i$ only if every one of the $n$ draws
-came from the $xN - k$ chromosomes that do not carry it. Counting the ways that can
+Consider a single genomic site at which $k$ of the $xN$ chromosomes carry the mutation,
+and suppose we draw $n$ chromosomes. We miss that mutation only if every one of the $n$
+draws came from the $xN - k$ chromosomes that do not carry it. Counting the ways that can
 happen gives
 
 $$
 P(\text{missed}) \;=\; \frac{\binom{xN - k}{n}}{\binom{xN}{n}},
 $$
 
-so we sample the site with probability $1 - P(\text{missed})$. An mutation carried by
-half the population ($k = xN/2$) is more likely to be sampled, whereas a singleton mutation ($k = 1$) is rarely sampled, and more likely to be missed. Averaging this sampling probability across multiple sites with varying mutation frequency gives the expected number of mutations in a sample of $n$ chromosomes. The exact derivations are available in [the math section](#math).
+so we capture the site with probability $1 - P(\text{missed})$. A mutation carried by
+half the population ($k = xN/2$) is almost certain to be sampled, whereas a singleton
+($k = 1$) is sampled only with probability $n/xN$. Averaging this sample probability
+across sites, weighted by how many sites carry each allele count $k$, gives the expected
+number of mutations in a sample of $n$ chromosomes. The full derivation is in [the math
+section](#math).
 
-We can therefore predict the whole mutations-area relationship curve using the equation below, which is implemented in `MARtheory()`. 
+We can therefore predict the whole mutations-area relationship with the equation below,
+which is what `MARtheory()` implements:
 
 $$
 \boxed{\;E[M] \;=\; L \sum_{k=0}^{xN} \sigma(k)
 \left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}\right)\;}
 $$
 
-
-
-`MARtheory()` computes the above sampling relationship purely from theory without running any sampling scheme, and we can fit the mutations-area relationship using `MARcalc()`. 
+`MARtheory()` evaluates this purely from theory, without running any sampling scheme. It
+reports its predictions against the number of *individuals* $j = n/x$, in a column named
+`N` so that the output lines up with `MARsampling()`, and we can fit the power law
+$M = c N^z$ with `MARcalc()`.
 
 ```{r marexp}
 theorydf <- MARtheory(gmexp)
@@ -153,147 +191,188 @@ head(theorydf)
 # plot the theorydf
 plot(theorydf)
 
-# you don't have to run MARcalc() sepgm1001gtely, supply `fit = TRUE`, and the plot method for `martheory` data class will automatically fit and overlay the line. 
+# you don't have to run MARcalc() separately: supply `fit = TRUE` and the plot method for
+# the `martheory` class will fit and overlay the line for you
 plot(theorydf, fit = TRUE)
 
-# To expose the sar object the plot method calculates internally, run MARcalc()
-theorydf_fit <- MARcalc(theorydf, Mtype = 'M',Atype = 'N')
+# to expose the sar object the plot method builds internally, run MARcalc()
+theorydf_fit <- MARcalc(theorydf, Mtype = 'M', Atype = 'N')
 summary(theorydf_fit)
 
 # overlay the fitted MARcalc results on the plot
 plot(theorydf, fit = theorydf_fit$par)
 ```
 
-### `MARsampling()` confirms `MARtheory()` prediction
- 
- we can compare it against the sampling output, which builds the same curve the hard way by repeatedly sampling boxes on the map:
+### `MARsampling()` confirms the `MARtheory()` prediction
 
-```{r marexp compare}
+We can now compare the prediction against the sampling output, which builds the same
+curve the hard way, by repeatedly sampling boxes on the map:
+
+```{r marexp-compare}
 mardf <- MARsampling(gmexp, myseed = 1)
 head(mardf)
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf)
 ```
 
-The blue prediction lands on top of the sampled points, and to either `MARsampling()` or `MARtheory()` output. The scaling factor $z$ from `MARsampling()` is very close to the scaling factor from `MARtheory()`. 
+The blue prediction lands on top of the sampled points, and the scaling factor $z$ from
+`MARsampling()` is very close to the one from `MARtheory()`.
 
 ```{r zexp}
 # fit the MAR
-mardf_fit <- MARcalc(mardf, Mtype = 'M',Atype = 'N')
+mardf_fit <- MARcalc(mardf, Mtype = 'M', Atype = 'N')
 
 summary(mardf_fit)
 
-# extract the fitted c and z value
+# extract the fitted c and z values
 print(mardf_fit$par)
 print(theorydf_fit$par)
 
-# you can compare the theory prediction with the empirical fit side-by-side
+# you can compare the theory prediction with the empirical fit side by side
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf, fit = mardf_fit$par)
 
-# or use a log-log scale by passing graphics::plot the log option 
+# or use a log-log scale by passing graphics::plot the log option
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf, fit = mardf_fit$par, log = 'xy')
 ```
 
+### `MARextinction()` confirms the `MARtheory()` prediction
 
-### `MARextinction()` confirms `MARtheory()` prediction
- 
-As `MARextinction()` simulates a different sampling process as `MARsampling()`, we can check `MARtheory()`'s prediction to `MARextinction()` output as well, which builds the same curve the hard way by iteratively removing the available samples on the map:
+Because `MARextinction()` simulates a different sampling process than `MARsampling()`, it
+is worth checking `MARtheory()`'s prediction against its output too. It builds the same
+curve the hard way as well, by iteratively removing the available samples on the map:
 
-```{r marext compare}
+```{r marext-compare}
 extdf <- MARextinction(gmexp, myseed = 1)
 head(extdf)
 
 # the blue line lands on the extinction curve constructed
 plot(extdf, Mtype = "M", Atype = "N", theory = theorydf)
 
-# you can compare the theory prediction with the empirical fit side-by-side
-# notice here we did not invoke `MARcalc()` as done above, but just ask the plotmethod to fit the model 
+# you can compare the theory prediction with the empirical fit side by side.
+# notice we did not invoke MARcalc() as above, but simply asked the plot method to fit
 plot(extdf, Mtype = "M", Atype = "N", theory = theorydf, fit = TRUE)
-
 ```
-Notice that when our two assumptions of randomly mating and random spatial distribution are met. The scaling factor $z$ is the same across three functions of MARtheory, MARsampling, and MARextinction that generates the same sampling relationship. In this condition, only the shape of the SFS contribute to the scaling factor of $z$.
+
+Notice that when our two assumptions of random mating and random spatial distribution are
+met, the scaling factor $z$ is the same across all three functions, `MARtheory()`,
+`MARsampling()` and `MARextinction()`, because they all describe the same sampling
+relationship. Under these conditions, only information carried by the SFS contributes to $z$.
 
 ### Predictions for Watterson's $\theta$ and nucleotide diversity
 
-Using the same sampling mechanism, we can predict the Watterson's $\theta$ ($\theta_w$) and nucleotide diversity ($\theta_\pi$) measures as well. 
+The same sampling mechanism predicts Watterson's $\theta$ ($\theta_w$) and nucleotide
+diversity ($\theta_\pi$) as well.
 
-Watterson's $\theta_w$ increases with the sample size. It counts
-segregating sites and divides by a correction factor which accounts for the sample size. 
+**Watterson's $\theta$ increases with sample size here.** It counts sites that are
+segregating among the $n$ sampled chromosomes and divides by a sample-size correction,
 
 $$
-Fill in theta_w
+\hat{\theta}_w \;=\; \frac{S_n}{L\,H_{n-1}},
+\qquad H_m \;=\; \sum_{i=1}^{m} \frac{1}{i},
 $$
 
-Under neutral coalescent theory, $\theta_w$ is an unbiased estimator for population scaled mutation rate. However, since our simulated `gmexp` object is based on an exponentiallly growing population, $\ that is only the right
-correction when the spectrum has the neutral $1/k$ shape. This spectrum does not, so our theoretical prediction changes with sample size.
+where $S_n$ is the number of segregating sites in the subsample and $H_m$ is the $m$-th
+harmonic number. The sampling argument above gives $E[S_n]/L$ directly, with one extra
+term: a site is *not* segregating if the subsample happens to draw all mutations (alternative alleles), which
+happens with probability $\binom{k}{n}/\binom{xN}{n}$. So
+
+$$
+E[\theta_w] \;=\; \frac{1}{H_{n-1}} \sum_{k=0}^{xN} \sigma(k)
+\left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}-\frac{\binom{k}{n}}{\binom{xN}{n}}\right).
+$$
+
+Under the neutral coalescent, $\theta_w$ is an unbiased estimator of the
+population-scaled mutation rate, and it is constant regardless of $n$. But $H_{n-1}$ is only the right
+correction when the spectrum has the neutral $1/k$ shape. Our simulated `gmexp` grew
+exponentially, its spectrum does not have that shape, and so the prediction climbs with
+sample size, exactly as the sampled values do.
 
 ```{r theta_w}
 plot(mardf, Mtype = "thetaw", Atype = "N", theory = theorydf)
 ```
 
-Nucleotide diversity $\theta_\pi$ does not change with sample size, taking exactly. It averages over *pairs* of chromosomes, and any pair we draw is just a
-random pair from the full dataset, so subsampling cannot shift it. 
+**Nucleotide diversity $\theta_\pi$ does not change with sample size.** It is the average
+over all $\binom{n}{2}$ pairs of sampled chromosomes of the per-site probability that the
+pair differs,
 
 $$
-Fill in the origignal definition and explain 
+\hat{\theta}_\pi \;=\; \frac{1}{L} \sum_{i=1}^{L} \frac{2k_i(n-k_i)}{n(n-1)},
 $$
+
+where $k_i$ is the allele count at site $i$ *within the subsample*. Any pair we draw is
+just a uniformly random pair from the full dataset, so the pair-level expectation is the
+full-dataset value no matter how many pairs we draw, and the prediction reduces to
+
+$$
+E[\theta_\pi] \;=\; \sum_{k=0}^{xN} \sigma(k)\,\frac{2k(xN-k)}{xN(xN-1)},
+$$
+
+in which $n$ does not appear at all. Subsampling therefore cannot shift it, for any
+spectrum ([Proposition 1](#math)).
 
 ```{r thetapi}
 plot(mardf, Mtype = "thetapi", Atype = "N", theory = theorydf)
 ```
 
-### Going from sampling individuals to sampling areas 
+### Going from sampling individuals to sampling areas
 
-Because the individuals are randomly placed, sample size and area really are
-interchangeable here:
+Everything so far predicts diversity as a function of sample size. Because the `gmexp`
+individuals are randomly placed, sample size and area really are interchangeable, and the
+regression of area on sample size is essentially noiseless:
 
 ```{r nagmexp}
 plot(A ~ N, data = mardf)
 N_A_lm <- lm(A ~ N, data = mardf)
 summary(N_A_lm)
-# extract the scaling factor
-p <- N_A_lm$coefficients['N']
+# with N = rho * A, the fitted slope of A ~ N estimates 1 / rho
+rho <- 1 / N_A_lm$coefficients['N']
+print(rho)
 ```
 
-Therefore, we can generate the expected MAR and compare it with sampled MAR. We did not include this last step of going from N to A in the packaged MARtheory function, as this would require fitting of the `MARsampling()` results. But we note that this is still purely analytical, as we did not use any sampled mutation / genetic diversity values and only used the population density information from MARsampling(). 
+We can therefore convert the predicted $N$ axis into an area axis and compare against the
+sampled MAR. We deliberately left this last step out of `MARtheory()`, because it needs
+the density $\rho$, which has to be fitted from the `MARsampling()` output. Note that the
+prediction is still analytical: we used only the population density from
+`MARsampling()`, and none of its sampled mutation or diversity values.
 
-```{r add area}
-# Add the expected area 
-theorydf$A = theorydf$N * p
+```{r add-area}
+# add the expected area
+theorydf$A <- theorydf$N / rho
 
-# Overlay with the MARsampling output 
+# overlay with the MARsampling output
 plot(mardf)
 lines(M ~ A, data = theorydf, col = 'blue')
 ```
 
+# How does this work in real life: our *Arabidopsis* dataset?
 
-# How does this work in real-life: our gm1001gbidopsis dataset?
+The *Arabidopsis thaliana* 1001 Genomes accessions break both assumptions at once, which
+makes them a good case for demonstrating that the scaling factor $z$ is determined by
+three things in a real, conservation-relevant setting:
 
-The *gm1001gbidopsis thaliana* 1001 Genomes accessions break both assumptions at once, which
-makes them a good case for demonstrating how the scaling factor $z$ is determined by three factors in real-life conservation relevant settings: 
-
-1. The site frequency spectrum
-2. The breeding structure
-3. The spatial distribution 
+1. the site frequency spectrum,
+2. the breeding structure,
+3. the spatial distribution.
 
 ```{r loadgm1001g}
 data(gm1001g)
 print(gm1001g)
 ```
 
-Run the prediction and compare it against random subsamples of individuals as we did before.
+Let us run the prediction and compare it against random subsamples of individuals, as we
+did before.
 
 ```{r gm1001gbroken}
 theorydf_gm1001g <- MARtheory(gm1001g)
 plot(theorydf_gm1001g, fit = TRUE)
 
-mardf_gm1001g <- MARsampling(gm = gm1001g)
+mardf_gm1001g <- MARsampling(gm = gm1001g, myseed = 1)
 plot(mardf_gm1001g, Atype = 'N', theory = theorydf_gm1001g)
 ```
 
-The prediction overshoots by roughly half, and the gap only
-closes at the largest ones.
+The prediction overshoots badly, by tens of percent over most of the range, and the gap
+closes only at the largest sample sizes.
 
-## No longer randomly mating: it acts as a haploid
+## No longer randomly mating: the accessions behave as haploids
 
 The genotypes explain why. These accessions are inbred lines, and they are *completely
 homozygous*:
@@ -333,19 +412,29 @@ gm1001gh <- genomaps(geno = gm1001gh_geno, maps = gm1001g$maps)
 theorydf_gm1001gh <- MARtheory(gm1001gh)
 plot(theorydf_gm1001gh, fit = TRUE)
 
-# since the theorydf_gm1001gh is based on `N`, we can use the original sampling output and overlay the "pseudo-haploid" prediction
+# theorydf_gm1001gh is indexed by `N`, so we can reuse the original sampling output and
+# overlay the "pseudo-haploid" prediction on it
 plot(mardf_gm1001g, Atype = 'N', theory = theorydf_gm1001gh)
 plot(mardf_gm1001g, Atype = 'N', theory = theorydf_gm1001gh, log = 'xy')
 ```
 
-This new prediction assuming haploid genotypes worked well, because the breeding structure assumption is now met. 
+Describing the ploidy correctly removes most of the bias: the prediction now runs through
+the sampled cloud instead of well above it. What is left is a predicted slope that is
+shallower than the sampled points show, and that residual is spatial, which is the subject
+of the next section.
 
-Note that we manually "made up" a genotype here (and we will make up locations later) to demonstrate the correctness of our sampling theory, since the Arabidopsis dataset is an extreme case of extensive inbreeding. For your analysis, we recommend caution on manipulating the data unless you are very familiar with R and your dataset. But rather use the provided theory overlay to know the combined effect of breeding structure on the z estimate. 
+Note that we "made up" a genotype here (and we will make up locations below) in order to
+demonstrate the correctness of the sampling theory, because this *Arabidopsis* dataset is
+an extreme case of inbreeding. For your own analysis we recommend caution in manipulating
+the data unless you are very familiar with R and with your dataset. The theory overlay is
+there to let you *see* how much the breeding structure moves your $z$ estimate, without
+having to rewrite your data.
 
-## No longer randomly distributed: sample size is not perfectly proportional to area
+## No longer randomly distributed: sample size is not proportional to area
 
-We repairs the bias between mutations and *sample size* introduced by breeding structue. The MAR is about
-*area*, though, and for our real-life data the two are no longer perfectly correlated:
+We have now repaired the bias between mutations and *sample size* introduced by the
+breeding structure. The MAR is about *area*, though, and in real data the two are no
+longer perfectly related:
 
 ```{r nagm1001g}
 plot(A ~ N, data = mardf_gm1001g)
@@ -353,83 +442,122 @@ N_A_lm <- lm(A ~ N, data = mardf_gm1001g)
 summary(N_A_lm)
 ```
 
-Moreover, different sampling schemes will create different relationship and thus different fitted $z$ values. 
+The scatter is now substantial, and different sampling schemes trace out different
+$N$--$A$ relationships and therefore different fitted $z$ values:
 
-```{r nagm1001g}
-extdf_gm1001g = MARextinction(gm1001g)
+```{r nagm1001g-ext}
+extdf_gm1001g <- MARextinction(gm1001g, myseed = 1)
 plot(A ~ N, data = extdf_gm1001g)
-N_A_lm <- lm(A ~ N, data = extdf_gm1001g)
-summary(N_A_lm)
+N_A_lm_ext <- lm(A ~ N, data = extdf_gm1001g)
+summary(N_A_lm_ext)
 
 plot(extdf_gm1001g, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-To isolate the spatial effect, we can now shuffle the sample locations so they are now "pseudo-" randomly distributed. 
+Note that the haploid prediction tracks the *extinction* curve much more closely than it
+tracked the `MARsampling()` cloud. The reason is not that $N$ and $A$ are better
+correlated here, but that `MARextinction()` removes cells from across the whole map, so
+the accessions that remain are close to a random subset of the panel. `MARsampling()`
+draws contiguous boxes instead, and because *Arabidopsis* accessions are spatially
+structured, the individuals inside one box are more related to each other than a random
+draw would be, and they carry fewer distinct mutations than the theory expects.
+
+To isolate the spatial effect, we can shuffle the sample locations so that the accessions
+become "pseudo-" randomly distributed.
 
 ```{r relocate}
 set.seed(42)
 nind <- length(gm1001g$maps$sample.id)
 gm1001gr_loc <- data.frame(id = gm1001g$maps$sample.id,
-                      lon = runif(nind, -10, 10),
-                      lat = runif(nind, -10, 10))
-# no crs as input or as outputs
-gm1001gr_maps <- marmaps(lonlatdf = randloc, mapcrs = "EPSG:8857")
+                           lon = runif(nind, -10, 10),
+                           lat = runif(nind, -10, 10))
+# lon/lat drawn uniformly, then reprojected into an equal-area map
+gm1001gr_maps <- marmaps(lonlatdf = gm1001gr_loc, mapcrs = "EPSG:8857")
 gm1001gr <- genomaps(geno = gm1001g$geno, maps = gm1001gr_maps)
 
 # check the new map we created
 plot(gm1001gr$maps)
 ```
 
-```{r gm1001gr sample}
-mardf_gm1001gr <- MARsampling(gm1001gr)
-plot(A ~ N, data = mardf_gm1001gr)
-N_A_lm <- lm(A ~ N, data = mardf_gm1001gr)
-summary(N_A_lm)
-```
-Now we can fit the haploid based theory onto this new sample output. 
+With the accessions scattered at random, area and sample size once again carry the same
+information:
 
-Now that area and sample size
-carry the same information, the exponent stops depending on which of them we regress
-against, and the haploid theory recovers it:
+```{r gm1001gr-sample}
+mardf_gm1001gr <- MARsampling(gm1001gr, myseed = 1)
+plot(A ~ N, data = mardf_gm1001gr)
+N_A_lm_r <- lm(A ~ N, data = mardf_gm1001gr)
+summary(N_A_lm_r)
+```
+
+And now the haploid prediction recovers the sampled curve: the exponent stops depending on
+whether we regress against area or against sample size, and both agree with the theory.
 
 ```{r zcompare}
 plot(mardf_gm1001gr, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-We can run extinction simulations on this new randomly distributed dataset, and the theory line will align well. (as it had been). because as we showed earlier, the correlation between N and area is better when using the `MARextinction()` sampling scheme. 
+Extinction simulations on the relocated dataset align with the same prediction, as they
+already did on the original map.
 
-```{r}
-extdf_gm1001gr <- MARextinction(gm1001gr)
+```{r extgm1001gr}
+extdf_gm1001gr <- MARextinction(gm1001gr, myseed = 1)
 plot(extdf_gm1001gr, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
+Collecting the fitted exponents makes the pattern easy to read. `z_N` is fitted against
+sample size, `z_A` against area, and `z_theory` is the single prediction from the
+"pseudo-haploid" SFS:
 
-# An important take-away: what does the z value capture?
+```{r ztable}
+zof <- function(df, Atype) MARcalc(df, Mtype = 'M', Atype = Atype)$par[['z']]
+ztab <- data.frame(
+    data = c("gm1001g", "gm1001g", "gm1001gr", "gm1001gr"),
+    scheme = c("MARsampling", "MARextinction", "MARsampling", "MARextinction"),
+    z_N = c(zof(mardf_gm1001g, 'N'), zof(extdf_gm1001g, 'N'),
+            zof(mardf_gm1001gr, 'N'), zof(extdf_gm1001gr, 'N')),
+    z_A = c(zof(mardf_gm1001g, 'A'), zof(extdf_gm1001g, 'A'),
+            zof(mardf_gm1001gr, 'A'), zof(extdf_gm1001gr, 'A'))
+)
+ztab$z_theory <- zof(theorydf_gm1001gh, 'N')
+print(ztab, digits = 3)
+```
 
-Three sepgm1001gte things influence `z` in a realistic dataset, and the sections above have
+On the real map, `z_N` and `z_A` disagree with each other and both sit above the
+prediction. Once the locations are shuffled, the two columns collapse onto each other and
+onto `z_theory`.
+
+# An important take-away: what does the $z$ value capture?
+
+Three separate things influence $z$ in a realistic dataset, and the sections above have
 now identified them one by one.
 
-1. **Genotype abundance**, summarized by the SFS. This is the part `MARtheory()`
+1. **Mutation abundance**, summarized by the SFS. This is the part `MARtheory()`
    predicts, and on `gmexp` it accounts for the entire curve.
 2. **Breeding structure.** The SFS counts chromosomes, but we sample individuals, and the
-   two coincide only under random mating. In the fully inbred *gm1001gbidopsis* accessions
+   two coincide only under random mating. In the fully inbred *Arabidopsis* accessions
    the chromosome-based prediction is wrong by tens of percent until the ploidy is
    described correctly.
-3. **Spatial structure**, summarized by the $N \sim A$ relationship. Random placement
-   gives a slope of 1 and makes area a clean proxy for sample size. Clustered sampling
-   (slope `r sprintf("%.2f", coef(fita)[2])` here) means the area-based and size-based
-   exponents are measuring different things.
+3. **Spatial structure**, summarized by the $N \sim A$ relationship and by how related
+   nearby individuals are. Random placement makes area a clean proxy for sample size and
+   forces the area-based and size-based exponents to agree
+   (`r sprintf("%.2f", ztab$z_A[3])` and `r sprintf("%.2f", ztab$z_N[3])` on the
+   relocated map). Clustered sampling pulls them apart
+   (`r sprintf("%.2f", ztab$z_A[1])` versus `r sprintf("%.2f", ztab$z_N[1])` on the real
+   map) and lifts both above the SFS prediction of
+   `r sprintf("%.2f", ztab$z_theory[1])`.
 
-A `z` estimated from real data mixes all three together. Reading it as a statement about
+A $z$ estimated from real data mixes all three together. Reading it as a statement about
 genetic diversity requires accounting for the other two first.
 
 # If you are really into the math {#math}
 
-Throughout, let $N$ be the number of individuals, $x$ the ploidy, and $xN = cN$ the total
-number of sequenced chromosomes. The genotype matrix covers $L$ sites. At each site, $k$
-denotes the number of chromosomes carrying the mutation, and $\sigma(k)$ is the
-proportional site-frequency spectrum, so that $\sum_{k=0}^{xN}\sigma(k) = 1$. We sample
-$n$ chromosomes and write $H_m = \sum_{i=1}^{m} 1/i$ for the harmonic number.
+Throughout, let $N$ be the number of individuals in the full dataset, $x$ the ploidy, and
+$xN$ the total number of sequenced chromosomes. The genotype matrix covers $L$ sites. At
+each site, $k$ denotes the number of chromosomes carrying the mutation, and $\sigma(k)$ is
+the proportional site frequency spectrum, so that $\sum_{k=0}^{xN}\sigma(k) = 1$. We
+sample $n$ chromosomes, equivalently $j = n/x$ individuals (this $j$ is what the package
+reports in the `N` column), and write $H_m = \sum_{i=1}^{m} 1/i$ for the $m$-th harmonic
+number.
 
 The goal is the expected number of captured mutations $M$ as a function of $n$, which in
 turn stands in for area.
@@ -483,37 +611,39 @@ $$
 **Watterson's estimator** is defined on sites that are *segregating* in the subsample,
 that is $1 \le K \le n-1$. Both fixed outcomes must therefore be removed: the site can
 come out monomorphic because no mutation was sampled, or because *only* mutations were
-sampled. 
+sampled. Dividing the resulting per-site fraction by $H_{n-1}$ gives
 
 $$
 E[\theta_w] \;=\; \frac{1}{H_{n-1}} \sum_{k=0}^{xN} \sigma(k)
-\left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}-\frac{\binom{k}{n}}{\binom{xN}{n}}\right)
+\left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}-\frac{\binom{k}{n}}{\binom{xN}{n}}\right).
 $$
 
-**Nucleotide diversity** can 
+**Nucleotide diversity** needs no hypergeometric projection at all. Because it is an
+average over pairs, the spectrum-averaged full-dataset value is already the answer:
 
 $$
 E[\theta_\pi] \;=\; \sum_{k=0}^{xN} \sigma(k)\,\frac{2k(xN-k)}{xN(xN-1)}
 $$
 
-Note that $n$ does not appear. That is exact rather than approximate, and it leads to the
-two results that explain why the two panels above behave so differently.
+Note that $n$ does not appear. That is exact rather than approximate, and together with
+the $\theta_w$ expression it explains why the two panels above behave so differently.
 
-**Proposition 1. $E[\theta_\pi]$ is invariant in $n$, for any spectrum.**
-$\theta_\pi$ is an average over pairs: $\hat\theta_\pi = D / \binom{n}{2}$, where $D$
-counts discordant pairs among the sampled chromosomes. By exchangeability of sampling
-without replacement, each of the $\binom{n}{2}$ sampled pairs is marginally a uniformly
-random pair drawn from the $\binom{xN}{2}$ pairs in the full dataset, so
-$E[D] = \binom{n}{2}\,k(xN-k)/\binom{xN}{2}$. The $\binom{n}{2}$ cancels on division,
-leaving the full-dataset value for every $n \ge 2$. No model assumption enters. The
-argument is pure combinatorics, which is why the $\theta_\pi$ curve stays flat regardless
-of demography or selection.
+**Proposition 1. $E[\theta_\pi]$ is invariant in $n$, for any spectrum.** At a single
+site, $\hat\theta_\pi = \Delta / \binom{n}{2}$, where $\Delta$ counts discordant pairs
+among the sampled chromosomes. By exchangeability of sampling without replacement, each of
+the $\binom{n}{2}$ sampled pairs is marginally a uniformly random pair drawn from the
+$\binom{xN}{2}$ pairs in the full dataset, so
+$E[\Delta] = \binom{n}{2}\,k(xN-k)/\binom{xN}{2}$. The $\binom{n}{2}$ cancels on division,
+leaving the full-dataset value for every $n \ge 2$; averaging over sites with weights
+$\sigma(k)$ gives the boxed expression. No model assumption enters. The argument is pure
+combinatorics, which is why the $\theta_\pi$ curve stays flat regardless of demography or
+selection.
 
-**Proposition 2. $E[\theta_w]$ is flat if and only if $\sigma(k) \propto 1/k$.**
+**Proposition 2. $E[\theta_w]$ is flat in $n$ if and only if $\sigma(k) \propto 1/k$.**
 The neutral spectrum is a fixed point of hypergeometric projection. Using
-$\frac{1}{k}\binom{k}{j} = \frac{1}{j}\binom{k-1}{j-1}$ and the Vandermonde convolution
+$\frac{1}{k}\binom{k}{i} = \frac{1}{i}\binom{k-1}{i-1}$ and the Vandermonde convolution
 $\sum_m \binom{m}{a}\binom{M-m}{b} = \binom{M+1}{a+b+1}$, a spectrum $\phi_k = \theta/k$
-projects onto a subsample of size $n$ as $\tilde\phi_j = \theta/j$ for $j = 1,\dots,n-1$.
+projects onto a subsample of size $n$ as $\tilde\phi_i = \theta/i$ for $i = 1,\dots,n-1$.
 Summing gives $E[S_n] = \theta H_{n-1}$, so dividing by $H_{n-1}$ returns $\theta$ at
 every $n$. For any other spectrum the cancellation is incomplete. In general
 $\theta_w(n)$ runs from $\theta_\pi$ at $n = 2$ to the full-dataset $\theta_w$ at
@@ -525,7 +655,7 @@ An upward drift, as in `gmexp`, means the dataset carries an excess of rare vari
 Everything above samples chromosomes. Under random mating that is equivalent to sampling
 individuals, because an individual is $x$ independent gene copies. Under inbreeding it is
 not, and the resulting error can be written down exactly. For a fully inbred, completely
-homozygous panel ($F = 1$), sampling $j$ individuals gives
+homozygous, diploid panel ($F = 1$), sampling $j$ individuals gives
 
 $$
 \frac{E[\hat\theta_{\pi,j}]}{\theta_{\pi,\text{full}}}
@@ -534,20 +664,22 @@ $$
 
 which is again independent of the spectrum. The reason is that the $2j$ sampled
 chromosomes contain $j$ within-individual pairs that are always identical and can never
-contribute a difference. Those pairs make up a fraction $1/(2j-1)$ of all pairs, against
-$1/(2N-1)$ in the full panel, and the bias is exactly the difference between the two
-fractions. The approach to the true value goes as $1/(2j)$: a 33% deficit at $j = 2$, and
-still 0.08% at $j = 400$. This is the same correlation between the two copies within an
-individual that made the diploid prediction overshoot by half in the *gm1001gbidopsis*
-section, and recasting the data as haploid is what removes it.
+contribute a difference. Those pairs make up a fraction $1/(2j-1)$ of all
+$\binom{2j}{2}$ pairs, against $1/(2N-1)$ in the full panel, and the bias is exactly the
+difference between the two fractions. The approach to the true value goes as $1/(2j)$:
+with $N = `r length(gm1001g$maps$sample.id)`$, a 33% deficit at $j = 2$ and still 0.08% at
+$j = 400$. This is the same correlation between the two copies within an individual that
+made the diploid prediction overshoot in the *Arabidopsis* section, and recasting the data
+as haploid is what removes it.
 
-## So what is the $z$ value am I comparing? 
+## So which $z$ value am I comparing?
 
-Given what we have generated. 
-
-The scaling of $M$ with $n$ is determined by four quantities: the number of sites $L$,
-the number of chromosomes $xN$, the spectrum $\sigma(k)$, and the sample size $n$. For
-real data, two further factors sit between that prediction and the observed
-mutations-area curve: the breeding structure, which controls whether sampling individuals
-is the same as sampling chromosomes, and the spatial structure, which controls whether
-sampling area is the same as sampling individuals.
+Putting the pieces together: the scaling of $M$ with $n$ is determined by four
+quantities, the number of sites $L$, the number of chromosomes $xN$, the spectrum
+$\sigma(k)$, and the sample size $n$. For real data, two further factors sit between that
+prediction and the observed mutations-area curve: the breeding structure, which controls
+whether sampling individuals is the same as sampling chromosomes, and the spatial
+structure, which controls whether sampling area is the same as sampling individuals. A
+$z$ reported without saying which of the three it is meant to reflect is not comparable
+across datasets, and `MARtheory()` is the tool for separating the first from the other
+two.

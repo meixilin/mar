@@ -17,9 +17,12 @@ editor_options:
 knitr::opts_chunk$set(
     collapse = TRUE,
     fig.align = "center",
+    fig.width = 6,
+    fig.height = 4.5,
+    dpi = 150,
     out.width = "100%"
 )
-devtools::load_all()
+rm(list = ls())
 ```
 
 # The standard `mar` workflow
