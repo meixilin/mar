@@ -4,13 +4,24 @@
 \alias{lonlat_parser}
 \title{Parse longitude/latitude coordinates from text file}
 \usage{
-lonlat_parser(lonlat.fn)
+lonlat_parser(lonlat.fn, ...)
 }
 \arguments{
 \item{lonlat.fn}{Path to input file (txt/csv/tsv, can be gzipped) containing coordinates. No missing values allowed.}
+
+\item{...}{
+  Arguments passed on to \code{\link[=marmaps]{marmaps}}
+  \describe{
+    \item{\code{mapres}}{Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.}
+    \item{\code{mapcrs}}{A character string specifying the coordinate reference system (CRS) for the map.}
+    \item{\code{incrs}}{A character string specifying the CRS of the input coordinates in \code{lonlatdf}.
+Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
+the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
+assignment are computed, so those stay consistent with the map units.}
+  }}
 }
 \value{
-A data frame containing sample IDs and their corresponding longitude/latitude coordinates.
+A marmaps object. See \code{\link[=marmaps]{marmaps()}}.
 Returns error if coordinates contain missing values or incorrect number of columns.
 }
 \description{
@@ -21,7 +32,10 @@ Sample IDs must be unique and in the same order as the Sample IDs provided in th
 }
 \examples{
 \dontrun{
-# Read coordinates from file
-coords <- lonlat_parser("sample_locations.txt")
+# Read coordinates from file, using an equal-area map projection
+coords <- lonlat_parser("sample_locations.txt", mapcrs = "EPSG:8857")
 }
+}
+\seealso{
+\code{\link[=marmaps]{marmaps()}}
 }

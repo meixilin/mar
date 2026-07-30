@@ -4,7 +4,7 @@
 \alias{mutdiv.gridded}
 \title{Calculate Genetic Diversity in a Gridded Bounding Box}
 \usage{
-mutdiv.gridded(gm, gmarea, bbox, revbbox = FALSE)
+mutdiv.gridded(gm, gmarea, sm, bbox, revbbox = FALSE)
 }
 \arguments{
 \item{gm}{A genomaps object containing genetic data and geographic informations, created by \code{\link[=genomaps]{genomaps()}} function.}

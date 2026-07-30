@@ -8,11 +8,11 @@ MARcalc(mardf, Mtype = .Mtype, Atype = .Atype)
 }
 \arguments{
 \item{mardf}{A data frame with columns of diversity metric and area.
-Output from \link{MARsampling} or \link{MARextinction}.}
+Output from \link{MARsampling}, \link{MARextinction} or \link{MARtheory}.}
 
 \item{Mtype}{The diversity metric to use. Default is "M" (richness), allowed values are M, E, thetaw, thetapi.}
 
-\item{Atype}{The area metric to use. Default is "A" (area), allowed values are A, Asq.}
+\item{Atype}{The area metric to use. Default is "A" (area), allowed values are A, Asq, N.}
 }
 \value{
 A fitted power model object from sars::sar_power

@@ -21,7 +21,6 @@ A list containing:
 \item{thetaw}{Watterson's theta estimate}
 \item{thetapi}{Pi (pairwise) diversity estimate}
 \item{A}{Total area with data}
-\item{Asq}{Area of the cells being analyzed}
 }
 \description{
 Calculates genetic diversity metrics for a specific set of cells. This function is particularly

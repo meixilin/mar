@@ -4,7 +4,7 @@
 \alias{expsfs}
 \title{Generate Expected Site Frequency Spectrum}
 \usage{
-expsfs(gm, folded = TRUE, nozero = TRUE)
+expsfs(gm, folded = FALSE, nozero = TRUE)
 }
 \arguments{
 \item{folded}{Logical, whether to fold the spectrum. Default TRUE}

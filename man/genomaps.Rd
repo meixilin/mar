@@ -21,14 +21,9 @@ comprehensive representation of the genetic and geographic data, connected by th
 }
 \examples{
 sample_id <- c("sample1", "sample2", "sample3")
-variant_id <- 1:4
-position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
-chromosome <- c("chr1", "chr1", "chr1", "chr2")
-position <- NULL
-chromosome <- NULL # if no position or chromosome
 genotype <- matrix(c(1, 2, 0, 0, 1, 1, 2, 0, 1, 2, 2, 1), nrow = 4, ncol = 3)
 ploidy <- 2
-geno <- margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
+geno <- margeno(genotype, ploidy, sample.id = sample_id)
 
 lonlatdf <- data.frame(
     id = sample_id,

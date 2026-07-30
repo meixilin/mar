@@ -4,7 +4,7 @@
 \alias{sfs}
 \title{Calculate Site Frequency Spectrum}
 \usage{
-sfs(gm, folded = TRUE, nozero = TRUE)
+sfs(gm, folded = FALSE, nozero = TRUE)
 }
 \arguments{
 \item{folded}{Logical, whether to fold the spectrum. Default TRUE}
