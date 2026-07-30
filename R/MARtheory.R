@@ -56,7 +56,7 @@
 # as soon as one derived copy lands in the subsample.
 # kpdf is named 0:xN, so position i holds the allele count k = i - 1.
 # k = 0 contributes nothing (miss = 1), it is kept in the sum for clarity.
-.E_S <- function(xN, kpdf, n, L) {
+.E_M <- function(xN, kpdf, n, L) {
     kk <- 0:xN
     sumpk <- sum(.p_K(xN = xN, k = kk, n = n, pk = kpdf[kk + 1]))
     out <- L * sumpk
@@ -93,7 +93,7 @@
 
 # expected diversity at a single subsample size n. n is first input here for lapply
 .mutdiv.theory <- function(n, xN, kpdf, L, ploidy) {
-    M <- .E_S(xN = xN, kpdf = kpdf, n = n, L = L)
+    M <- .E_M(xN = xN, kpdf = kpdf, n = n, L = L)
     # thetaw / thetapi are undefined at n = 1 (H_0 = 0 / division by n - 1)
     if (n < 2) {
         thetaw <- NA_real_

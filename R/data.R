@@ -10,3 +10,16 @@
 #' }
 #' @source <https://1001genomes.org/data/GMI-MPI/releases/v3.1/SNP_matrix_imputed_hdf5/>
 "gm1001g"
+
+#' gmexp
+#'
+#' Example genomaps object created from simulated expanding population
+#'
+#' @format ## `gmexp`
+#' An S3 `genomaps` object created using [genomaps()] function.
+#' \describe{
+#'   \item{geno}{An S3 `margeno` object. See [margeno()] function.}
+#'   \item{maps}{An S3 `marmaps` object. See [marmaps()] function.}
+#' }
+#' @source data-raw/gmexp_simulate.py
+"gmexp"

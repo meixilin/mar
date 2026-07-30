@@ -37,9 +37,10 @@ plot.marmaps <- function(x, ...) {
 #'   `genomaps` object (an `sfs` is generated from it via \link{expsfs}). When
 #'   supplied, a legend distinguishing observed vs. expected is added in the
 #'   top right corner.
-#' @param ... Additional arguments passed to \link[graphics]{plot}. To examine
-#'   rare variants more closely, pass `log = "x"` to spread out the low
-#'   allele-count bins.
+#' @param ... Additional arguments passed to \link[graphics]{plot}, other than
+#'   `type`, `xlab` and `ylab`, which the method sets itself. To examine rare
+#'   variants more closely, pass `log = "x"` to spread out the low allele-count
+#'   bins.
 #'
 #' @return Invisibly returns NULL
 #' @export
@@ -56,17 +57,16 @@ plot.marmaps <- function(x, ...) {
 plot.sfs <- function(x, expected = NULL, ...) {
     data <- as.vector(x)
     bins <- as.integer(names(x))
-    plotargs <- utils::modifyList(
-        list(type = "b", pch = 19, xlab = "Allele Count", ylab = "Number of Alleles"),
-        list(...)
-    )
-    do.call(graphics::plot, c(list(data ~ bins), plotargs))
+    # plot
+    graphics::plot(x = bins, y = data, type = "b", xlab = "Allele Count", ylab = "Number of Alleles", ...)
     expected <- .resolve_expsfs(x, expected)
     if (!is.null(expected)) {
         .overlay_expsfs(bins, x, expected)
-        datacol <- if (!is.null(plotargs$col)) plotargs$col else graphics::par("col")
-        legend("topright", legend = c("observed", "expected"), col = c(datacol, .theorycol), pch = 19, lty = 1, bty = "n")
     }
+    # dataline = 1 because the observed spectrum is drawn as points AND line
+    .ann_legend("topright", list(...), "observed",
+        overlaylab = if (!is.null(expected)) "expected", dataline = 1
+    )
     return(invisible())
 }
 
@@ -82,14 +82,15 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #'   to be fitted via \link{MARcalc}.
 #' @param Mtype Type of genetic diversity metric to plot
 #' @param Atype Type of area metric to plot
-#' @param logscale Logical, whether to plot on log-log scale
 #' @param theory What theoretical MAR prediction to overlay: `NULL` (default,
 #'   no overlay), a `martheory` object (output of \link{MARtheory}, used
 #'   as-is), or a `genomaps` object (a `martheory` is generated from it via
 #'   \link{MARtheory}). Only supported when `Atype = "N"`. When supplied
 #'   (together with `fit`), a legend distinguishing observed data / fitted
 #'   equation / theory is added in the bottom right corner.
-#' @param ... Additional arguments passed to plot
+#' @param ... Additional arguments passed to \link[graphics]{plot}. Pass
+#'   `log = "xy"` (or `"x"` / `"y"`) for a log-log (or semi-log) plot; the
+#'   fitted curve follows the axes.
 #'
 #' @return Invisibly returns NULL
 #' @export
@@ -99,8 +100,10 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #' plot(marsamp_object, fit = c(c = 0.5, z = 0.25))
 #' # fit c/z automatically, and overlay the MARtheory prediction generated from gm
 #' plot(marsamp_object, Atype = "N", fit = TRUE, theory = gm1001g)
+#' # the power law as a straight line on log-log axes
+#' plot(marsamp_object, fit = TRUE, log = "xy")
 #' }
-plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, logscale = FALSE, theory = NULL, ...) {
+plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
     Mtype <- match.arg(Mtype)
     Atype <- match.arg(Atype)
     tmpdf <- x[, c(Atype, Mtype)]
@@ -114,47 +117,21 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, logscal
     cz <- .resolve_fit(tmpdf, fit, Mtype = Mtype, Atype = Atype)
     c <- cz$c
     z <- cz$z
-    dots <- list(...)
-    datacol <- if (!is.null(dots$col)) dots$col else graphics::par("col")
-    datapch <- if (!is.null(dots$pch)) dots$pch else graphics::par("pch")
     # plot
-    if (logscale) {
-        graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], log = "xy", xlab = Atype, ylab = Mtype, ...)
-        # log(M) = log(c) + A*z
-        if (!is.null(c) & !is.null(z)) {
-            abline(a = c, b = z, col = .anncol)
-        }
-    } else {
-        graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
-        # M = c*A^z
-        if (!is.null(c) & !is.null(z)) {
-            curve(c * x^z, add = TRUE, col = .anncol)
-        }
+    graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
+    # M = c*A^z. curve() follows the axes it is drawn on, so this stays correct
+    # when the caller asks for log = "x" / "y" / "xy"
+    if (!is.null(c) & !is.null(z)) {
+        curve(c * x^z, add = TRUE, col = .anncol)
     }
     theory <- .resolve_theory(theory)
     if (!is.null(theory)) {
         .overlay_theory_marsamp(theory, Mtype = Mtype, Atype = Atype)
     }
-    # combined legend: observed data / fitted equation / theory overlay, bottom right
-    leglab <- list("observed")
-    legcol <- datacol
-    legpch <- datapch
-    leglty <- NA
-    if (!is.null(c) & !is.null(z)) {
-        leglab <- c(leglab, .eq_marsamp(c, z, Mtype = Mtype, Atype = Atype))
-        legcol <- c(legcol, .anncol)
-        legpch <- c(legpch, NA)
-        leglty <- c(leglty, 1)
-    }
-    if (!is.null(theory)) {
-        leglab <- c(leglab, "theory")
-        legcol <- c(legcol, .theorycol)
-        legpch <- c(legpch, NA)
-        leglty <- c(leglty, 1)
-    }
-    if (length(leglab) > 1) {
-        legend("bottomright", legend = as.expression(leglab), col = legcol, pch = legpch, lty = leglty, bty = "n")
-    }
+    .ann_legend("bottomright", list(...), "observed",
+        eq = if (!is.null(c) & !is.null(z)) .eq_marsamp(c, z, Mtype = Mtype, Atype = Atype),
+        overlaylab = if (!is.null(theory)) "theory"
+    )
     return(invisible())
 }
 
@@ -203,12 +180,15 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
     graphics::plot(x = a_per, y = m_per, xlab = paste0("% of ", Atype, " lost"), ylab = paste0("% of ", Mtype, " remained"), ...)
     if (!is.null(z)) {
         curve((1 - x)^z, add = TRUE, col = .anncol)
-        .ann_marextinct(z, location = "topright")
     }
     theory <- .resolve_theory(theory)
     if (!is.null(theory)) {
         .overlay_theory_marextinct(theory, Mtype = Mtype, Atype = Atype)
     }
+    .ann_legend("bottomleft", list(...), "observed",
+        eq = if (!is.null(z)) bquote((1 - m) == (1 - a)^.(round(z, 2))),
+        overlaylab = if (!is.null(theory)) "theory"
+    )
     return(invisible())
 }
 
@@ -223,8 +203,9 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #'   `c(c = , z = )` vector supplies one or both directly, and leaves the rest
 #'   to be fitted via \link{MARcalc}.
 #' @param Mtype Type of genetic diversity metric to plot. Allowed values are `r toString(.Mtype_theory)`.
-#' @param logscale Logical, whether to plot on log-log scale
-#' @param ... Additional arguments passed to plot
+#' @param ... Additional arguments passed to \link[graphics]{plot}. Pass
+#'   `log = "xy"` (or `"x"` / `"y"`) for a log-log (or semi-log) plot; the
+#'   fitted curve follows the axes.
 #'
 #' @return Invisibly returns NULL
 #' @export
@@ -233,8 +214,9 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #' \dontrun{
 #' theory <- MARtheory(gm1001g)
 #' plot(theory, fit = TRUE)
+#' plot(theory, fit = TRUE, log = "xy")
 #' }
-plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FALSE, ...) {
+plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
     Mtype <- match.arg(Mtype)
     Atype <- "N" # martheory is always predicted against N (number of individuals)
     tmpdf <- x[, c(Atype, Mtype)]
@@ -248,21 +230,16 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FAL
     c <- cz$c
     z <- cz$z
     # plot
-    if (logscale) {
-        graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], log = "xy", xlab = Atype, ylab = Mtype, ...)
-        # log(M) = log(c) + N*z
-        if (!is.null(c) & !is.null(z)) {
-            abline(a = c, b = z, col = .anncol)
-            .ann_marsamp(c, z, location = "bottomright", Mtype = Mtype, Atype = Atype)
-        }
-    } else {
-        graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
-        # M = c*N^z
-        if (!is.null(c) & !is.null(z)) {
-            curve(c * x^z, add = TRUE, col = .anncol)
-            .ann_marsamp(c, z, location = "bottomright", Mtype = Mtype, Atype = Atype)
-        }
+    graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
+    # M = c*N^z. curve() follows the axes it is drawn on, so this stays correct
+    # when the caller asks for log = "x" / "y" / "xy"
+    if (!is.null(c) & !is.null(z)) {
+        curve(c * x^z, add = TRUE, col = .anncol)
     }
+    # the plotted points here ARE the theory rather than observed data
+    .ann_legend("bottomright", list(...), "theory",
+        eq = if (!is.null(c) & !is.null(z)) .eq_marsamp(c, z, Mtype = Mtype, Atype = Atype)
+    )
     return(invisible())
 }
 
@@ -279,24 +256,42 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FAL
     )
 }
 
-# the fitted power-law equation as a plotmath expression, shared by
-# .ann_marsamp (standalone equation legend, used by plot.martheory) and the
-# combined observed/fit/theory legend in plot.marsamp
+# the fitted power-law equation as a plotmath expression, shared by the combined
+# data/fit/theory legends of plot.marsamp and plot.martheory
 .eq_marsamp <- function(c, z, Mtype = "M", Atype = "A") {
     bquote(.(.mtype_label(Mtype)) == .(round(c, 2)) * .(as.name(Atype))^.(round(z, 2)))
 }
 
-.ann_marsamp <- function(c, z, location, Mtype = "M", Atype = "A") {
-    legend(location, legend = as.expression(.eq_marsamp(c, z, Mtype, Atype)), text.col = .anncol)
-}
-
-.ann_marextinct <- function(z, location) {
-    equation <- bquote((1 - m) == (1 - a)^.(round(z, 2)))
-    legend(location, legend = as.expression(equation), text.col = .anncol)
-}
-
-.ann_marsadsfs <- function(aa, ll, location) {
-    legend(location, legend = paste0("AIC = ", round(aa, 2), "\nLL = ", round(ll, 2)))
+# the legend shared by every plot method: one key for the plotted data, plus
+# optional keys for the fitted equation (`eq`) and for an overlaid curve
+# (`overlaylab`, "theory" or "expected"). the data key's colour and symbol are
+# read back out of the plot call's arguments so the key matches the points
+# actually drawn -- with [[ ]], since $ partial-matches and would let col.axis
+# stand in for col. `dataline` is the data key's line type: NA for a scatter,
+# 1 for a plot whose points are joined (plot.sfs, type = "b"). the eq and
+# overlay keys are always line-only. a lone data key is not worth a legend, so
+# nothing is drawn in that case.
+.ann_legend <- function(location, plotargs, datalab, eq = NULL, overlaylab = NULL, dataline = NA) {
+    leglab <- list(datalab)
+    legcol <- if (!is.null(plotargs[["col"]])) plotargs[["col"]] else graphics::par("col")
+    legpch <- if (!is.null(plotargs[["pch"]])) plotargs[["pch"]] else graphics::par("pch")
+    leglty <- dataline
+    if (!is.null(eq)) {
+        leglab <- c(leglab, eq)
+        legcol <- c(legcol, .anncol)
+        legpch <- c(legpch, NA)
+        leglty <- c(leglty, 1)
+    }
+    if (!is.null(overlaylab)) {
+        leglab <- c(leglab, overlaylab)
+        legcol <- c(legcol, .theorycol)
+        legpch <- c(legpch, NA)
+        leglty <- c(leglty, 1)
+    }
+    if (length(leglab) > 1) {
+        legend(location, legend = as.expression(leglab), col = legcol, pch = legpch, lty = leglty, bty = "n")
+    }
+    return(invisible())
 }
 
 # resolve the expected (neutral) sfs to overlay from a single `expected`
@@ -317,10 +312,10 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FAL
 }
 
 # overlay the expected sfs on top of the observed sfs line/point plot of `x`,
-# aligning bins by name in case `expected` uses a different bin set
+# aligning bins by name in case `expected` uses a different bin set.
 .overlay_expsfs <- function(bins, x, expected, col = .theorycol) {
     aligned <- as.vector(expected)[match(names(x), names(expected))]
-    lines(bins, aligned, col = col, type = 'b', pch = 19)
+    lines(bins, aligned, col = col, type = 'b')
     return(invisible())
 }
 
@@ -384,8 +379,10 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FAL
     return(invisible())
 }
 
-# same, but rescaled to the % lost / % remained axes used by plot.marextinct,
-# scaling the theory curve by its own first row (as plot.marextinct does)
+# same, but rescaled to the % lost / % remained axes used by plot.marextinct.
+# unlike marsamp/marextinct output (sorted with row 1 = full sample), martheory
+# is always sorted with N ascending from 1, so the full-sample reference row is
+# picked out by which.max() rather than assumed to be the first row
 .overlay_theory_marextinct <- function(theory, Mtype, Atype, col = .theorycol) {
     if (Atype != "N" || !all(c(Atype, Mtype) %in% colnames(theory))) {
         warning("MARtheory overlay requires Atype = \"N\" and a matching Mtype column in `theory`; skipping overlay")
@@ -393,8 +390,9 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, logscale = FAL
     }
     tdf <- theory[, c(Atype, Mtype)]
     tdf <- tdf[(tdf[, Mtype] > 0 & !is.na(tdf[, Mtype])), ]
-    a_per <- 1 - tdf[, Atype] / (tdf[1, Atype])
-    m_per <- tdf[, Mtype] / (tdf[1, Mtype])
+    full <- tdf[which.max(tdf[, Atype]), ]
+    a_per <- 1 - tdf[, Atype] / full[, Atype]
+    m_per <- tdf[, Mtype] / full[, Mtype]
     lines(x = a_per, y = m_per, col = col)
     return(invisible())
 }
