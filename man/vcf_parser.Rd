@@ -4,7 +4,7 @@
 \alias{vcf_parser}
 \title{Convert VCF file to GDS format}
 \usage{
-vcf_parser(vcf.fn)
+vcf_parser(vcf.fn, ploidy = 2)
 }
 \arguments{
 \item{vcf.fn}{Path to the input VCF file. Can be either .vcf or .vcf.gz format}

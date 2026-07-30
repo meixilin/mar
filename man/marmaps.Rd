@@ -4,14 +4,19 @@
 \alias{marmaps}
 \title{Create a marmaps object}
 \usage{
-marmaps(lonlatdf, mapres, mapcrs)
+marmaps(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326")
 }
 \arguments{
 \item{lonlatdf}{A data frame with three columns: sample ID, longitude, and latitude.}
 
+\item{mapcrs}{A character string specifying the coordinate reference system (CRS) for the map.}
+
 \item{mapres}{Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.}
 
-\item{mapcrs}{A character string specifying the coordinate reference system (CRS) for the map.}
+\item{incrs}{A character string specifying the CRS of the input coordinates in \code{lonlatdf}.
+Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
+the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
+assignment are computed, so those stay consistent with the map units.}
 }
 \value{
 A marmaps object.
@@ -26,5 +31,15 @@ lonlatdf <- data.frame(
     latitude = c(37.8, 37.7, 37.9),
     stringsAsFactors = FALSE
 )
-marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:4326")
+# input is WGS84 lon/lat, reprojected to an equal-area map
+marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8857", incrs = "EPSG:4326")
+
+# input coordinates already in the target projection (no reprojection)
+lonlatdf <- data.frame(
+    id = c("sample1", "sample2", "sample3"),
+    x = c(100, 200, 400),
+    y = c(37.8, 37.7, 37.9),
+    stringsAsFactors = FALSE
+)
+marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8859", incrs = "EPSG:8859")
 }

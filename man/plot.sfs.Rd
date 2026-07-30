@@ -4,20 +4,35 @@
 \alias{plot.sfs}
 \title{Plot Method for Site Frequency Spectrum}
 \usage{
-\method{plot}{sfs}(x, ...)
+\method{plot}{sfs}(x, expected = NULL, ...)
 }
 \arguments{
 \item{x}{An object of class "sfs" containing site frequency spectrum data}
 
-\item{...}{Additional arguments passed to barplot}
+\item{expected}{What expected (neutral) SFS to overlay: \code{NULL} (default, no
+overlay), an \code{sfs} object (output of \link{expsfs}, used as-is), or a
+\code{genomaps} object (an \code{sfs} is generated from it via \link{expsfs}). When
+supplied, a legend distinguishing observed vs. expected is added in the
+top right corner.}
+
+\item{...}{Additional arguments passed to \link[graphics]{plot}, other than
+\code{type}, \code{xlab} and \code{ylab}, which the method sets itself. To examine rare
+variants more closely, pass \code{log = "x"} to spread out the low allele-count
+bins.}
 }
 \value{
 Invisibly returns NULL
 }
 \description{
-Creates a barplot of the site frequency spectrum
+Creates a line/point plot of the site frequency spectrum
 }
 \examples{
 sfs_object <- sfs(AC = c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30), N = 50, ploidy = 2)
 plot(sfs_object)
+\dontrun{
+# overlay the neutral expectation, generated automatically from gm
+plot(sfs_object, expected = gm1001g)
+# spread out rare variants (low allele counts) on a log-x scale
+plot(sfs_object, log = "x")
+}
 }

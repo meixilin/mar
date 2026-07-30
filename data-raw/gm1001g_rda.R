@@ -2,16 +2,15 @@
 options(echo = TRUE)
 library(mar)
 
-genodata <- mar::text_parser(
-    geno.fn = '1001g_genotypes.txt.gz', 
-    samp.fn = '1001g_accessions.txt', 
-    pos.fn = '1001g_chrpos.txt', 
+genodata <- text_parser(
+    geno.fn = '1001g_genotypes.txt.gz',
+    samp.fn = '1001g_accessions.txt',
+    pos.fn = '1001g_chrpos.txt',
     ploidy = 2
 )
 
-mapsdata <- mar::lonlat_parser('1001g_lonlat.txt')
-mapsdata <- mar::marmaps(mapsdata, mapres = NULL, mapcrs = "OGC:CRS84")
+mapsdata <- lonlat_parser('1001g_lonlat.txt', mapcrs = 'EPSG:8857')
 
-gm1001g <- mar::genomaps(genodata, mapsdata)
+gm1001g <- genomaps(genodata, mapsdata)
 
 usethis::use_data(gm1001g)

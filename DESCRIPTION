@@ -1,27 +1,24 @@
 Package: mar
 Type: Package
 Title: Fitting Mutations-Area Relationships using population genomic samples of a species
-Version: 0.2.0
-Date: 2025-11-21
-Author: Moi Exposito-Alonso, Meixi Lin
-Maintainer: Meixi Lin <22927483+meixilin@users.noreply.github.com>
+Version: 0.3.0
+Date: 2026-07-30
+Author: Meixi Lin, Sawyer Kate Thomsen, Moi Exposito-Alonso
+Maintainer: Sawyer Kate Thomsen <sawyerthomsen15@berkeley.edu>, Meixi Lin <meixilin@berkeley.edu>
 Description: Fitting Mutations-Area Relationships using population genomic samples of a species.
 License: MIT + file LICENSE
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 biocViews:
 Imports:
     terra,
     sars,
-    sads,
-    bbmle,
-    matrixStats,
-    SeqArray (>= 1.28.0)
+    matrixStats
 Encoding: UTF-8
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 LazyData: true
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)

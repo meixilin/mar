@@ -4,30 +4,30 @@
 \alias{plot.marsamp}
 \title{Plot Method for Mutations-Area Relationship sample data}
 \usage{
-\method{plot}{marsamp}(
-  x,
-  c = NULL,
-  z = NULL,
-  Mtype = .Mtype,
-  Atype = .Atype,
-  logscale = FALSE,
-  ...
-)
+\method{plot}{marsamp}(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...)
 }
 \arguments{
 \item{x}{A data frame containing sampling data}
 
-\item{c}{Intercept parameter of fitted power law curve}
-
-\item{z}{Slope parameter of fitted power law curve}
+\item{fit}{Whether to draw the fitted power-law curve. \code{FALSE} (default) draws
+nothing; \code{TRUE} fits both \code{c} and \code{z} via \link{MARcalc}; a named
+\code{c(c = , z = )} vector supplies one or both directly, and leaves the rest
+to be fitted via \link{MARcalc}.}
 
 \item{Mtype}{Type of genetic diversity metric to plot}
 
 \item{Atype}{Type of area metric to plot}
 
-\item{logscale}{Logical, whether to plot on log-log scale}
+\item{theory}{What theoretical MAR prediction to overlay: \code{NULL} (default,
+no overlay), a \code{martheory} object (output of \link{MARtheory}, used
+as-is), or a \code{genomaps} object (a \code{martheory} is generated from it via
+\link{MARtheory}). Only supported when \code{Atype = "N"}. When supplied
+(together with \code{fit}), a legend distinguishing observed data / fitted
+equation / theory is added in the bottom right corner.}
 
-\item{...}{Additional arguments passed to plot}
+\item{...}{Additional arguments passed to \link[graphics]{plot}. Pass
+\code{log = "xy"} (or \code{"x"} / \code{"y"}) for a log-log (or semi-log) plot; the
+fitted curve follows the axes.}
 }
 \value{
 Invisibly returns NULL
@@ -37,6 +37,10 @@ Creates a plot of genetic diversity against area, optionally with fitted power l
 }
 \examples{
 \dontrun{
-plot(marsamp_object, c = 0.5, z = 0.25)
+plot(marsamp_object, fit = c(c = 0.5, z = 0.25))
+# fit c/z automatically, and overlay the MARtheory prediction generated from gm
+plot(marsamp_object, Atype = "N", fit = TRUE, theory = gm1001g)
+# the power law as a straight line on log-log axes
+plot(marsamp_object, fit = TRUE, log = "xy")
 }
 }

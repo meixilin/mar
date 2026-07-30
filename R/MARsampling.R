@@ -42,9 +42,8 @@ MARsampling <-
         minrange <- min(latrange, lonrange)
         # the point where most samples are available (for inwards / outwards sampling)
         # TODO: user specified central point
-        sm <- .as_spatraster(sm)
         maxrc <- terra::where.max(sm) # can have multiple rows when tied
-        r0c0 <- terra::rowColFromCell(sm, maxrc[1, "cell"])
+        r0c0 <- terra::rowColFromCell(sm, maxrc[1, 'cell'])
         # calculate and store non-empty cell once, as a summed-area table for O(1) box occupancy queries
         pres <- !is.na(terra::as.matrix(sm, wide = TRUE))
         cumocc <- apply(pres, 2, cumsum)
