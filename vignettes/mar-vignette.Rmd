@@ -195,7 +195,7 @@ summary(marfit)
 c_M_A = unname(marfit$par['c'])
 z_M_A = unname(marfit$par['z'])
 # Plot the fit again
-mar:::plot.marsamp(mardf, c = c_M_A, z = z_M_A)
+plot(mardf, fit = c(c = c_M_A, z = z_M_A))
 ```
 
 You can also fit other mutation relationships. For example, nucleotide diversity thetapi
@@ -215,7 +215,7 @@ summary(marfit_pi)
 c_pi_Asq = unname(marfit_pi$par['c'])
 z_pi_Asq = unname(marfit_pi$par['z'])
 # Plot the fit again
-mar:::plot.marsamp(mardf, c = c_pi_Asq, z = z_pi_Asq, Mtype = 'thetapi', Atype = 'Asq')
+plot(mardf, fit = c(c = c_pi_Asq, z = z_pi_Asq), Mtype = 'thetapi', Atype = 'Asq')
 ```
 
 **Alternative workflow**:
