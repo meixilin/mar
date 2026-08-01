@@ -20,7 +20,7 @@
 #' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
 #' div <- mutdiv.gridded(gm1001g, gmarea, bbox = c(1, 10, 2, 8))
 mutdiv.gridded <- function(gm, gmarea, sm, bbox, revbbox = FALSE) {
-    stopifnot('Bounding box should be length of 4' = length(bbox) == 4)
+    stopifnot("Bounding box should be length of 4" = length(bbox) == 4)
     # calculate area by bounding box using gmarea (so units are interpretable at km)
     Asq <- sum(gmarea[bbox[1]:bbox[2], bbox[3]:bbox[4]])
     # if reverse bounding box
@@ -74,7 +74,8 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
         # calculate genetic diversity
         out <- append(
             .calc_theta(gm, sampleids),
-            list(A = A))
+            list(A = A)
+        )
     }
     # Asq will be appended when called from mutdiv.gridded
     if (!is.null(Asq)) {

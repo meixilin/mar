@@ -42,14 +42,13 @@
 #'
 #' @examples
 #' # Calculate SFS from allele counts
-#' allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
-#' sfs_result <- sfs(allele_counts, N=50, ploidy=2)
-
+#' allele_counts <- c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30)
+#' sfs_result <- sfs(allele_counts, N = 50, ploidy = 2)
 # set folded = FALSE so the MAR sampling theory could work
 sfs <- function(gm, folded = FALSE, nozero = TRUE) {
-    AC = gm$geno$allele_count
-    N = length(gm$maps$sample.id)
-    ploidy = gm$geno$ploidy
+    AC <- gm$geno$allele_count
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
 
     xN <- N * ploidy
     if (any(AC > xN)) {
@@ -74,15 +73,14 @@ sfs <- function(gm, folded = FALSE, nozero = TRUE) {
 #'
 #' @examples
 #' # Generate expected SFS
-#' exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
-
+#' exp_sfs <- expsfs(lenAC = 1000, N = 100, ploidy = 2)
 expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
-    N = length(gm$maps$sample.id)
-    ploidy = gm$geno$ploidy
-    xN = N*ploidy
-    lenAC = nrow(gm$geno$genotype)
-    theta = lenAC / .Hn(xN) # scale theta
-    expsfs = c(0, theta/(1:xN)) # need to add 0 as xN is the same as zero when folded
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
+    xN <- N * ploidy
+    lenAC <- nrow(gm$geno$genotype)
+    theta <- lenAC / .Hn(xN) # scale theta
+    expsfs <- c(0, theta / (1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)
 }
