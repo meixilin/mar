@@ -59,7 +59,8 @@ create_test_pixy_genomaps_na <- function() {
 
 test_that("mutdiv.gridded basic functionality works", {
     gm <- gm1001g
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
 
     # Test with a simple 50x50 bounding box
     result <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 50, 1, 50))
@@ -88,7 +89,8 @@ test_that("mutdiv.gridded basic functionality works", {
 
 test_that("mutdiv.cells basic functionality works", {
     gm <- gm1001g
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
 
     # Get actual cellids from the test data
     cellids <- unique(gm$maps$cellid)[1:2]
@@ -167,7 +169,8 @@ test_that("test that .calc_theta output is correct", {
 test_that(".mutdiv.cellids handles various inputs correctly", {
     gm <- create_test_genomaps()
     attr(gm, "genolen") <- 1000
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
     Asq <- 1.0
 
     # Get actual cellids
