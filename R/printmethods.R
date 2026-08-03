@@ -15,7 +15,9 @@
 print.margeno <- function(x, ...) {
     cat("margeno object\n")
     cat("    number of samples: ", length(x$sample.id), "\n")
-    cat("    number of genomic sites: ", length(x$variant.id), "\n")
+    cat("    number of SNPs: ", sum(x$allele_count > 0), "\n")
+    cat("    number of sites: ", length(x$variant.id), "\n")
+    cat("    missing rate: ", round(mean(is.na(x$genotype)), digits = 3), "\n")
     cat("    ploidy: ", x$ploidy, "\n")
     cat("\n")
     cat("head of variantid, position, chromosome, genotype:\n")

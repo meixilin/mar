@@ -85,7 +85,6 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
 
 # genetic diversity estimator (use `gm$genotype` matrix)
 # ploidy does not matter here. although > diploid is not well-defined.
-# TODO: allow L calculations
 .calc_theta <- function(gm, sampleid = NULL) {
     ploidy <- gm$geno$ploidy
     # subset ids
@@ -104,17 +103,20 @@ mutdiv.cells <- function(gm, gmarea, cellids) {
 
     # number of mutations (can be all alternative mutations)
     M <- sum(AC > 0)
-    # segregating sites (polymorphic in the sample)
-    M_seg <- sum(AC > 0 & AC < xN)
+    # segregating sites boolean variable (polymorphic in the sample)
+    isseg <- AC > 0 & AC < xN
     # compute diversity, Theta Waterson and Theta Pi (pairwise)
     if (any(xN > 1) & M > 0) {
         # total pairwise difference / total pairwise comparison
         thetapi <- sum(2 * AC * (xN - AC)) / sum(xN * (xN - 1))
-        # Segregating sites / sum of all possible harmonic numbers of xN (subset to never evaluate .Hn(-1))
-        thetaw <- M_seg / sum(.Hn(xN[xN > 0] - 1))
+        # fully follow pixy: sum (Sn / a(n)) / total "sites with at least one allele."
+        # TODO: I still think this correction can be improved. why not use ratio of sum as thetapi.
+        # NOTE: when xN = 0 or 1, isseg will always be false (so no edge case of .Hn(-1) here)
+        thetaw <- sum(1 / .Hn(xN[isseg] - 1)) / sum(xN > 0)
     } else {
-        thetaw <- 0
-        thetapi <- 0
+        # match the theory output (theta is undefined when n < 2)
+        thetaw <- NA_real_
+        thetapi <- NA_real_
     }
     # endemic segregating sites
     E <- sum(AC > 0 & oAC == 0)
