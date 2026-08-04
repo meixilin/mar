@@ -39,7 +39,8 @@
     return(genomaps(mg, mm))
 }
 
-create_test_pixy_genomaps_na <- function() {
+create_test_pixy_genomaps_na <- function(paper = c('theta_pi', 'theta_w')) {
+    paper <- match.arg(paper)
     gt <- rbind(
         c(".", ".", ".", "."), #  1  - - - -
         c("1", "0", ".", "0"), #  2  T G - G
@@ -54,6 +55,11 @@ create_test_pixy_genomaps_na <- function() {
         c("0", "0", "0", "0"), # 11  A A A A
         c(".", ".", ".", ".") # 12  - - - -
     )
+    if (paper == 'theta_w') {
+        # 9 T T T C
+        gt[9, ] = c('1', '1', '1', '0')
+    }
+
     return(.pixy_genomaps(gt))
 }
 
@@ -158,11 +164,16 @@ test_that(".calc_theta correctly handles fully missing sites", {
     expect_true(res$M <= (nrow(geno) - 1))
 })
 
-test_that("test that .calc_theta output is correct", {
+test_that("test that .calc_theta reproduces pixy", {
     gm_na <- create_test_pixy_genomaps_na()
     res_na <- .calc_theta(gm_na)
 
     expect_equal(res_na$thetapi, 0.1)
+
+    gm_na_tw <- create_test_pixy_genomaps_na(paper = 'theta_w')
+    res_na_tw <- .calc_theta(gm_na_tw)
+    exp_tw <- (1*2/(sum(1+1/2)) + 1/(sum(1+1/2+1/3))) / 9 # pixy original
+    expect_equal(res_na_tw$thetaw, exp_tw)
 })
 
 

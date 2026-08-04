@@ -3,9 +3,6 @@
     # create object (order determined by SeqArray output)
     # 2026 update: add an allele count entry so sfs, .calc_theta can all use (if all NA, AC is 0)
     AC = matrixStats::rowSums2(genotype, na.rm = TRUE)
-    if (any(AC == 0)) {
-        message(paste0("There are ", sum(AC == 0)," invariant sites in the genotype matrix"))
-    }
     obj <- list(
         sample.id = sample.id,
         variant.id = variant.id,
