@@ -101,7 +101,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     gridpresent <- sort(unique(gm$maps$cellid))
     gridrowcol <- terra::rowColFromCell(.get_samplemap(gm$maps), gridpresent)
     # find right stepsize
-    mystep <- ifelse(length(gridpresent) > 100, ceiling(length(gridpresent) * xfrac), 1)
+    mystep <- ceiling(length(gridpresent) * xfrac)
     rvars <- gridrowcol[, 1]
     cvars <- gridrowcol[, 2]
 

@@ -5,7 +5,7 @@
 #' @param gm a [genomaps] object created by [genomaps()]
 #' @param scheme sampling schemes for spatial data. allowed are `r toString(.MARsampling_schemes)`.
 #' @param nrep number of replicates.
-#' @param xfrac fraction of the range to use for the step size in the sampling scheme.
+#' @param xfrac fraction of the range to use for the step size in the sampling scheme. At least one step at a time.
 #' @param quorum require all sampling grid to have samples. default is FALSE.
 #' @param animate play an animation of the sampling boxes. default is FALSE.
 #' @param myseed set seed for reproducibility. default is NULL.
@@ -50,7 +50,7 @@ MARsampling <-
         cumocc <- t(apply(cumocc, 1, cumsum))
         cumocc <- rbind(0L, cbind(0L, cumocc))
         # find right stepsize
-        mystep <- ifelse(minrange > 100, ceiling(minrange * xfrac), 1)
+        mystep <- ceiling(minrange * xfrac)
         sidesize <- seq(1, minrange, by = mystep)
         # differences btw different schemes are in the bounding boxes selected for diversity calculations
         # differences in bounding boxes are in the sample probability settings
