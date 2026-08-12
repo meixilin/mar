@@ -13,12 +13,15 @@
 #' Creates a spatial plot of sample locations and density
 #'
 #' @param x An object of class "marmaps" containing sample mapping information
-#' @param ... Additional arguments passed to plot
+#' @param ... Additional arguments passed to \link[terra]{plot}
 #'
 #' @return Invisibly returns NULL
+#' @seealso [marmaps()]
 #' @export
 #'
 #' @examples
+#' # cells are coloured by the number of samples they hold,
+#' # the individual sampling locations are drawn on top
 #' plot(gm1001g$maps)
 plot.marmaps <- function(x, ...) {
     sm = .get_samplemap(x)
@@ -43,17 +46,18 @@ plot.marmaps <- function(x, ...) {
 #'   bins.
 #'
 #' @return Invisibly returns NULL
+#' @seealso [sfs()] and [expsfs()]
 #' @export
 #'
 #' @examples
-#' sfs_object <- sfs(AC = c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30), N = 50, ploidy = 2)
+#' sfs_object <- sfs(gm1001g)
 #' plot(sfs_object)
-#' \dontrun{
+#'
 #' # overlay the neutral expectation, generated automatically from gm
 #' plot(sfs_object, expected = gm1001g)
+#'
 #' # spread out rare variants (low allele counts) on a log-x scale
-#' plot(sfs_object, log = "x")
-#' }
+#' plot(sfs_object, expected = gm1001g, log = "x")
 plot.sfs <- function(x, expected = NULL, ...) {
     data <- as.vector(x)
     bins <- as.integer(names(x))
@@ -75,7 +79,7 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #'
 #' Creates a plot of genetic diversity against area, optionally with fitted power law
 #'
-#' @param x A data frame containing sampling data
+#' @param x An object of class "marsamp", the output of \link{MARsampling}
 #' @param fit Whether to draw the fitted power-law curve. `FALSE` (default) draws
 #'   nothing; `TRUE` fits both `c` and `z` via \link{MARcalc}; a named
 #'   `c(c = , z = )` vector supplies one or both directly, and leaves the rest
@@ -93,16 +97,20 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #'   fitted curve follows the axes.
 #'
 #' @return Invisibly returns NULL
+#' @seealso [MARsampling()] and [MARcalc()]
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' plot(marsamp_object, fit = c(c = 0.5, z = 0.25))
+#' mardf <- MARsampling(gm1001g, nrep = 5, xfrac = 0.1, myseed = 42)
+#'
+#' # supply c and z directly
+#' plot(mardf, fit = c(c = 0.5, z = 0.25))
+#'
 #' # fit c/z automatically, and overlay the MARtheory prediction generated from gm
-#' plot(marsamp_object, Atype = "N", fit = TRUE, theory = gm1001g)
+#' plot(mardf, Atype = "N", fit = TRUE, theory = gm1001g)
+#'
 #' # the power law as a straight line on log-log axes
-#' plot(marsamp_object, fit = TRUE, log = "xy")
-#' }
+#' plot(mardf, fit = TRUE, log = "xy")
 plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
     Mtype <- match.arg(Mtype)
     Atype <- match.arg(Atype)
@@ -139,7 +147,7 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
 #'
 #' Creates a plot showing relationship between area loss and genetic diversity loss
 #'
-#' @param x A data frame containing extinction data
+#' @param x An object of class "marextinct", the output of \link{MARextinction}
 #' @param fit Whether to draw the fitted extinction curve. `FALSE` (default)
 #'   draws nothing; `TRUE` fits `z` via \link{MARcalc}; a named `c(z = )`
 #'   vector supplies it directly.
@@ -150,17 +158,20 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
 #'   `martheory` object (output of \link{MARtheory}, used as-is), or a
 #'   `genomaps` object (a `martheory` is generated from it via
 #'   \link{MARtheory}). Only supported when `Atype = "N"`.
-#' @param ... Additional arguments passed to plot
+#' @param ... Additional arguments passed to \link[graphics]{plot}
 #'
 #' @return Invisibly returns NULL
+#' @seealso [MARextinction()] and [MARcalc()]
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' plot(marextinct_object, fit = c(z = 0.25))
+#' extdf <- MARextinction(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+#'
+#' # supply z directly
+#' plot(extdf, fit = c(z = 0.25))
+#'
 #' # fit z automatically, and overlay the MARtheory prediction generated from gm
-#' plot(marextinct_object, Atype = "N", fit = TRUE, theory = gm1001g)
-#' }
+#' plot(extdf, Atype = "N", fit = TRUE, theory = gm1001g)
 plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
     Mtype <- match.arg(Mtype)
     Atype <- match.arg(Atype)
@@ -208,14 +219,18 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #'   fitted curve follows the axes.
 #'
 #' @return Invisibly returns NULL
+#' @seealso [MARtheory()] and [MARcalc()]
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' theory <- MARtheory(gm1001g)
 #' plot(theory, fit = TRUE)
+#'
+#' # the power law as a straight line on log-log axes
 #' plot(theory, fit = TRUE, log = "xy")
-#' }
+#'
+#' # Watterson's theta is flat with sample size under neutrality
+#' plot(theory, Mtype = "thetaw")
 plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
     Mtype <- match.arg(Mtype)
     Atype <- "N" # martheory is always predicted against N (number of individuals)

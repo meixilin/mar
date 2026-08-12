@@ -5,20 +5,32 @@
 #' circling the grid with boxes. The function returns a data frame containing the area and
 #' diversity metrics for each step of the extinction process.
 #'
-#' @param gm A genomaps object.
-#' @param scheme The sampling scheme to use for the extinction process. Default is "random", allowed values are `r toString(.MARsampling_schemes)`.
+#' @param gm A [genomaps()] object created by [genomaps()].
+#' @param scheme The order in which cells go extinct. Default is "random", allowed values are `r toString(.MARsampling_schemes)`.
+#'   `inwards` / `outwards` remove cells starting from the cell holding the most samples, and `southnorth` / `northsouth`
+#'   remove them starting from the southern or northern edge.
 #' @param nrep The number of extinction replicates to perform. Default is 10.
-#' @param xfrac The fraction of cells to be randomly removed at each extinction step. Default is 0.01 or one raster cell if there are less than 100 cells.
-#' @param animate If TRUE, the function will animate the extinction process. Default is FALSE.
+#' @param xfrac The fraction of occupied cells removed at each extinction step.
+#'   Rounded up, so at least one raster cell is removed per step. Default is 0.01.
+#' @param animate If TRUE, the function will animate the extinction process and output to default plotting device. Default is FALSE.
 #' @param myseed An optional seed value to ensure reproducibility. Implemented as `set.seed(myseed)`. Default is NULL.
 #'
-#' @return A data frame containing the area and diversity metrics for each step of the extinction process.
+#' @return A `marextinct` object: a data frame with one row per extinction step
+#'   and columns `N` (number of remaining samples), `M` (number of mutations),
+#'   `E` (endemic mutations), `thetaw`, `thetapi`, `A` (remaining area), `extl`
+#'   (the surviving cell ids) and `repid` (replicate id). Each replicate ends
+#'   with a row of zeros, representing the loss of the whole range. The `scheme`
+#'   used is stored as an attribute.
+#' @seealso [MARsampling()] for the sampling counterpart and [plot.marextinct()]
+#'   for plotting the extinction curve.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' extdf <- MARextinction(gm1001g)
-#' }
+#' extdf <- MARextinction(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+#' head(extdf[, c("N", "M", "thetaw", "thetapi", "A", "repid")])
+#'
+#' # diversity remaining against area lost, with the fitted extinction curve
+#' plot(extdf, fit = TRUE)
 #'
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------

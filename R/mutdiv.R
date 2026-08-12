@@ -1,24 +1,39 @@
 #' Calculate Genetic Diversity in a Gridded Bounding Box
 #'
+#' Computes the diversity metrics collected by [MARsampling()] for a single
+#' bounding box of the sample map, given in raster row and column indices.
+#'
 #' @param gm A genomaps object containing genetic data and geographic informations, created by [genomaps()] function.
-#' @param gmarea Raster file that contains area size of each cell
+#' @param gmarea Raster file that contains area size of each cell, as returned by
+#'   `terra::cellSize(sm, unit = "km")`
+#' @param sm The sample map `SpatRaster` of `gm`. Stored wrapped inside the
+#'   [marmaps()] object, so it must be unwrapped with `terra::unwrap()` first.
 #' @param bbox Numeric vector of length 4 specifying the bounding box coordinates c(r1, r2, c1, c2)
 #' @param revbbox Logical, whether to reverse/invert the bounding box selection. Default FALSE
 #'
 #' @return A list containing:
 #'   \item{N}{Number of samples}
-#'   \item{M}{Number of segregating sites}
-#'   \item{E}{Number of endemic segregating sites}
+#'   \item{M}{Number of mutations}
+#'   \item{E}{Number of endemic mutations}
 #'   \item{thetaw}{Watterson's theta estimate}
 #'   \item{thetapi}{Pi (pairwise) diversity estimate}
 #'   \item{A}{Total area with data}
 #'   \item{Asq}{Area of the bounding box square}
+#'   All entries are `NA` when the bounding box contains no occupied cell.
+#' @seealso [mutdiv.cells()] for the cell-list equivalent used by
+#'   [MARextinction()].
 #' @export
 #'
 #' @examples
-#' # Calculate mutation diversity in a 10x10 grid region
-#' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
-#' div <- mutdiv.gridded(gm1001g, gmarea, bbox = c(1, 10, 2, 8))
+#' # the sample map raster and the area of each of its cells
+#' sm <- terra::unwrap(gm1001g$maps$samplemap)
+#' gmarea <- terra::cellSize(sm, unit = "km")
+#'
+#' # diversity within a 11 x 11 cell region of the map
+#' mutdiv.gridded(gm1001g, gmarea, sm, bbox = c(15, 25, 15, 25))
+#'
+#' # everything outside that region instead
+#' mutdiv.gridded(gm1001g, gmarea, sm, bbox = c(15, 25, 15, 25), revbbox = TRUE)
 mutdiv.gridded <- function(gm, gmarea, sm, bbox, revbbox = FALSE) {
     stopifnot("Bounding box should be length of 4" = length(bbox) == 4)
     # calculate area by bounding box using gmarea (so units are interpretable at km)
@@ -39,23 +54,34 @@ mutdiv.gridded <- function(gm, gmarea, sm, bbox, revbbox = FALSE) {
 #' useful for extinction simulations.
 #'
 #' @param gm A genomaps object containing genetic data and geographic informations, created by [genomaps()] function.
-#' @param gmarea Raster file that contains area size of each cell
+#' @param gmarea Raster file that contains area size of each cell, as returned by
+#'   `terra::cellSize(sm, unit = "km")`
 #' @param cellids Vector of cell IDs to analyze
 #'
 #' @return A list containing:
 #'   \item{N}{Number of samples}
-#'   \item{M}{Number of segregating sites}
-#'   \item{E}{Number of endemic segregating sites}
+#'   \item{M}{Number of mutations}
+#'   \item{E}{Number of endemic mutations}
 #'   \item{thetaw}{Watterson's theta estimate}
 #'   \item{thetapi}{Pi (pairwise) diversity estimate}
 #'   \item{A}{Total area with data}
+#'   All entries are `NA` when `cellids` is empty.
+#' @seealso [mutdiv.gridded()] for the bounding-box equivalent used by
+#'   [MARsampling()].
 #' @export
 #'
 #' @examples
-#' # Calculate genetic diversity for a specific set of cells
-#' gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
-#' cell_ids <- c(613, 726, 727)
-#' div <- mutdiv.cells(gm1001g, gmarea, cellids = cell_ids)
+#' sm <- terra::unwrap(gm1001g$maps$samplemap)
+#' gmarea <- terra::cellSize(sm, unit = "km")
+#'
+#' # the occupied cells of the sample map
+#' cellids <- sort(unique(gm1001g$maps$cellid))
+#'
+#' # diversity retained in the three northernmost occupied cells
+#' mutdiv.cells(gm1001g, gmarea, cellids = head(cellids, 3))
+#'
+#' # diversity of the whole range
+#' mutdiv.cells(gm1001g, gmarea, cellids = cellids)
 mutdiv.cells <- function(gm, gmarea, cellids) {
     # Not calculating Asq as it is very similar to A in MARextinction settings
     out <- .mutdiv.cellids(gm, gmarea, cellids, NULL)

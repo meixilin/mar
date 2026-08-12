@@ -7,6 +7,7 @@
 #' @param ... Additional arguments passed to print
 #'
 #' @return Invisibly returns NULL
+#' @seealso [margeno()]
 #' @export
 #'
 #' @examples
@@ -43,10 +44,10 @@ print.margeno <- function(x, ...) {
 #' @param ... Additional arguments passed to print
 #'
 #' @return Invisibly returns NULL
+#' @seealso [marmaps()]
 #' @export
 #'
 #' @examples
-#' # Create and print a marmaps object
 #' print(gm1001g$maps)
 print.marmaps <- function(x, ...) {
     cat("marmaps object\n")

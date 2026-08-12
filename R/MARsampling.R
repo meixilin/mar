@@ -1,17 +1,44 @@
 .MARsampling_schemes <- c("random", "inwards", "outwards", "southnorth", "northsouth")
 
-#' MAR sampling wrapper function
+#' Sample the mutations-area relationship (MAR) across spatial scales
+#'
+#' Draws square bounding boxes of increasing side length across the sample map
+#' and computes the genetic diversity contained in each one, giving the
+#' empirical accumulation of mutations with area. Box sizes step from a single
+#' raster cell up to the shorter side of the map, with `nrep` boxes placed at
+#' each size according to `scheme`.
 #'
 #' @param gm a [genomaps] object created by [genomaps()]
 #' @param scheme sampling schemes for spatial data. allowed are `r toString(.MARsampling_schemes)`.
-#' @param nrep number of replicates.
-#' @param xfrac fraction of the range to use for the step size in the sampling scheme. At least one step at a time.
-#' @param quorum require all sampling grid to have samples. default is FALSE.
+#'   `random` places boxes uniformly, `inwards` / `outwards` weight them towards
+#'   or away from the cell holding the most samples, and `southnorth` /
+#'   `northsouth` weight them towards the southern or northern edge of the map.
+#' @param nrep number of replicate boxes drawn at each box size. default is 10.
+#' @param xfrac fraction of the shorter map side used as the step between
+#'   consecutive box sizes. Rounded up, so the step is at least one raster cell.
+#'   default is 0.01.
+#' @param quorum only draw boxes that contain at least one occupied cell.
+#'   default is TRUE.
 #' @param animate play an animation of the sampling boxes. default is FALSE.
-#' @param myseed set seed for reproducibility. default is NULL.
+#' @param myseed set seed for reproducibility. Implemented as `set.seed(myseed)`.
+#'   default is NULL.
 #'
-#' @return a `marsamp` object. consist of a data frame.
+#' @return a `marsamp` object: a data frame with one row per sampled box and
+#'   columns `N` (number of samples), `M` (number of mutations), `E` (endemic
+#'   mutations), `thetaw`, `thetapi`, `A` (area of the occupied cells), `Asq`
+#'   (area of the whole box) and `extent` (the box as `r1;r2;c1;c2`). The
+#'   `scheme` used is stored as an attribute.
+#' @seealso [MARcalc()] to fit the power law, [plot.marsamp()] to plot it, and
+#'   [MARtheory()] for the theoretical counterpart.
 #' @export
+#'
+#' @examples
+#' # sample with the default random scheme
+#' mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+#' head(mardf)
+#'
+#' # weight the boxes towards the most densely sampled cell
+#' MARsampling(gm1001g, scheme = "outwards", nrep = 2, xfrac = 0.1, myseed = 42)
 #'
 MARsampling <-
     function(gm,

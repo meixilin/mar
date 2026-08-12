@@ -123,20 +123,25 @@
 #' the empirical sampling points, or passed to [MARcalc()] with `Atype = "N"` to
 #' fit the power-law exponent against sample size.
 #'
-#' @param gm A [genomaps()] object.
+#' @param gm A [genomaps()] object created by [genomaps()].
 #' @param maxind Maximum number of individuals to predict up to. Default to all
 #'   individuals available in genomaps()
 #'
 #' @return A data frame with class `martheory`, with a column `N` (number of
-#'   individuals) and columns `M`, `thetaw`, and `thetapi`.
+#'   individuals, from 1 to `maxind`) and columns `M`, `thetaw`, and `thetapi`.
+#' @seealso [sfs()] for the spectrum the prediction is built from,
+#'   [MARsampling()] for the empirical counterpart, and [plot.martheory()].
 #' @export
 #'
 #' @examples
-#' # Predicted MAR for the 1001 genomes example, overlaid on sampling
+#' # Predicted MAR for the 1001 genomes example
 #' expmardf <- MARtheory(gm1001g)
-#' mardf <- MARsampling(gm1001g, nrep = 20)
-#' plot(M ~ N, data = mardf)
-#' lines(M ~ N, data = expmardf, col = "blue")
+#' head(expmardf)
+#'
+#' # overlay the prediction on the empirical sampling points
+#' mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+#' plot(mardf, Atype = "N", theory = expmardf)
+#'
 #' # fit the predicted power-law exponent against sample size
 #' MARcalc(expmardf, Mtype = "M", Atype = "N")
 MARtheory <- function(gm, maxind = NULL) {

@@ -89,25 +89,28 @@
 #'
 #' Reads genotype data from text files (txt, csv, tsv) along with optional sample IDs and position information
 #'
-#' @param geno.fn Path to genotype file. Must be a txt/csv/tsv file (can be gzipped). Should contain a matrix where rows are SNPs and columns are samples, with values representing count of alternative alleles
-#' @param samp.fn Optional path to sample ID file. Must be a single column file with no header
-#' @param pos.fn Optional path to position file. Must have header with CHR/CHROM and POS columns
+#' @param geno.fn Path to genotype file. The file must be a txt/csv/tsv file (can be gzipped), and contain a matrix where rows are SNPs and columns are samples, with values representing count of alternative alleles. No headers or row names are allowed.
+#' @param samp.fn Optional path to sample ID file. The file must be a single column file with no header.
+#' @param pos.fn Optional path to chromosome position file. The file must have header with CHR/CHROM and POS columns
 #' @param ploidy Integer specifying the ploidy level of the samples (default: 2)
 #'
-#' @return A margeno object containing the parsed genotype data and associated information
+#' @return A [margeno()] object containing the parsed genotype data and associated information
+#' @seealso [vcf_parser()] to read genotypes from a VCF instead, and
+#'   [lonlat_parser()] to read coordinates.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Basic usage with just genotype file
-#' geno <- text_parser("genotypes.txt")
+#' # read the genotypes behind the gm1001g example object
+#' geno.fn <- system.file("extdata", "1001g_genotypes.txt.gz", package = "mar")
+#' samp.fn <- system.file("extdata", "1001g_accessions.txt", package = "mar")
+#' pos.fn <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 #'
-#' # With sample IDs and positions
-#' geno <- text_parser("genotypes.txt", "samples.txt", "positions.txt")
+#' # the genotype matrix alone is enough
+#' geno <- text_parser(geno.fn)
 #'
-#' # For haploid data
-#' geno <- text_parser("genotypes.txt", ploidy = 1)
-#' }
+#' # sample IDs and positions are optional but recommended
+#' geno <- text_parser(geno.fn, samp.fn, pos.fn, ploidy = 2)
+#' print(geno)
 text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # check if geno.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
@@ -140,29 +143,29 @@ text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     return(margeno)
 }
 
-#' Convert VCF file to GDS format
+#' Parse a VCF file into a margeno object
 #'
-#' This function converts a VCF (Variant Call Format) file to GDS (Genomic Data Structure) format
-#' using SeqArray package.
+#' Reads the genotypes of a VCF (Variant Call Format) file into a [margeno()]
+#' object. Only the `GT` field is used: each call is converted to a count of
+#' alternative alleles, and missing calls (`./.`) become `NA`. Sample IDs,
+#' chromosomes and positions are taken from the VCF itself. The whole file is
+#' read into memory, so this is intended for a modest SNP panels used in MAR
+#' analyses rather than for whole-genome all-sites VCFs.
 #'
 #' @param vcf.fn Path to the input VCF file. Can be either .vcf or .vcf.gz format
-#' @param gds.fn Optional. Path for the output GDS file. If NULL, will use the same name as vcf file
-#'               with .gds extension
-#' @param opengds Logical. If TRUE, opens and returns the GDS file handle. If FALSE, returns the
-#'                path to the created GDS file. Default is FALSE
+#' @param ploidy Integer specifying the ploidy level of the samples (default: 2).
 #'
-#' @return If opengds=TRUE, returns an opened GDS file connection. If opengds=FALSE, returns the
-#'         path to the created GDS file as a character string
+#' @return A [margeno()] object containing the parsed genotypes, sample IDs,
+#'   chromosomes and positions.
+#' @seealso [text_parser()] to read genotype matrices already in text form, and
+#'   [lonlat_parser()] to read coordinates.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Convert VCF to GDS
-#' gds_file <- vcf_parser("input.vcf")
-#'
-#' # Convert and open GDS file
-#' gds_conn <- vcf_parser("input.vcf.gz", opengds = TRUE)
-#' }
+#' # simulated expanding population shipped with the package
+#' vcf.fn <- system.file("extdata", "gmexp.vcf.gz", package = "mar")
+#' geno <- vcf_parser(vcf.fn)
+#' print(geno)
 vcf_parser <- function(vcf.fn, ploidy = 2) {
     con <- if (grepl("\\.gz$", vcf.fn)) gzfile(vcf.fn) else file(vcf.fn)
 
@@ -231,22 +234,28 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 #'
 #' Reads a file containing sample IDs with their corresponding longitude and latitude coordinates.
 #' The input file must have a header with columns: ID, LON/LONGITUDE, LAT/LATITUDE (in that order).
-#' While coordinates do not need to be in "+proj=longlat +datum=WGS84" projection, the WGS84 projection was used in testing..
 #' Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
-#'
+#' If Sample IDs were not provided in [text_parser()], sample IDs should be 1,2,3, ... , N.
 #' @param lonlat.fn Path to input file (txt/csv/tsv, can be gzipped) containing coordinates. No missing values allowed.
 #' @inheritDotParams marmaps mapcrs mapres incrs
 #'
 #' @return A marmaps object. See [marmaps()].
 #'         Returns error if coordinates contain missing values or incorrect number of columns.
-#' @seealso [marmaps()]
+#' @seealso [marmaps()], and [text_parser()] / [vcf_parser()] for the matching
+#'   genotypes.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Read coordinates from file, using an equal-area map projection
-#' coords <- lonlat_parser("sample_locations.txt", mapcrs = "EPSG:8857")
-#' }
+#' # read the coordinates behind the gm1001g example object in longitude-latitude formats (EPSG:4326)
+#' # and reprojected onto the Equal Earth Greenwich (EPSG: 8857)
+#' lonlat.fn <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
+#' maps <- lonlat_parser(lonlat.fn, mapcrs = "EPSG:8857")
+#' print(maps)
+#' plot(maps)
+#'
+#' # simulated locations without a coordinate reference system, so no projection is applied
+#' lonlat.fn <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
+#' lonlat_parser(lonlat.fn, incrs = "", mapcrs = "")
 lonlat_parser <- function(lonlat.fn, ...) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
