@@ -81,12 +81,11 @@ chrposfile <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 # Tips: for your own data, change the variables above to the corresponding filepaths
 
 # Read genotype
-# Optional: for vcf parsing, see Alternative 1: Reading VCF files
-genodata <- mar::text_parser(
+# Tips: for vcf parsing, see Alternative 1: Reading VCF files
+genodata <- text_parser(
     geno.fn = genofile,
     samp.fn = samplefile,
-    pos.fn = chrposfile,
-    ploidy = 2
+    pos.fn = chrposfile
 )
 
 print(genodata)
@@ -311,7 +310,7 @@ vcffile <- system.file("extdata", "gmexp.vcf.gz", package = "mar")
 # Tips: for your own data, change the variable above to the corresponding filepath
 
 # Read genotype
-genodata <- mar::vcf_parser(vcffile, ploidy = 2)
+genodata <- vcf_parser(vcffile, ploidy = 2)
 
 print(genodata)
 ```

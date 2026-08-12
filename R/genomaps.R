@@ -138,7 +138,7 @@ margeno <- function(genotype, ploidy, sample.id = NULL, variant.id = NULL, posit
     stopifnot(class(position) == "integer" | is.null(position))
     stopifnot(class(chromosome) %in% c("character", "integer") | is.null(chromosome))
     stopifnot("matrix" %in% class(genotype))
-    stopifnot(class(ploidy) == "integer")
+    stopifnot(class(ploidy) == "numeric")
 
     # if not provided, fill in sample.id and variant.id
     if (is.null(sample.id)) sample.id <- seq_len(ncol(genotype))
