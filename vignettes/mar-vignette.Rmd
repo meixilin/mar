@@ -47,8 +47,8 @@ data(gm1001g)
 print(gm1001g)
 
 # gm1001g is a list of two objects, to obtain marmaps and margeno objects
-genodata <- gm1001g$geno
-mapsdata <- gm1001g$maps
+gm1001g$geno
+gm1001g$maps
 
 # Tips: all operations in `mar` package takes `genomaps` as the input.
 # Therefore, you do not have to extract the marmaps and margeno objects most if not all the time.
@@ -127,12 +127,16 @@ After successful importing of genotypes and geographic data, it is now time to c
 object used by all downstream functions.
 
 ```{r genomaps}
-gm <- genomaps(genodata, mapsdata)
-save(gm, file = "tempgm.rda")
+gm1001g_load <- genomaps(genodata, mapsdata)
+# The created gm1001g_load is the same as the provided example gm1001g 
+all.equal(gm1001g_load, gm1001g)
+rm(genodata,mapsdata, gm1001g_load)
 ```
 
 
-## Step 3: Explore the Site Frequency Spectrum using `sfs()` {#s3}
+## Step 3: Site-frequency spectrum computation and theoretical MAR/GDAR prediction {#s3}
+
+### 3a: Build SFS using `sfs()`
 
 TODO: fill in the marApp description on SFS here.
 
@@ -150,12 +154,32 @@ plot(obs_sfs)
 exp_sfs <- expsfs(gm1001g)
 plot(exp_sfs)
 
-# Tips: you can also generate an unfolded SFS
-obs_sfs_unfolded <- sfs(gm1001g, folded = FALSE)
-plot(obs_sfs_unfolded)
-exp_sfs_unfolded <- expsfs(gm1001g, folded = FALSE)
-plot(exp_sfs_unfolded)
+# Tips: you can overlay the expected SFS on the observed SFS
+plot(obs_sfs, expected = exp_sfs, log = 'x')
+
+# Tips: you can also generate a folded SFS
+obs_sfs_folded <- sfs(gm1001g, folded = TRUE)
+
+# Tips: you can overlay the expected SFS by passing the genomaps object 
+plot(obs_sfs_folded, expected = gm1001g, log = 'x')
 ```
+
+### 3b. Predict the MAR/GDAR using `MARtheory()`
+
+TODO: fill description. Point to the theory vignette on this actually does not work because assumptions of random mating and random distribution is violated. 
+
+```{r mar-theory}
+theorydf <- MARtheory(gm1001g)
+head(theorydf)
+
+# plot the theorydf
+plot(theorydf)
+
+# you don't have to run MARcalc() separately: supply `fit = TRUE` and the plot method for
+# the `martheory` class will fit and overlay the line for you
+plot(theorydf, fit = TRUE)
+```
+
 
 ## Step 4: Estimate the mutations-area relationship
 
@@ -165,23 +189,19 @@ The MAR is estimated in two steps.
 
 TODO: Description here on the output table. and the default options (e.g. nrep, xfrac). Use the marApp documentation or the manuscript when needed.
 
-TODO: I cannot get the plot method to register for marsamp (crying in my heart >_<), could you check this?
-
-```{r mar-animate}
-MARsampling(gm1001g, myseed = 3, scheme = "outwards", animate = T)
-```
-
-
 ```{r mar-sampling}
-# Tips: uses of myseed not neccessary, used here for reproducibility with the manuscript
-mardf <- MARsampling(gm1001g, myseed = 3, scheme = "outwards")
+mardf <- MARsampling(gm1001g, myseed = 91)
 head(mardf)
 
 # mardf is a marsamp object
 class(mardf)
-# plot the diversity-by-area sampling results (?mar::plot.marsamp)
-mar:::plot.marsamp(mardf)
-plot(mardf) # TODO: doesn't work but should work
+
+# plot the diversity-by-area sampling results
+plot(mardf)
+
+# Tips: alternative genetic divrsity metrics or area metrics can be passed
+plot(mardf, Mtype = 'M', Atype = 'Asq')
+plot(mardf, Mtype = 'thetapi', Atype = 'A')
 ```
 
 ### 4b. Fit the mutations-area relationship model using `MARcalc()` {#4b}
@@ -194,31 +214,28 @@ marfit <- MARcalc(mardf)
 class(marfit)
 # To extract full mar fit table, use summary
 summary(marfit)
-# Extract the c and z values from marfit
-c_M_A <- unname(marfit$par["c"])
-z_M_A <- unname(marfit$par["z"])
-# Plot the fit again
-plot(mardf, fit = c(c = c_M_A, z = z_M_A))
+
+# Plot the fit
+plot(mardf, fit = marfit$par)
+
+# Alternatively, the plot.marsamp method can automatically fit the power-law model
+plot(mardf, fit = TRUE)
 ```
 
 You can also fit other mutation relationships. For example, nucleotide diversity thetapi
 
 TODO: description here. What does theta_pi measures.
 
-```{r}
-# plot alternative diversity-by-area sampling results
-mar:::plot.marsamp(mardf, Mtype = "thetapi", Atype = "Asq")
+```{r mar-fit-pi}
 marfit_pi <- MARcalc(mardf, Mtype = "thetapi", Atype = "Asq")
 
 # marfit is a sars object (from R package sars)
 class(marfit_pi)
 # To extract full mar fit table, use summary
 summary(marfit_pi)
-# Extract the c and z values from marfit_pi
-c_pi_Asq <- unname(marfit_pi$par["c"])
-z_pi_Asq <- unname(marfit_pi$par["z"])
-# Plot the fit again
-plot(mardf, fit = c(c = c_pi_Asq, z = z_pi_Asq), Mtype = "thetapi", Atype = "Asq")
+
+# Plot the fitted power-law model
+plot(mardf, fit = marfit_pi$par, Mtype = "thetapi", Atype = "Asq")
 ```
 
 **Alternative workflow**:
@@ -230,21 +247,20 @@ plot(mardf, fit = c(c = c_pi_Asq, z = z_pi_Asq), Mtype = "thetapi", Atype = "Asq
 hypothetical area reduction scenarios.
 
 ```{r mar-extinction}
-marext <- MARextinction(gm1001g, myseed = 91)
-head(marext)
+extdf <- MARextinction(gm1001g, myseed = 91)
+head(extdf)
 
-# marext is a marextinct object
-class(marext)
+# extdf is a extdfinct object
+class(extdf)
 # plot the diversity-by-area sampling results (?mar::plot.marsamp)
-mar:::plot.marextinct(marext)
-plot(marext) # TODO: doesn't work but should work
+plot(extdf, fit = TRUE) 
 ```
 
 We can use the scaling factors inferred in [4b. Fit the mutations-area relationship model using `MARcalc()`](#4b) to predict the extinction.
 
-```{r }
+```{r mar-extinct-plot}
 # plot the extinction mar fit
-plot.marextinct(marext, z = z_M_A)
+plot(extdf, fit = marfit$par)
 ```
 
 **Alternative workflow**:
@@ -253,25 +269,28 @@ plot.marextinct(marext, z = z_M_A)
 
 ## Step 7: Inspect and Export Outputs
 
+TODO: elaborate
+
 Use `str()`, `print()`, and `summary()` to inspect any result object.
 
 ```{r inspect}
 # Object structures
-str(mar_sampling)
-str(mut_div)
-str(mar_fit)
-str(mar_ext)
+str(extdf)
+str(gm1001g)
+str(marfit)
 
 # Model summaries
-print(mar_fit)
-summary(mar_fit)
+print(marfit)
+# This generates the confidence interval 
+summary(marfit)
 ```
 
-To save results or export to CSV:
+To save results or export to CSV (does not run):
 
-```{r export}
-saveRDS(mar_fit, file = "mar_fit.rds")
-write.csv(as.data.frame(mar_sampling), file = "mar_sampling.csv", row.names = FALSE)
+```{r export, eval=FALSE}
+save(gm1001g, file = 'gm1001g.rda')
+saveRDS(marfit, file = "marfit.rds")
+write.csv(mardf, file = "mardf.csv")
 ```
 
 
@@ -351,6 +370,8 @@ plot(mapsdata)
 ## Alternative 3: More on `MARsampling()` {#a3}
 
 TODO: mention the animate option
+
+TODO
 
 ## Alternative 4: More on `MARextinction()` {#a4}
 

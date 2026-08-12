@@ -2,28 +2,36 @@
 % Please edit documentation in R/MARsadsfs.R
 \name{expsfs}
 \alias{expsfs}
-\title{Generate Expected Site Frequency Spectrum}
+\title{Generate the expected site frequency spectrum under neutrality}
 \usage{
 expsfs(gm, folded = FALSE, nozero = TRUE)
 }
 \arguments{
-\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
+\item{gm}{A \code{\link[=genomaps]{genomaps()}} object created by \code{\link[=genomaps]{genomaps()}}.}
 
-\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
+\item{folded}{Logical, whether to fold the spectrum, collapsing the \code{k} and
+\code{N * ploidy - k} bins for sites whose ancestral allele is unknown.
+Default FALSE.}
 
-\item{lenAC}{Length of allele count vector. In other words, total number of SNPs surveyed.}
-
-\item{N}{Number of samples}
-
-\item{ploidy}{Ploidy level of the organism}
+\item{nozero}{Logical, whether to drop the \code{k = 0} bin (sites with no
+alternative allele in the sample). Default TRUE.}
 }
 \value{
-An object of class "sfs" containing the expected site frequency spectrum
+An object of class \code{sfs}, in the same format as the output of \code{\link[=sfs]{sfs()}},
+holding the expected rather than the observed number of sites per bin.
 }
 \description{
-Generate Expected Site Frequency Spectrum
+Builds the standard neutral expectation \code{theta / k} for a \code{\link[=genomaps]{genomaps()}}
+object, scaling \code{theta} by Watterson's estimator so that the expected and
+observed spectra contain the same number of segregating sites and are
+directly comparable.
 }
 \examples{
-# Generate expected SFS
-exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
+expsfs(gm1001g)[1:5]
+
+# compare the observed spectrum against the neutral expectation
+plot(sfs(gm1001g), expected = expsfs(gm1001g), log = "x")
+}
+\seealso{
+\code{\link[=sfs]{sfs()}} for the observed spectrum and \code{\link[=plot.sfs]{plot.sfs()}} for plotting.
 }

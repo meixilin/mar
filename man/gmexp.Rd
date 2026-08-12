@@ -3,14 +3,15 @@
 \docType{data}
 \name{gmexp}
 \alias{gmexp}
-\title{gmexp}
+\title{Simulated MARtheory example data}
 \format{
 \subsection{\code{gmexp}}{
 
 An S3 \code{genomaps} object created using \code{\link[=genomaps]{genomaps()}} function.
 \describe{
-\item{geno}{An S3 \code{margeno} object. See \code{\link[=margeno]{margeno()}} function.}
-\item{maps}{An S3 \code{marmaps} object. See \code{\link[=marmaps]{marmaps()}} function.}
+\item{geno}{An S3 \code{margeno} object with 885 variants x 50 diploid samples.
+See \code{\link[=margeno]{margeno()}} function.}
+\item{maps}{An S3 \code{marmaps} object with 50 samples. See \code{\link[=marmaps]{marmaps()}} function.}
 }
 }
 }
@@ -21,6 +22,21 @@ data-raw/gmexp_simulate.py
 gmexp
 }
 \description{
-Example genomaps object created from simulated expanding population
+A \code{\link[=genomaps]{genomaps()}} object derived from a simulated population
+We simulated 50 diploid individuals sampled from a randomly mating population
+growing exponentially, using the python package \code{msprime}. Coordinates are
+randomly assigned to simulate a randomly distributed population.
+For this population, the MAR can be predicted theoretically from the SFS.
+}
+\details{
+The simulated VCF and coordinates are shipped in \code{inst/extdata}
+(\code{gmexp.vcf.gz} and \code{gmexp_lonlat.csv}); see the examples of \code{\link[=vcf_parser]{vcf_parser()}}
+and \code{\link[=lonlat_parser]{lonlat_parser()}} for how to read raw data.
+}
+\examples{
+print(gmexp)
+}
+\seealso{
+\link{gm1001g} for the empirical example data.
 }
 \keyword{datasets}

@@ -12,7 +12,7 @@ genomaps(geno, maps)
 \item{maps}{A marmaps object.}
 }
 \value{
-A genomaps object.
+A genomaps object, a list of the \code{geno} and \code{maps} inputs.
 }
 \description{
 The genomaps object is the central data structure for the mar package. It combines the genetic data
@@ -20,18 +20,18 @@ from the margeno object and the spatial information from the marmaps object, pro
 comprehensive representation of the genetic and geographic data, connected by the sample IDs.
 }
 \examples{
-sample_id <- c("sample1", "sample2", "sample3")
-genotype <- matrix(c(1, 2, 0, 0, 1, 1, 2, 0, 1, 2, 2, 1), nrow = 4, ncol = 3)
-ploidy <- 2
-geno <- margeno(genotype, ploidy, sample.id = sample_id)
+# gm1001g is itself a genomaps object, rebuild it from its two components
+geno <- gm1001g$geno
+maps <- gm1001g$maps
+gm <- genomaps(geno, maps)
 
-lonlatdf <- data.frame(
-    id = sample_id,
-    longitude = c(-122.1, -121.9, -122.0),
-    latitude = c(37.8, 37.7, 37.9),
-    stringsAsFactors = FALSE
-)
-maps <- marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:4326")
-
-genomaps(geno, maps)
+print(gm)
+# genomaps() will fail if sample names are not matching
+maps_bad <- gm1001g$maps
+maps_bad$sample.id <- 1:1004
+gm <- genomaps(geno, maps_bad)
+}
+\seealso{
+\code{\link[=margeno]{margeno()}} and \code{\link[=marmaps]{marmaps()}} for the two components, and
+\code{\link[=MARsampling]{MARsampling()}}, \code{\link[=MARextinction]{MARextinction()}} and \code{\link[=MARtheory]{MARtheory()}} for using genomaps.
 }

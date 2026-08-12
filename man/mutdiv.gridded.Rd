@@ -9,7 +9,11 @@ mutdiv.gridded(gm, gmarea, sm, bbox, revbbox = FALSE)
 \arguments{
 \item{gm}{A genomaps object containing genetic data and geographic informations, created by \code{\link[=genomaps]{genomaps()}} function.}
 
-\item{gmarea}{Raster file that contains area size of each cell}
+\item{gmarea}{Raster file that contains area size of each cell, as returned by
+\code{terra::cellSize(sm, unit = "km")}}
+
+\item{sm}{The sample map \code{SpatRaster} of \code{gm}. Stored wrapped inside the
+\code{\link[=marmaps]{marmaps()}} object, so it must be unwrapped with \code{terra::unwrap()} first.}
 
 \item{bbox}{Numeric vector of length 4 specifying the bounding box coordinates c(r1, r2, c1, c2)}
 
@@ -18,18 +22,30 @@ mutdiv.gridded(gm, gmarea, sm, bbox, revbbox = FALSE)
 \value{
 A list containing:
 \item{N}{Number of samples}
-\item{M}{Number of segregating sites}
-\item{E}{Number of endemic segregating sites}
+\item{M}{Number of mutations}
+\item{E}{Number of endemic mutations}
 \item{thetaw}{Watterson's theta estimate}
 \item{thetapi}{Pi (pairwise) diversity estimate}
 \item{A}{Total area with data}
 \item{Asq}{Area of the bounding box square}
+All entries are \code{NA} when the bounding box contains no occupied cell.
 }
 \description{
-Calculate Genetic Diversity in a Gridded Bounding Box
+Computes the diversity metrics collected by \code{\link[=MARsampling]{MARsampling()}} for a single
+bounding box of the sample map, given in raster row and column indices.
 }
 \examples{
-# Calculate mutation diversity in a 10x10 grid region
-gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
-div <- mutdiv.gridded(gm1001g, gmarea, bbox = c(1, 10, 2, 8))
+# the sample map raster and the area of each of its cells
+sm <- terra::unwrap(gm1001g$maps$samplemap)
+gmarea <- terra::cellSize(sm, unit = "km")
+
+# diversity within a 11 x 11 cell region of the map
+mutdiv.gridded(gm1001g, gmarea, sm, bbox = c(15, 25, 15, 25))
+
+# everything outside that region instead
+mutdiv.gridded(gm1001g, gmarea, sm, bbox = c(15, 25, 15, 25), revbbox = TRUE)
+}
+\seealso{
+\code{\link[=mutdiv.cells]{mutdiv.cells()}} for the cell-list equivalent used by
+\code{\link[=MARextinction]{MARextinction()}}.
 }

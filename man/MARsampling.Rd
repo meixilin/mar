@@ -2,7 +2,7 @@
 % Please edit documentation in R/MARsampling.R
 \name{MARsampling}
 \alias{MARsampling}
-\title{MAR sampling wrapper function}
+\title{Sample the mutations-area relationship (MAR) across spatial scales}
 \usage{
 MARsampling(
   gm,
@@ -17,21 +17,49 @@ MARsampling(
 \arguments{
 \item{gm}{a \link{genomaps} object created by \code{\link[=genomaps]{genomaps()}}}
 
-\item{scheme}{sampling schemes for spatial data. allowed are random, inwards, outwards, southnorth, northsouth.}
+\item{scheme}{sampling schemes for spatial data. allowed are random, inwards, outwards, southnorth, northsouth.
+\code{random} places boxes uniformly, \code{inwards} / \code{outwards} weight them towards
+or away from the cell holding the most samples, and \code{southnorth} /
+\code{northsouth} weight them towards the southern or northern edge of the map.}
 
-\item{nrep}{number of replicates.}
+\item{nrep}{number of replicate boxes drawn at each box size. default is 10.}
 
-\item{xfrac}{fraction of the range to use for the step size in the sampling scheme.}
+\item{xfrac}{fraction of the shorter map side used as the step between
+consecutive box sizes. Rounded up, so the step is at least one raster cell.
+default is 0.01.}
 
-\item{quorum}{require all sampling grid to have samples. default is FALSE.}
+\item{quorum}{only draw boxes that contain at least one occupied cell.
+default is TRUE.}
 
 \item{animate}{play an animation of the sampling boxes. default is FALSE.}
 
-\item{myseed}{set seed for reproducibility. default is NULL.}
+\item{myseed}{set seed for reproducibility. Implemented as \code{set.seed(myseed)}.
+default is NULL.}
 }
 \value{
-a \code{marsamp} object. consist of a data frame.
+a \code{marsamp} object: a data frame with one row per sampled box and
+columns \code{N} (number of samples), \code{M} (number of mutations), \code{E} (endemic
+mutations), \code{thetaw}, \code{thetapi}, \code{A} (area of the occupied cells), \code{Asq}
+(area of the whole box) and \code{extent} (the box as \verb{r1;r2;c1;c2}). The
+\code{scheme} used is stored as an attribute.
 }
 \description{
-MAR sampling wrapper function
+Draws square bounding boxes of increasing side length across the sample map
+and computes the genetic diversity contained in each one, giving the
+empirical accumulation of mutations with area. Box sizes step from a single
+raster cell up to the shorter side of the map, with \code{nrep} boxes placed at
+each size according to \code{scheme}.
+}
+\examples{
+# sample with the default random scheme
+mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+head(mardf)
+
+# weight the boxes towards the most densely sampled cell
+MARsampling(gm1001g, scheme = "outwards", nrep = 2, xfrac = 0.1, myseed = 42)
+
+}
+\seealso{
+\code{\link[=MARcalc]{MARcalc()}} to fit the power law, \code{\link[=plot.marsamp]{plot.marsamp()}} to plot it, and
+\code{\link[=MARtheory]{MARtheory()}} for the theoretical counterpart.
 }

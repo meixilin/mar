@@ -19,6 +19,8 @@ Displays a summary of spatial mapping data including sample counts,
 geographic ranges, and a preview of sample locations
 }
 \examples{
-# Create and print a marmaps object
 print(gm1001g$maps)
+}
+\seealso{
+\code{\link[=marmaps]{marmaps()}}
 }

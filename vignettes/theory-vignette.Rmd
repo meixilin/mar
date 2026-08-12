@@ -52,7 +52,7 @@ and shuffle their sample locations, `MARtheory()` recovers the `MARsampling()` o
 real dataset as well.
 
 In the end, having shown that the MAR can be derived from the SFS, we discuss what this
-means for interpreting the $z$ value in conservation genetics. 
+means for interpreting the $z$ value in conservation genetics.
 
 TL,DR: directly skip to this [important interpretation section](#interpret).
 
@@ -225,7 +225,7 @@ head(mardf)
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf)
 ```
 
-The blue prediction lands on top of the sampled points. When we also fit the scaling factor $z$ on 
+The blue prediction lands on top of the sampled points. When we also fit the scaling factor $z$ on
 `MARsampling()` output using `MARcalc()`, the two `MARcalc()` outputs are very similar.
 
 ```{r marsamp-marcalc-gmexp}
@@ -263,7 +263,7 @@ extdf_fit <-MARcalc(extdf, Mtype = 'M', Atype = 'N')
 summary(extdf_fit)
 ```
 
-Finally, let's put the three `MARcalc()` outputs side by side. 
+Finally, let's put the three `MARcalc()` outputs side by side.
 Notice that when our two assumptions of random mating and random spatial distribution are
 met, the scaling factor $z$ is the same across all three functions' output, `MARtheory()`,
 `MARsampling()` and `MARextinction()`, because they all describe the same sampling
@@ -359,7 +359,7 @@ print(rho)
 ```
 
 We can therefore convert the predicted $N$ axis into an area axis and compare against the
-sampled MAR. 
+sampled MAR.
 
 ```{r area-theory-gmexp}
 # add the expected area
@@ -370,9 +370,9 @@ plot(mardf)
 lines(M ~ A, data = theorydf, col = 'blue')
 ```
 
-We deliberately left this last step out of `MARtheory()`. In real-life practice, we are more interested in 
-the scaling value $z$ rather than the constant $c$ in the $M = cA^z$ relationship. 
-When the population density $\rho$ is a constant fitted from the `MARsampling()` output, the scaling factor $z$ for area is going to be very similar as the scaling factor $z$ for sample size, as shown below: 
+We deliberately left this last step out of `MARtheory()`. In real-life practice, we are more interested in
+the scaling value $z$ rather than the constant $c$ in the $M = cA^z$ relationship.
+When the population density $\rho$ is a constant fitted from the `MARsampling()` output, the scaling factor $z$ for area is going to be very similar as the scaling factor $z$ for sample size, as shown below:
 
 ```{r z-N-A}
 mardf_fit_A <- MARcalc(mardf)
@@ -474,7 +474,7 @@ plot(A ~ N, data = mardf_gm1001g)
 ```
 
 The scatter is now substantial, and different sampling schemes builds different
-$N \sim A$ relationships. 
+$N \sim A$ relationships.
 ```{r nagm1001g-ext}
 extdf_gm1001g <- MARextinction(gm1001g, myseed = 1)
 
@@ -485,7 +485,7 @@ plot(A ~ N, data = extdf_gm1001g)
 plot(extdf_gm1001g, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-When we run `MARcalc()` on `MARextinction()` output in the *Arabidopsis data*, we observe that the fitted $z$ values is no longer the same as the output from `MARsampling()`. 
+When we run `MARcalc()` on `MARextinction()` output in the *Arabidopsis data*, we observe that the fitted $z$ values is no longer the same as the output from `MARsampling()`.
 
 ```{r ext-samp-gm1001g}
 mardf_fit_gm1001g = MARcalc(mardf_gm1001g)
@@ -495,7 +495,7 @@ extract_summary(list(mardf_fit_gm1001g, extdf_fit_gm1001g),
 ```
 
 Note that the `MARtheory()` prediction tracks the *extinction* curve more closely than it
-tracked the `MARsampling()` cloud. This is because `MARextinction()` randomly removes cells throughout the map iteratively, so the accessions that remain are close to a random sampling of the genotypes. 
+tracked the `MARsampling()` cloud. This is because `MARextinction()` randomly removes cells throughout the map iteratively, so the accessions that remain are close to a random sampling of the genotypes.
 `MARsampling()` draws contiguous boxes instead, and because *Arabidopsis* accessions are spatially structured, the individuals inside one box are more related to each other than a random draw would be (isolation-by-distance), and they carry fewer distinct mutations than the theory expects.
 
 To isolate the spatial effect, we can shuffle the sample locations so that the accessions
@@ -544,10 +544,10 @@ now identified them one by one.
 1. **Mutation abundance**: This is summarized by the SFS. This is the part `MARtheory()`
    predicts. On our `gmexp` example which is randomly mating and randomly distributed. Mutation abundance accounts for the entire curve.
 2. **Breeding structure**: The SFS counts chromosomes, but we sample individuals, and the
-   two coincide only under random mating. The $z$ value will shift higher with more inbreeding, as shown in the *Arabidopsis* `gm1001g` example. 
-3. **Spatial structure**: This is summarized by both the population density ($N \sim A$ relationship) and by how related nearby individuals are (population structure). Random placement makes area a clean proxy for sample size and allows the area-based and size-based $z$ to agree well. While spatial clustering and population structure could shift $z$ in both directions.  
+   two coincide only under random mating. The $z$ value will shift higher with more inbreeding, as shown in the *Arabidopsis* `gm1001g` example.
+3. **Spatial structure**: This is summarized by both the population density ($N \sim A$ relationship) and by how related nearby individuals are (population structure). Random placement makes area a clean proxy for sample size and allows the area-based and size-based $z$ to agree well. While spatial clustering and population structure could shift $z$ in both directions.
 
-A $z$ estimated from real data contains information from all three aspects, which makes it an elegant and easy-to-interpret way to analyze genetic diversity at macroecological scale, and estimate genetic extinction under . However, it is important to note that, 
+A $z$ estimated from real data contains information from all three aspects, which makes it an elegant and easy-to-interpret way to analyze genetic diversity at macroecological scale, and estimate genetic extinction under . However, it is important to note that,
 
 
 ## So which $z$ value am I comparing?
@@ -621,38 +621,11 @@ $$
 
 ## The other two diversity measures
 
-**Watterson's estimator** is defined on sites that are *segregating* in the subsample,
+**Watterson's $\theta$** is defined on sites that are *segregating* in the subsample,
 that is $1 \le K \le n-1$. Both fixed outcomes must therefore be removed: the site can
 come out monomorphic because no mutation was sampled, or because *only* mutations were
-sampled. Dividing the resulting per-site fraction by $H_{n-1}$ gives
-
-$$
-E[\theta_w] \;=\; \frac{1}{H_{n-1}} \sum_{k=0}^{xN} \sigma(k)
-\left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}-\frac{\binom{k}{n}}{\binom{xN}{n}}\right).
-$$
-
-**Nucleotide diversity** needs no hypergeometric projection at all. Because it is an
-average over pairs, the spectrum-averaged full-dataset value is already the answer:
-
-$$
-E[\theta_\pi] \;=\; \sum_{k=0}^{xN} \sigma(k)\,\frac{2k(xN-k)}{xN(xN-1)}
-$$
-
-Note that $n$ does not appear. That is exact rather than approximate, and together with
-the $\theta_w$ expression it explains why the two panels above behave so differently.
-
-**Proposition 1. $E[\theta_\pi]$ is invariant in $n$, for any spectrum.** At a single
-site, $\hat\theta_\pi = \Delta / \binom{n}{2}$, where $\Delta$ counts discordant pairs
-among the sampled chromosomes. By exchangeability of sampling without replacement, each of
-the $\binom{n}{2}$ sampled pairs is marginally a uniformly random pair drawn from the
-$\binom{xN}{2}$ pairs in the full dataset, so
-$E[\Delta] = \binom{n}{2}\,k(xN-k)/\binom{xN}{2}$. The $\binom{n}{2}$ cancels on division,
-leaving the full-dataset value for every $n \ge 2$; averaging over sites with weights
-$\sigma(k)$ gives the boxed expression. No model assumption enters. The argument is pure
-combinatorics, which is why the $\theta_\pi$ curve stays flat regardless of demography or
-selection.
-
-**Proposition 2. $E[\theta_w]$ is flat in $n$ if and only if $\sigma(k) \propto 1/k$.**
+sampled. Dividing the resulting per-site fraction by $H_{n-1}$ gives $E[\theta_w]$.
+$E[\theta_w]$ is flat in $n$ if and only if $\sigma(k) \propto 1/k$.
 The neutral spectrum is a fixed point of hypergeometric projection. Using
 $\frac{1}{k}\binom{k}{i} = \frac{1}{i}\binom{k-1}{i-1}$ and the Vandermonde convolution
 $\sum_m \binom{m}{a}\binom{M-m}{b} = \binom{M+1}{a+b+1}$, a spectrum $\phi_k = \theta/k$
@@ -663,25 +636,24 @@ $\theta_w(n)$ runs from $\theta_\pi$ at $n = 2$ to the full-dataset $\theta_w$ a
 $n = xN$, so the direction of its trend is the sign of $-D$, where $D$ is Tajima's $D$.
 An upward drift, as in `gmexp`, means the dataset carries an excess of rare variants.
 
-### When random mating fails
-
-Everything above samples chromosomes. Under random mating that is equivalent to sampling
-individuals, because an individual is $x$ independent gene copies. Under inbreeding it is
-not, and the resulting error can be written down exactly. For a fully inbred, completely
-homozygous, diploid panel ($F = 1$), sampling $j$ individuals gives
-
 $$
-\frac{E[\hat\theta_{\pi,j}]}{\theta_{\pi,\text{full}}}
-\;=\; \frac{1 - \dfrac{1}{2j-1}}{1 - \dfrac{1}{2N-1}},
+E[\theta_w] \;=\; \frac{1}{H_{n-1}} \sum_{k=0}^{xN} \sigma(k)
+\left(1-\frac{\binom{xN-k}{n}}{\binom{xN}{n}}-\frac{\binom{k}{n}}{\binom{xN}{n}}\right).
 $$
 
-which is again independent of the spectrum. The reason is that the $2j$ sampled
-chromosomes contain $j$ within-individual pairs that are always identical and can never
-contribute a difference. Those pairs make up a fraction $1/(2j-1)$ of all
-$\binom{2j}{2}$ pairs, against $1/(2N-1)$ in the full panel, and the bias is exactly the
-difference between the two fractions. The approach to the true value goes as $1/(2j)$:
-with $N = `r length(gm1001g$maps$sample.id)`$, a 33% deficit at $j = 2$ and still 0.08% at
-$j = 400$. This is the same correlation between the two copies within an individual that
-made the diploid prediction overshoot in the *Arabidopsis* section, and recasting the data
-as haploid is what removes it.
+**Nucleotide diversity** measures the average number of differences per site between DNA sequences.
+$E[\theta_\pi]$ is invariant in $n$, for any SFS. At a single
+site, $\hat\theta_\pi = \Delta / \binom{n}{2}$, where $\Delta$ counts discordant pairs
+among the sampled chromosomes. By exchangeability of sampling without replacement, each of
+the $\binom{n}{2}$ sampled pairs is marginally a uniformly random pair drawn from the
+$\binom{xN}{2}$ pairs in the full dataset, so
+$E[\Delta] = \binom{n}{2}\,k(xN-k)/\binom{xN}{2}$. The $\binom{n}{2}$ cancels on division,
+leaving the full-dataset value for every $n \ge 2$; averaging over sites with weights
+$\sigma(k)$ gives the boxed expression. No model assumption enters. The argument is pure
+combinatorics, which is why the $\theta_\pi$ curve stays flat regardless of demography or
+selection.
 
+
+$$
+E[\theta_\pi] \;=\; \sum_{k=0}^{xN} \sigma(k)\,\frac{2k(xN-k)}{xN(xN-1)}
+$$

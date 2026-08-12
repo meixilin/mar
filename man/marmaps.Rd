@@ -7,39 +7,48 @@
 marmaps(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326")
 }
 \arguments{
-\item{lonlatdf}{A data frame with three columns: sample ID, longitude, and latitude.}
+\item{lonlatdf}{A data frame with three columns: sample ID, longitude, and latitude. Column names are not checked.}
 
-\item{mapcrs}{A character string specifying the coordinate reference system (CRS) for the map.}
+\item{mapcrs}{A character string specifying the coordinate reference system (CRS) for the output map.}
 
-\item{mapres}{Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.}
+\item{mapres}{Optional numeric value for the output map resolution, in the units of \code{mapcrs}.
+If not provided (mapres = NULL), it will be automatically calculated.}
 
 \item{incrs}{A character string specifying the CRS of the input coordinates in \code{lonlatdf}.
 Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
 the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
-assignment are computed, so those stay consistent with the map units.}
+assignment are computed, so those stay consistent with the map units.
+Set both \code{incrs} and \code{mapcrs} to \code{""} for coordinates on an arbitrary plane,
+such as those of a spatial simulation.}
 }
 \value{
-A marmaps object.
+A marmaps object, holding the sample IDs, the coordinates in \code{mapcrs},
+the sample map raster (wrapped with \code{terra::wrap()} so that it can be saved,
+unwrap it with \code{terra::unwrap()} before use), and the map cell each sample
+falls in.
 }
 \description{
-Create a marmaps object
+Rasterizes the sampling coordinates of a species onto a regular grid. The grid
+is the unit of area for every downstream MAR calculation, so the map's coordinate
+reference system should be an equal-area projection whenever the samples span a wide latitudinal
+range.
 }
 \examples{
-lonlatdf <- data.frame(
-    id = c("sample1", "sample2", "sample3"),
-    longitude = c(-122.1, -121.9, -122.0),
-    latitude = c(37.8, 37.7, 37.9),
-    stringsAsFactors = FALSE
-)
-# input is WGS84 lon/lat, reprojected to an equal-area map
-marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8857", incrs = "EPSG:4326")
+# coordinates of the 1001 genomes accessions, in WGS84 lon/lat
+lonlat.fn <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
+lonlatdf <- read.delim(lonlat.fn)
+head(lonlatdf)
 
-# input coordinates already in the target projection (no reprojection)
-lonlatdf <- data.frame(
-    id = c("sample1", "sample2", "sample3"),
-    x = c(100, 200, 400),
-    y = c(37.8, 37.7, 37.9),
-    stringsAsFactors = FALSE
-)
-marmaps(lonlatdf, mapres = NULL, mapcrs = "EPSG:8859", incrs = "EPSG:8859")
+# reprojected onto an equal-area map, resolution chosen automatically
+marmaps(lonlatdf, mapcrs = "EPSG:8857", incrs = "EPSG:4326")
+
+# the same map at a coarser, fixed resolution of 200 km
+marmaps(lonlatdf, mapcrs = "EPSG:8857", mapres = 2e5)
+
+# coordinates already in the target projection are not reprojected
+marmaps(lonlatdf, mapcrs = "EPSG:4326", incrs = "EPSG:8857")
+}
+\seealso{
+\code{\link[=lonlat_parser]{lonlat_parser()}}, which builds a marmaps object directly from a
+file, and \code{\link[=genomaps]{genomaps()}} to pair it with a \code{\link[=margeno]{margeno()}} object.
 }

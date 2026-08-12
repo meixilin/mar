@@ -28,9 +28,15 @@ Creates a plot of the theoretical MAR prediction (from \link{MARtheory})
 against sample size, optionally with a fitted power-law curve.
 }
 \examples{
-\dontrun{
 theory <- MARtheory(gm1001g)
 plot(theory, fit = TRUE)
+
+# the power law as a straight line on log-log axes
 plot(theory, fit = TRUE, log = "xy")
+
+# Watterson's theta is flat with sample size under neutrality
+plot(theory, Mtype = "thetaw")
 }
+\seealso{
+\code{\link[=MARtheory]{MARtheory()}} and \code{\link[=MARcalc]{MARcalc()}}
 }

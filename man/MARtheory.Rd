@@ -7,14 +7,14 @@
 MARtheory(gm, maxind = NULL)
 }
 \arguments{
-\item{gm}{A \code{\link[=genomaps]{genomaps()}} object.}
+\item{gm}{A \code{\link[=genomaps]{genomaps()}} object created by \code{\link[=genomaps]{genomaps()}}.}
 
 \item{maxind}{Maximum number of individuals to predict up to. Default to all
 individuals available in genomaps()}
 }
 \value{
 A data frame with class \code{martheory}, with a column \code{N} (number of
-individuals) and columns \code{M}, \code{thetaw}, and \code{thetapi}.
+individuals, from 1 to \code{maxind}) and columns \code{M}, \code{thetaw}, and \code{thetapi}.
 }
 \description{
 \code{MARtheory()} is the theoretical counterpart to \code{\link[=MARsampling]{MARsampling()}}. Instead of
@@ -30,11 +30,18 @@ the empirical sampling points, or passed to \code{\link[=MARcalc]{MARcalc()}} wi
 fit the power-law exponent against sample size.
 }
 \examples{
-# Predicted MAR for the 1001 genomes example, overlaid on sampling
+# Predicted MAR for the 1001 genomes example
 expmardf <- MARtheory(gm1001g)
-mardf <- MARsampling(gm1001g, nrep = 20)
-plot(M ~ N, data = mardf)
-lines(M ~ N, data = expmardf, col = "blue")
+head(expmardf)
+
+# overlay the prediction on the empirical sampling points
+mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+plot(mardf, Atype = "N", theory = expmardf)
+
 # fit the predicted power-law exponent against sample size
 MARcalc(expmardf, Mtype = "M", Atype = "N")
+}
+\seealso{
+\code{\link[=sfs]{sfs()}} for the spectrum the prediction is built from,
+\code{\link[=MARsampling]{MARsampling()}} for the empirical counterpart, and \code{\link[=plot.martheory]{plot.martheory()}}.
 }

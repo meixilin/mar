@@ -27,12 +27,15 @@ Invisibly returns NULL
 Creates a line/point plot of the site frequency spectrum
 }
 \examples{
-sfs_object <- sfs(AC = c(1, 1, 0, 2, 0, 1, 1, 0, 0, 2, 30), N = 50, ploidy = 2)
+sfs_object <- sfs(gm1001g)
 plot(sfs_object)
-\dontrun{
+
 # overlay the neutral expectation, generated automatically from gm
 plot(sfs_object, expected = gm1001g)
+
 # spread out rare variants (low allele counts) on a log-x scale
-plot(sfs_object, log = "x")
+plot(sfs_object, expected = gm1001g, log = "x")
 }
+\seealso{
+\code{\link[=sfs]{sfs()}} and \code{\link[=expsfs]{expsfs()}}
 }

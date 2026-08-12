@@ -7,7 +7,7 @@
 \method{plot}{marsamp}(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...)
 }
 \arguments{
-\item{x}{A data frame containing sampling data}
+\item{x}{An object of class "marsamp", the output of \link{MARsampling}}
 
 \item{fit}{Whether to draw the fitted power-law curve. \code{FALSE} (default) draws
 nothing; \code{TRUE} fits both \code{c} and \code{z} via \link{MARcalc}; a named
@@ -36,11 +36,17 @@ Invisibly returns NULL
 Creates a plot of genetic diversity against area, optionally with fitted power law
 }
 \examples{
-\dontrun{
-plot(marsamp_object, fit = c(c = 0.5, z = 0.25))
+mardf <- MARsampling(gm1001g, nrep = 5, xfrac = 0.1, myseed = 42)
+
+# supply c and z directly
+plot(mardf, fit = c(c = 0.5, z = 0.25))
+
 # fit c/z automatically, and overlay the MARtheory prediction generated from gm
-plot(marsamp_object, Atype = "N", fit = TRUE, theory = gm1001g)
+plot(mardf, Atype = "N", fit = TRUE, theory = gm1001g)
+
 # the power law as a straight line on log-log axes
-plot(marsamp_object, fit = TRUE, log = "xy")
+plot(mardf, fit = TRUE, log = "xy")
 }
+\seealso{
+\code{\link[=MARsampling]{MARsampling()}} and \code{\link[=MARcalc]{MARcalc()}}
 }

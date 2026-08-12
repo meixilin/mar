@@ -3,14 +3,16 @@
 \docType{data}
 \name{gm1001g}
 \alias{gm1001g}
-\title{gm1001g}
+\title{Arabidopsis thaliana 1001 Genomes example data}
 \format{
 \subsection{\code{gm1001g}}{
 
 An S3 \code{genomaps} object created using \code{\link[=genomaps]{genomaps()}} function.
 \describe{
-\item{geno}{An S3 \code{margeno} object. See \code{\link[=margeno]{margeno()}} function.}
-\item{maps}{An S3 \code{marmaps} object. See \code{\link[=marmaps]{marmaps()}} function.}
+\item{geno}{An S3 \code{margeno} object with 10,000 variants x 1,004 diploid
+samples. See \code{\link[=margeno]{margeno()}} function.}
+\item{maps}{An S3 \code{marmaps} object with 1,004 samples on a 58 x 95 cell
+raster. See \code{\link[=marmaps]{marmaps()}} function.}
 }
 }
 }
@@ -21,6 +23,21 @@ An S3 \code{genomaps} object created using \code{\link[=genomaps]{genomaps()}} f
 gm1001g
 }
 \description{
-Example genomaps object created from Arabidopsis 1001G project
+A \code{\link[=genomaps]{genomaps()}} object derived from the Arabidopsis 1001 Genomes Project.
+A total of 1004 geo-referenced samples from the native continental range
+(excluding the USA, Canary Islands or Japan samples) were kept, and 10,000
+biallelic polymorphic SNPs were randomly sampled from chromosome 1.
+}
+\details{
+The raw inputs used to build this object are shipped in \code{inst/extdata}
+(\verb{1001g_genotypes.txt.gz}, \verb{1001g_accessions.txt}, \verb{1001g_chrpos.txt} and
+\verb{1001g_lonlat.txt}); see the examples of \code{\link[=text_parser]{text_parser()}} and
+\code{\link[=lonlat_parser]{lonlat_parser()}} for how to read raw data.
+}
+\examples{
+print(gm1001g)
+}
+\seealso{
+\link{gmexp} for the simulated example data.
 }
 \keyword{datasets}

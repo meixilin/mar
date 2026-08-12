@@ -12,12 +12,15 @@ lonlat_parser(lonlat.fn, ...)
 \item{...}{
   Arguments passed on to \code{\link[=marmaps]{marmaps}}
   \describe{
-    \item{\code{mapres}}{Optional numeric value for the map resolution. If not provided (mapres = NULL), it will be automatically calculated.}
-    \item{\code{mapcrs}}{A character string specifying the coordinate reference system (CRS) for the map.}
+    \item{\code{mapcrs}}{A character string specifying the coordinate reference system (CRS) for the output map.}
+    \item{\code{mapres}}{Optional numeric value for the output map resolution, in the units of \code{mapcrs}.
+If not provided (mapres = NULL), it will be automatically calculated.}
     \item{\code{incrs}}{A character string specifying the CRS of the input coordinates in \code{lonlatdf}.
 Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
 the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
-assignment are computed, so those stay consistent with the map units.}
+assignment are computed, so those stay consistent with the map units.
+Set both \code{incrs} and \code{mapcrs} to \code{""} for coordinates on an arbitrary plane,
+such as those of a spatial simulation.}
   }}
 }
 \value{
@@ -27,15 +30,22 @@ Returns error if coordinates contain missing values or incorrect number of colum
 \description{
 Reads a file containing sample IDs with their corresponding longitude and latitude coordinates.
 The input file must have a header with columns: ID, LON/LONGITUDE, LAT/LATITUDE (in that order).
-While coordinates do not need to be in "+proj=longlat +datum=WGS84" projection, the WGS84 projection was used in testing..
 Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
+If Sample IDs were not provided in \code{\link[=text_parser]{text_parser()}}, sample IDs should be 1,2,3, ... , N.
 }
 \examples{
-\dontrun{
-# Read coordinates from file, using an equal-area map projection
-coords <- lonlat_parser("sample_locations.txt", mapcrs = "EPSG:8857")
-}
+# read the coordinates behind the gm1001g example object in longitude-latitude formats (EPSG:4326)
+# and reprojected onto the Equal Earth Greenwich (EPSG: 8857)
+lonlat.fn <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
+maps <- lonlat_parser(lonlat.fn, mapcrs = "EPSG:8857")
+print(maps)
+plot(maps)
+
+# simulated locations without a coordinate reference system, so no projection is applied
+lonlat.fn <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
+lonlat_parser(lonlat.fn, incrs = "", mapcrs = "")
 }
 \seealso{
-\code{\link[=marmaps]{marmaps()}}
+\code{\link[=marmaps]{marmaps()}}, and \code{\link[=text_parser]{text_parser()}} / \code{\link[=vcf_parser]{vcf_parser()}} for the matching
+genotypes.
 }

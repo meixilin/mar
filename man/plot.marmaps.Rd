@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{An object of class "marmaps" containing sample mapping information}
 
-\item{...}{Additional arguments passed to plot}
+\item{...}{Additional arguments passed to \link[terra]{plot}}
 }
 \value{
 Invisibly returns NULL
@@ -18,5 +18,10 @@ Invisibly returns NULL
 Creates a spatial plot of sample locations and density
 }
 \examples{
+# cells are coloured by the number of samples they hold,
+# the individual sampling locations are drawn on top
 plot(gm1001g$maps)
+}
+\seealso{
+\code{\link[=marmaps]{marmaps()}}
 }
