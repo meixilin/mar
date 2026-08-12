@@ -1,48 +1,3 @@
-create_test_genomaps <- function() {
-    # Create sample data
-    sample.id <- c("s1", "s2", "s3", "s4")
-    variant.id <- as.integer(1:3)
-    position <- as.integer(c(100, 200, 300))
-    chromosome <- c("1", "1", "2")
-    genotype <- matrix(c(0, 1, 2, 1, 0, 2, 2, 1, 0, 1, 2, 0), nrow = 3, byrow = TRUE)
-    mg <- margeno(genotype, ploidy = 2, sample.id, variant.id, position, chromosome)
-
-    # Create spatial data
-    lonlatdf <- data.frame(
-        id = sample.id,
-        longitude = c(-73.935, -73.934, -73.933, -73.932),
-        latitude = c(40.730, 40.731, 40.732, 40.733)
-    )
-    mm <- marmaps(lonlatdf, mapres = 0.001, mapcrs = "+proj=longlat +datum=WGS84")
-
-    # Create genomaps object
-    gm <- genomaps(mg, mm)
-    return(gm)
-}
-
-create_test_genomaps_na <- function() {
-    # Create sample data
-    sample.id <- c("s1", "s2", "s3", "s4")
-    variant.id <- as.integer(1:3)
-    position <- as.integer(c(100, 200, 300))
-    chromosome <- c("1", "1", "2")
-    genotype <- matrix(c(0, 1, 2, 1, 0, NA, 2, 1, 0, 1, NA, 0), nrow = 3, byrow = TRUE)
-    mg <- margeno(genotype, ploidy = 2, sample.id, variant.id, position, chromosome)
-
-    # Create spatial data
-    lonlatdf <- data.frame(
-        id = sample.id,
-        longitude = c(-73.935, -73.934, -73.933, -73.932),
-        latitude = c(40.730, 40.731, 40.732, 40.733)
-    )
-    mm <- marmaps(lonlatdf, mapres = 0.001, mapcrs = "+proj=longlat +datum=WGS84")
-
-    # Create genomaps object
-    gm <- genomaps(mg, mm)
-    return(gm)
-}
-
-
 .pixy_ref <- c("A", "G", "T", "A", "A", "G", "G", "G", "C", "T", "A", "A")
 .pixy_alt <- c(".", "T", ".", ".", ".", ".", "C", ".", ".", ".", ".", ".")
 
@@ -110,7 +65,8 @@ create_test_pixy_genomaps_na <- function(paper = c('theta_pi', 'theta_w')) {
 
 test_that("mutdiv.gridded basic functionality works", {
     gm <- gm1001g
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
 
     # Test with a simple 50x50 bounding box
     result <- mutdiv.gridded(gm, gmarea, gmarea, bbox = c(1, 50, 1, 50))
@@ -139,7 +95,8 @@ test_that("mutdiv.gridded basic functionality works", {
 
 test_that("mutdiv.cells basic functionality works", {
     gm <- gm1001g
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
 
     # Get actual cellids from the test data
     cellids <- unique(gm$maps$cellid)[1:2]
@@ -223,7 +180,8 @@ test_that("test that .calc_theta reproduces pixy", {
 test_that(".mutdiv.cellids handles various inputs correctly", {
     gm <- create_test_genomaps()
     attr(gm, "genolen") <- 1000
-    gmarea <- .areaofraster(gm$maps$samplemap)
+    sm <- .get_samplemap(gm$maps)
+    gmarea <- .areaofraster(sm)
     Asq <- 1.0
 
     # Get actual cellids

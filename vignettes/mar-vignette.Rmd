@@ -47,8 +47,8 @@ data(gm1001g)
 print(gm1001g)
 
 # gm1001g is a list of two objects, to obtain marmaps and margeno objects
-genodata = gm1001g$geno
-mapsdata = gm1001g$maps
+genodata <- gm1001g$geno
+mapsdata <- gm1001g$maps
 
 # Tips: all operations in `mar` package takes `genomaps` as the input.
 # Therefore, you do not have to extract the marmaps and margeno objects most if not all the time.
@@ -81,7 +81,7 @@ chrposfile <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 # Tips: for your own data, change the variables above to the corresponding filepaths
 
 # Read genotype
-# Optional: for vcf parsing, see Appendix S2: reading vcf files
+# Optional: for vcf parsing, see Alternative 1: Reading VCF files
 genodata <- mar::text_parser(
     geno.fn = genofile,
     samp.fn = samplefile,
@@ -95,7 +95,7 @@ print(genodata)
 **Alternative workflow**:
     `vcf_parser()` handles reading of VCF files, see [Alternative 1: Reading VCF files](#a1).
 
-### 1b: Import geographic data using `lonlat_parser()`
+### 1b: Import geographic data using `lonlat_parser()` {#s1b}
 
 `lonlat_parser()` reads the coordinate file (TXT, CSV, or TSV) and returns a `marmaps` object.
 
@@ -109,7 +109,7 @@ lonlatfile <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
 # Read coordinates
 # Tips: lonlat_parser will assume the coordinates are longitude and latitude following ESPG: 4326 (WGS84) by default
 # and automatically determine the map resolution following equation 12 in (Hengl 2006)
-mapsdata <- lonlat_parser(lonlatfile, mapcrs = 'EPSG:8857')
+mapsdata <- lonlat_parser(lonlatfile, mapcrs = "EPSG:8857")
 
 print(mapsdata)
 # Optional: to inspect the reference map created
@@ -128,7 +128,7 @@ object used by all downstream functions.
 
 ```{r genomaps}
 gm <- genomaps(genodata, mapsdata)
-save(gm, file = 'tempgm.rda')
+save(gm, file = "tempgm.rda")
 ```
 
 
@@ -168,13 +168,13 @@ TODO: Description here on the output table. and the default options (e.g. nrep, 
 TODO: I cannot get the plot method to register for marsamp (crying in my heart >_<), could you check this?
 
 ```{r mar-animate}
-MARsampling(gm1001g, myseed = 3, scheme = 'outwards', animate = T)
+MARsampling(gm1001g, myseed = 3, scheme = "outwards", animate = T)
 ```
 
 
 ```{r mar-sampling}
 # Tips: uses of myseed not neccessary, used here for reproducibility with the manuscript
-mardf <- MARsampling(gm1001g, myseed = 3, scheme = 'outwards')
+mardf <- MARsampling(gm1001g, myseed = 3, scheme = "outwards")
 head(mardf)
 
 # mardf is a marsamp object
@@ -195,8 +195,8 @@ class(marfit)
 # To extract full mar fit table, use summary
 summary(marfit)
 # Extract the c and z values from marfit
-c_M_A = unname(marfit$par['c'])
-z_M_A = unname(marfit$par['z'])
+c_M_A <- unname(marfit$par["c"])
+z_M_A <- unname(marfit$par["z"])
 # Plot the fit again
 plot(mardf, fit = c(c = c_M_A, z = z_M_A))
 ```
@@ -207,18 +207,18 @@ TODO: description here. What does theta_pi measures.
 
 ```{r}
 # plot alternative diversity-by-area sampling results
-mar:::plot.marsamp(mardf, Mtype = 'thetapi', Atype = 'Asq')
-marfit_pi <- MARcalc(mardf, Mtype = 'thetapi', Atype = 'Asq')
+mar:::plot.marsamp(mardf, Mtype = "thetapi", Atype = "Asq")
+marfit_pi <- MARcalc(mardf, Mtype = "thetapi", Atype = "Asq")
 
 # marfit is a sars object (from R package sars)
 class(marfit_pi)
 # To extract full mar fit table, use summary
 summary(marfit_pi)
 # Extract the c and z values from marfit_pi
-c_pi_Asq = unname(marfit_pi$par['c'])
-z_pi_Asq = unname(marfit_pi$par['z'])
+c_pi_Asq <- unname(marfit_pi$par["c"])
+z_pi_Asq <- unname(marfit_pi$par["z"])
 # Plot the fit again
-plot(mardf, fit = c(c = c_pi_Asq, z = z_pi_Asq), Mtype = 'thetapi', Atype = 'Asq')
+plot(mardf, fit = c(c = c_pi_Asq, z = z_pi_Asq), Mtype = "thetapi", Atype = "Asq")
 ```
 
 **Alternative workflow**:
@@ -243,9 +243,8 @@ plot(marext) # TODO: doesn't work but should work
 We can use the scaling factors inferred in [4b. Fit the mutations-area relationship model using `MARcalc()`](#4b) to predict the extinction.
 
 ```{r }
-
 # plot the extinction mar fit
-mar:::plot.marextinct(marext, z = z_M_A)
+plot.marextinct(marext, z = z_M_A)
 ```
 
 **Alternative workflow**:
@@ -280,7 +279,74 @@ write.csv(as.data.frame(mar_sampling), file = "mar_sampling.csv", row.names = FA
 
 ## Alternative 1: Reading VCF files {#a1}
 
+`vcf_parser()` reads a VCF file (`.vcf` or `.vcf.gz`) and returns a `margeno`
+object, the same type of object returned by `text_parser()`. Use it in place
+of [1a: Import genotype data using `text_parser()`](#s1) whenever your
+genotype data is already in VCF format.
+
+```{r import vcf}
+# Tips: vcf_parser reads both gzipped and uncompressed VCF files.
+
+# Locate example VCF file
+vcffile <- system.file("extdata", "gmexp.vcf.gz", package = "mar")
+# Tips: for your own data, change the variable above to the corresponding filepath
+
+# Read genotype
+genodata <- mar::vcf_parser(vcffile, ploidy = 2)
+
+print(genodata)
+```
+
+Sample coordinates are still imported separately with `lonlat_parser()`, as in
+[1b: Import geographic data using `lonlat_parser()`](#s1b).
+
+```{r import vcf coordinates}
+# Locate example coordinates
+lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
+# Tips: this example uses arbitrary planar coordinates rather than longitude/latitude,
+# so no coordinate reference system conversion is needed
+mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+
+print(mapsdata)
+```
+
+With `genodata` and `mapsdata` in hand, proceed to Step 2 to construct the
+`genomaps` object as usual.
+
 ## Alternative 2: Customizing projection and map resolution {#a2}
+
+`lonlat_parser()` accepts three arguments that control how sample coordinates
+are turned into a raster: `mapcrs`, `incrs`, and `mapres`.
+[1b: Import geographic data using `lonlat_parser()`](#s1b) uses the defaults
+for `incrs` and `mapres`; this section covers overriding them.
+
+**Coordinates already in the target projection**: if your coordinates are not
+longitude/latitude, or are already expressed in the same units as `mapcrs`,
+set `incrs` to match `mapcrs` so that `lonlat_parser()` skips reprojection.
+
+```{r skip reprojection}
+# Locate example coordinates (arbitrary planar units, not longitude/latitude)
+lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
+# Tips: setting incrs = mapcrs (here, both "") skips reprojection entirely
+mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+
+print(mapsdata)
+```
+
+**Custom map resolution**: by default `mapres = NULL`, so `mar` calculates
+the resolution automatically following equation 12 in (Hengl 2006). Provide
+`mapres` directly to override this, for example when you want raster cells to
+match a specific spatial scale.
+
+```{r custom resolution}
+# Locate sample coordinates
+lonlatfile <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
+# Tips: mapres is expressed in the units of mapcrs (meters, for EPSG:8857)
+mapsdata <- lonlat_parser(lonlatfile, mapcrs = "EPSG:8857", mapres = 100000)
+
+print(mapsdata)
+plot(mapsdata)
+```
 
 ## Alternative 3: More on `MARsampling()` {#a3}
 
