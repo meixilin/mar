@@ -29,11 +29,7 @@ out_prefix = "gmexp"
 # growth_rate > 0 means the population grew exponentially towards the present.
 demography = msprime.Demography()
 demography.add_population(name="pop", initial_size=initial_size, growth_rate=growth_rate)
-# cap the exponential phase at end_time so the ancestral population size stays constant further back
-ancestral_size = initial_size * np.exp(-growth_rate * end_time)
-demography.add_population_parameters_change(
-    time=end_time, population="pop", growth_rate=0, initial_size=ancestral_size
-)
+demography.add_population_parameters_change(time=end_time, population="pop", growth_rate=0)
 
 ts = msprime.sim_ancestry(
     samples=sample_size,
@@ -59,6 +55,6 @@ with open(lonlat_path, "w") as f:
         f.write(f"tsk_{i},{lon},{lat}\n")
 
 print(f"num_trees: {mts.num_trees}")
-print(f"segregating_sites: {mts.segregating_sites()}")
+print(f"segregating_sites: {mts.segregating_sites(span_normalise = False)}")
 print(f"wrote {vcf_path} ({mts.num_individuals} individuals, {mts.num_sites} sites)")
 print(f"wrote {lonlat_path}")

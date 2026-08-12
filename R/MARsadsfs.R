@@ -77,9 +77,11 @@ sfs <- function(gm, folded = FALSE, nozero = TRUE) {
 expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
     N <- length(gm$maps$sample.id)
     ploidy <- gm$geno$ploidy
+    AC <- gm$geno$allele_count
     xN <- N * ploidy
-    lenAC <- nrow(gm$geno$genotype)
-    theta <- lenAC / .Hn(xN) # scale theta
+    # get segregating sites
+    M_seg <- sum(AC > 0 & AC < xN)
+    theta <- M_seg / .Hn(xN) # scale theta
     expsfs <- c(0, theta / (1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)

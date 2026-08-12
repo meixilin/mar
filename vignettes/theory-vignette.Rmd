@@ -40,7 +40,7 @@ SAD as scaled probability densities over abundance classes, and note one small
 distinction. Then we introduce the `MARtheory()` function. Assuming that individuals are
 **randomly mating and randomly distributed** in the population, `MARtheory()` derives the
 exact mutations-area relationship from the site frequency spectrum alone, together with
-the population density $\rho$, which links the number of sampled individuals to area, $N = \rho A$ (Preston 1962). Without knowing any individual's specific location,
+the density $\rho$, which links area to the number of sampled individuals, $A = \rho N$ (Preston 1962). Without knowing any individual's specific location,
 and without running the `MARsampling()` procedure, the SFS deterministically gives us the MAR. We
 then validate `MARtheory()`'s prediction against `MARsampling()` and `MARextinction()` on a simulated dataset (the `gmexp` data).
 
@@ -51,19 +51,24 @@ output part ways. When we then treat the 1001 Genomes accessions as haploid indi
 and shuffle their sample locations, `MARtheory()` recovers the `MARsampling()` output in a
 real dataset as well.
 
-In the end, having shown that the MAR can be derived from the SFS, we discuss what that
-implies for interpreting the $z$ value in conservation genetics.
+In the end, having shown that the MAR can be derived from the SFS, we discuss what this
+means for interpreting the $z$ value in conservation genetics. 
+
+TL,DR: directly skip to this [important interpretation section](#interpret).
 
 ## Some assumptions and the example data
 
 We start by simulating 50 diploid individuals sampled from a randomly mating, randomly
 distributed population growing exponentially, using the python package `msprime` (code
-available in `data-raw/gmexp_simulate.py`). We built a `genomaps` object from that
+available in `data-raw/gmexp_simulate.py`). We chose a growing population, rather than a
+constant-size one, to show that the theory holds regardless of the spectrum's shape.
+
+We built a `genomaps` object from that
 simulation (code available in `data-raw/gmexp_rda.R`) and provide it with this package.
 
 You can explore the data here:
 
-```{r explore-gmexp}
+```{r load-gmexp}
 library(mar)
 
 data(gmexp)
@@ -83,7 +88,7 @@ scattered at random, a box twice as large holds twice as many of them, so $N \pr
 The `gmexp` coordinates were drawn from a uniform distribution, which we can see by
 plotting the `marmaps` object stored within the `genomaps` object.
 
-```{r randomloc}
+```{r plot-gmexp}
 plot(gmexp$maps)
 ```
 
@@ -92,21 +97,27 @@ violate each one in turn and measure what it costs.
 
 ## What is a site frequency spectrum?
 
-Before we get to the sampling relationship, we need to define what an SFS is and what
-notation we will use for it.
+Before we get to the sampling relationship, we need to define what an SFS is.
 
-Take a genetic dataset of $N$ individuals with ploidy $x$, so that there are $xN$
-chromosomes in total, genotyped, and contains $L$ biallelic SNP sites. At any one SNP site, count how many of
+Take a genetic dataset of $N$ individuals with ploidy $x$, there are $xN$
+chromosomes and $L$ biallelic SNP sites ($L \times xN$ genotype matrix). At any one SNP site, count how many of
 the $xN$ chromosomes carry the mutation and call that count $k$. The **site frequency
 spectrum** (SFS) is the tally of how many sites have $k = 1$ (singletons), how many have
 $k = 2$, and so on. We write the proportional site frequency spectrum as $\sigma(k)$, so
 that $\sum_{k=0}^{xN} \sigma(k) = 1$.
-TODO: what is \sigma(k). Give an example that generate SFS, and get sigma(k) by dividing with L.
+
+As an example, suppose we genotyped $L = 5$ biallelic sites across $xN = 4$ chromosomes, with
+allele counts $k = 1, 1, 3, 2, 1$ at the five sites. The raw SFS tallies these into a
+vector indexed by $k$: three singletons, one doubleton, one tripleton, and no site fixed
+for either allele, i.e. $(0, 3, 1, 1, 0)$ for $k = 0, \ldots, 4$. Dividing each entry by
+$L$ gives the proportional spectrum, $\sigma(1) = 3/5$, $\sigma(2) = 1/5$, $\sigma(3) =
+1/5$, and $\sigma(0) = \sigma(4) = 0$. `sfs()` below returns the raw counts; dividing by
+$L$ recovers $\sigma(k)$.
 
 For `gmexp` that is $L = `r length(gmexp$geno$allele_count)`$ sites spread over
 $xN = `r length(gmexp$maps$sample.id) * gmexp$geno$ploidy`$ chromosomes:
 
-```{r sfsplot}
+```{r sfs-gmexp}
 obs <- sfs(gmexp)
 plot(obs)
 ```
@@ -121,7 +132,7 @@ in the statistical structure of rarity in biological systems.
 
 There is, however, **a key distinction between the SFS and the SAD**. The SAD entries sum
 to the total number of sampled individuals, whereas the SFS entries sum to the total
-number of sites $L$, which is unrelated to how many individuals were sampled. Any
+number of variant sites $L$, which is unrelated to how many individuals were sampled. Any
 species-abundance model can be fitted to an SFS, since both are densities over abundance
 classes, but they are not the same object. For a direct comparison to a SAD, a haplotype
 abundance distribution under the infinite-alleles assumption would be more appropriate.
@@ -134,7 +145,7 @@ constant-size neutral population: it grew exponentially, and exponential growth 
 excess of rare variants. We can check that against the neutral expectation the package
 ships, `expsfs()`:
 
-```{r neutral}
+```{r expsfs-gmexp}
 plot(obs, expected = gmexp)
 # pass the `log = 'x'` option to inspect the singletons
 plot(obs, expected = gmexp, log = 'x')
@@ -144,8 +155,7 @@ plot(obs, expected = gmexp, log = 'y')
 ```
 
 Singletons are more common than the constant-size neutral model predicts, and
-high-frequency variants are depleted. That is exponential growth showing up in the
-spectrum, and it does not interfere with the sampling theory, as we show next.
+high-frequency variants are depleted. This is reflective of the underlying demography of exponential growth, and it does not interfere with the sampling theory, as we show next.
 
 ## How to build the MAR from a site frequency spectrum?
 
@@ -158,16 +168,16 @@ space, so sampling a larger area means sampling more individuals.
 Consider a single genomic site at which $k$ of the $xN$ chromosomes carry the mutation,
 and suppose we draw $n$ chromosomes. We miss that mutation only if every one of the $n$
 draws came from the $xN - k$ chromosomes that do not carry it. Counting the ways that can
-happen gives
+happen gives:
 
 $$
 P(\text{missed}) \;=\; \frac{\binom{xN - k}{n}}{\binom{xN}{n}},
 $$
 
-so we capture the site with probability $1 - P(\text{missed})$. A mutation carried by
+So we sample this mutation with probability $1 - P(\text{missed})$. A mutation carried by
 half the population ($k = xN/2$) is almost certain to be sampled, whereas a singleton
 ($k = 1$) is sampled only with probability $n/xN$. Averaging this sample probability
-across sites, weighted by how many sites carry each allele count $k$, gives the expected
+across sites, weighted by how many sites carry each allele count $k$ ($\sigma(k)$), gives the expected
 number of mutations in a sample of $n$ chromosomes. The full derivation is in [the math
 section](#math).
 
@@ -184,7 +194,7 @@ reports its predictions against the number of *individuals* $j = n/x$, in a colu
 `N` so that the output lines up with `MARsampling()`, and we can fit the power law
 $M = c N^z$ with `MARcalc()`.
 
-```{r marexp}
+```{r martheory-gmexp}
 theorydf <- MARtheory(gmexp)
 head(theorydf)
 
@@ -208,24 +218,20 @@ plot(theorydf, fit = theorydf_fit$par)
 We can now compare the prediction against the sampling output, which builds the same
 curve the hard way, by repeatedly sampling boxes on the map:
 
-```{r marexp-compare}
+```{r marsamp-gmexp}
 mardf <- MARsampling(gmexp, myseed = 1)
 head(mardf)
+# We need to set `Atype = 'N'` here since the MARtheory() is based on sample numbers not area size
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf)
 ```
 
-The blue prediction lands on top of the sampled points, and the scaling factor $z$ from
-`MARsampling()` is very close to the one from `MARtheory()`.
+The blue prediction lands on top of the sampled points. When we also fit the scaling factor $z$ on 
+`MARsampling()` output using `MARcalc()`, the two `MARcalc()` outputs are very similar.
 
-```{r zexp}
+```{r marsamp-marcalc-gmexp}
 # fit the MAR
 mardf_fit <- MARcalc(mardf, Mtype = 'M', Atype = 'N')
-
 summary(mardf_fit)
-
-# extract the fitted c and z values
-print(mardf_fit$par)
-print(theorydf_fit$par)
 
 # you can compare the theory prediction with the empirical fit side by side
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf, fit = mardf_fit$par)
@@ -234,13 +240,14 @@ plot(mardf, Mtype = "M", Atype = "N", theory = theorydf, fit = mardf_fit$par)
 plot(mardf, Mtype = "M", Atype = "N", theory = theorydf, fit = mardf_fit$par, log = 'xy')
 ```
 
+
 ### `MARextinction()` confirms the `MARtheory()` prediction
 
 Because `MARextinction()` simulates a different sampling process than `MARsampling()`, it
 is worth checking `MARtheory()`'s prediction against its output too. It builds the same
 curve the hard way as well, by iteratively removing the available samples on the map:
 
-```{r marext-compare}
+```{r marext-gmexp}
 extdf <- MARextinction(gmexp, myseed = 1)
 head(extdf)
 
@@ -248,14 +255,37 @@ head(extdf)
 plot(extdf, Mtype = "M", Atype = "N", theory = theorydf)
 
 # you can compare the theory prediction with the empirical fit side by side.
-# notice we did not invoke MARcalc() as above, but simply asked the plot method to fit
+# notice we did not invoke MARcalc() as above, as the `fit = TRUE` option will automatically run MARcalc()
 plot(extdf, Mtype = "M", Atype = "N", theory = theorydf, fit = TRUE)
+
+# to expose the sar object the plot method builds internally, run MARcalc()
+extdf_fit <-MARcalc(extdf, Mtype = 'M', Atype = 'N')
+summary(extdf_fit)
 ```
 
+Finally, let's put the three `MARcalc()` outputs side by side. 
 Notice that when our two assumptions of random mating and random spatial distribution are
-met, the scaling factor $z$ is the same across all three functions, `MARtheory()`,
+met, the scaling factor $z$ is the same across all three functions' output, `MARtheory()`,
 `MARsampling()` and `MARextinction()`, because they all describe the same sampling
 relationship. Under these conditions, only information carried by the SFS contributes to $z$.
+
+```{r three-mar-gmexp}
+extract_summary <- function(fittedlist, names) {
+    outdf <- data.frame()
+    for (ii in seq_along(fittedlist)) {
+        fitted <- fittedlist[[ii]]; name <- names[ii]
+        fittedsum <- summary(fitted)$Parameters
+        rownames(fittedsum) <- NULL
+        output <- data.frame(sampling_func = name, vars = c('c', 'z'))
+        output <- cbind(output, fittedsum)
+        outdf <- rbind(outdf, output)
+    }
+    return(outdf)
+}
+
+extract_summary(list(theorydf_fit, mardf_fit, extdf_fit),
+                c('MARtheory', 'MARsampling', 'MARextinction'))
+```
 
 ### Predictions for Watterson's $\theta$ and nucleotide diversity
 
@@ -286,7 +316,7 @@ correction when the spectrum has the neutral $1/k$ shape. Our simulated `gmexp` 
 exponentially, its spectrum does not have that shape, and so the prediction climbs with
 sample size, exactly as the sampled values do.
 
-```{r theta_w}
+```{r thetaw-gmexp}
 plot(mardf, Mtype = "thetaw", Atype = "N", theory = theorydf)
 ```
 
@@ -309,7 +339,7 @@ $$
 in which $n$ does not appear at all. Subsampling therefore cannot shift it, for any
 spectrum ([Proposition 1](#math)).
 
-```{r thetapi}
+```{r thetapi-gmexp}
 plot(mardf, Mtype = "thetapi", Atype = "N", theory = theorydf)
 ```
 
@@ -317,30 +347,36 @@ plot(mardf, Mtype = "thetapi", Atype = "N", theory = theorydf)
 
 Everything so far predicts diversity as a function of sample size. Because the `gmexp`
 individuals are randomly placed, sample size and area really are interchangeable, and the
-regression of area on sample size is essentially noiseless:
+regression of area on sample size will connect the final link between site-frequency spectrums and the mutations-area relationship:
 
-```{r nagmexp}
+```{r area-gmexp}
 plot(A ~ N, data = mardf)
-N_A_lm <- lm(A ~ N, data = mardf)
-summary(N_A_lm)
-# with N = rho * A, the fitted slope of A ~ N estimates 1 / rho
-rho <- 1 / N_A_lm$coefficients['N']
+A_N_lm <- lm(A ~ N, data = mardf)
+summary(A_N_lm)
+# with A = rho * N, the fitted slope of A ~ N estimates rho
+rho <- A_N_lm$coefficients['N']
 print(rho)
 ```
 
 We can therefore convert the predicted $N$ axis into an area axis and compare against the
-sampled MAR. We deliberately left this last step out of `MARtheory()`, because it needs
-the density $\rho$, which has to be fitted from the `MARsampling()` output. Note that the
-prediction is still analytical: we used only the population density from
-`MARsampling()`, and none of its sampled mutation or diversity values.
+sampled MAR. 
 
-```{r add-area}
+```{r area-theory-gmexp}
 # add the expected area
-theorydf$A <- theorydf$N / rho
+theorydf$A <- theorydf$N * rho
 
 # overlay with the MARsampling output
 plot(mardf)
 lines(M ~ A, data = theorydf, col = 'blue')
+```
+
+We deliberately left this last step out of `MARtheory()`. In real-life practice, we are more interested in 
+the scaling value $z$ rather than the constant $c$ in the $M = cA^z$ relationship. 
+When the population density $\rho$ is a constant fitted from the `MARsampling()` output, the scaling factor $z$ for area is going to be very similar as the scaling factor $z$ for sample size, as shown below: 
+
+```{r z-N-A}
+mardf_fit_A <- MARcalc(mardf)
+extract_summary(list(mardf_fit, mardf_fit_A), c('M ~ N', 'M ~ A'))
 ```
 
 # How does this work in real life: our *Arabidopsis* dataset?
@@ -353,7 +389,7 @@ three things in a real, conservation-relevant setting:
 2. the breeding structure,
 3. the spatial distribution.
 
-```{r loadgm1001g}
+```{r load-gm1001g}
 data(gm1001g)
 print(gm1001g)
 ```
@@ -361,7 +397,7 @@ print(gm1001g)
 Let us run the prediction and compare it against random subsamples of individuals, as we
 did before.
 
-```{r gm1001gbroken}
+```{r theory-broken-gm1001g}
 theorydf_gm1001g <- MARtheory(gm1001g)
 plot(theorydf_gm1001g, fit = TRUE)
 
@@ -381,24 +417,21 @@ homozygous*:
 table(gm1001g$geno$genotype)
 ```
 
-Not one heterozygote. The same fact shows up in the spectrum as a striking regularity:
-every odd allele count is empty, because a mutation can only ever be carried in pairs.
+Not one heterozygote. We can see this more clearly in the SFS, where every odd allele count is empty.
 
 ```{r oddk}
 sfs_gm1001g <- sfs(gm1001g, folded = FALSE)
 plot(sfs_gm1001g, log = 'x')
 ```
 
-This breaks assumption 1 outright. The two chromosomes inside an accession are not two
-independent draws, they are identical copies. When we sample one individual and hand the
-theory two chromosomes, it believes it had two independent chances to catch each mutation
-when it really had one, so it predicts too many.
+This breaks the random mating assumption The two chromosomes inside an accession are not two
+independent draws, they are identical copies. When we sample one inbred individual but assume random mating, we are assuming we randomly sampled two independent chromomes, so the theory predicts too many mutations.
 
 The remedy is to describe the data as what it effectively is: a haploid sample of
 `r length(gm1001g$maps$sample.id)` gene copies rather than a diploid sample of
 `r 2 * length(gm1001g$maps$sample.id)`.
 
-```{r haploid}
+```{r gm1001gh}
 # edit the genotype of gm1001g directly
 gm1001gh_genotype <- gm1001g$geno$genotype
 # manually create a "pseudo-haploid"
@@ -438,34 +471,37 @@ longer perfectly related:
 
 ```{r nagm1001g}
 plot(A ~ N, data = mardf_gm1001g)
-N_A_lm <- lm(A ~ N, data = mardf_gm1001g)
-summary(N_A_lm)
 ```
 
-The scatter is now substantial, and different sampling schemes trace out different
-$N$--$A$ relationships and therefore different fitted $z$ values:
-
+The scatter is now substantial, and different sampling schemes builds different
+$N \sim A$ relationships. 
 ```{r nagm1001g-ext}
 extdf_gm1001g <- MARextinction(gm1001g, myseed = 1)
-plot(A ~ N, data = extdf_gm1001g)
-N_A_lm_ext <- lm(A ~ N, data = extdf_gm1001g)
-summary(N_A_lm_ext)
 
+# check the area - sample size relationship first
+plot(A ~ N, data = extdf_gm1001g)
+
+# overlay the theory prediction
 plot(extdf_gm1001g, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-Note that the haploid prediction tracks the *extinction* curve much more closely than it
-tracked the `MARsampling()` cloud. The reason is not that $N$ and $A$ are better
-correlated here, but that `MARextinction()` removes cells from across the whole map, so
-the accessions that remain are close to a random subset of the panel. `MARsampling()`
-draws contiguous boxes instead, and because *Arabidopsis* accessions are spatially
-structured, the individuals inside one box are more related to each other than a random
-draw would be, and they carry fewer distinct mutations than the theory expects.
+When we run `MARcalc()` on `MARextinction()` output in the *Arabidopsis data*, we observe that the fitted $z$ values is no longer the same as the output from `MARsampling()`. 
+
+```{r ext-samp-gm1001g}
+mardf_fit_gm1001g = MARcalc(mardf_gm1001g)
+extdf_fit_gm1001g = MARcalc(extdf_gm1001g)
+extract_summary(list(mardf_fit_gm1001g, extdf_fit_gm1001g),
+                c('MARsampling', 'MARextinction'))
+```
+
+Note that the `MARtheory()` prediction tracks the *extinction* curve more closely than it
+tracked the `MARsampling()` cloud. This is because `MARextinction()` randomly removes cells throughout the map iteratively, so the accessions that remain are close to a random sampling of the genotypes. 
+`MARsampling()` draws contiguous boxes instead, and because *Arabidopsis* accessions are spatially structured, the individuals inside one box are more related to each other than a random draw would be (isolation-by-distance), and they carry fewer distinct mutations than the theory expects.
 
 To isolate the spatial effect, we can shuffle the sample locations so that the accessions
-become "pseudo-" randomly distributed.
+become "pseudo-" randomly distributed, and keep the genotype matrix as the original.
 
-```{r relocate}
+```{r gm1001gr}
 set.seed(42)
 nind <- length(gm1001g$maps$sample.id)
 gm1001gr_loc <- data.frame(id = gm1001g$maps$sample.id,
@@ -485,71 +521,48 @@ information:
 ```{r gm1001gr-sample}
 mardf_gm1001gr <- MARsampling(gm1001gr, myseed = 1)
 plot(A ~ N, data = mardf_gm1001gr)
-N_A_lm_r <- lm(A ~ N, data = mardf_gm1001gr)
-summary(N_A_lm_r)
 ```
 
-And now the haploid prediction recovers the sampled curve: the exponent stops depending on
-whether we regress against area or against sample size, and both agree with the theory.
+And now the haploid prediction recovers the sampled curve:
 
 ```{r zcompare}
 plot(mardf_gm1001gr, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-Extinction simulations on the relocated dataset align with the same prediction, as they
-already did on the original map.
+Extinction simulations on the relocated dataset align with the same prediction.
 
 ```{r extgm1001gr}
 extdf_gm1001gr <- MARextinction(gm1001gr, myseed = 1)
 plot(extdf_gm1001gr, Atype = 'N', theory = theorydf_gm1001gh)
 ```
 
-Collecting the fitted exponents makes the pattern easy to read. `z_N` is fitted against
-sample size, `z_A` against area, and `z_theory` is the single prediction from the
-"pseudo-haploid" SFS:
-
-```{r ztable}
-zof <- function(df, Atype) MARcalc(df, Mtype = 'M', Atype = Atype)$par[['z']]
-ztab <- data.frame(
-    data = c("gm1001g", "gm1001g", "gm1001gr", "gm1001gr"),
-    scheme = c("MARsampling", "MARextinction", "MARsampling", "MARextinction"),
-    z_N = c(zof(mardf_gm1001g, 'N'), zof(extdf_gm1001g, 'N'),
-            zof(mardf_gm1001gr, 'N'), zof(extdf_gm1001gr, 'N')),
-    z_A = c(zof(mardf_gm1001g, 'A'), zof(extdf_gm1001g, 'A'),
-            zof(mardf_gm1001gr, 'A'), zof(extdf_gm1001gr, 'A'))
-)
-ztab$z_theory <- zof(theorydf_gm1001gh, 'N')
-print(ztab, digits = 3)
-```
-
-On the real map, `z_N` and `z_A` disagree with each other and both sit above the
-prediction. Once the locations are shuffled, the two columns collapse onto each other and
-onto `z_theory`.
-
-# An important take-away: what does the $z$ value capture?
+# The important take-away: what does the $z$ value capture? {#interpret}
 
 Three separate things influence $z$ in a realistic dataset, and the sections above have
 now identified them one by one.
 
-1. **Mutation abundance**, summarized by the SFS. This is the part `MARtheory()`
-   predicts, and on `gmexp` it accounts for the entire curve.
-2. **Breeding structure.** The SFS counts chromosomes, but we sample individuals, and the
-   two coincide only under random mating. In the fully inbred *Arabidopsis* accessions
-   the chromosome-based prediction is wrong by tens of percent until the ploidy is
-   described correctly.
-3. **Spatial structure**, summarized by the $N \sim A$ relationship and by how related
-   nearby individuals are. Random placement makes area a clean proxy for sample size and
-   forces the area-based and size-based exponents to agree
-   (`r sprintf("%.2f", ztab$z_A[3])` and `r sprintf("%.2f", ztab$z_N[3])` on the
-   relocated map). Clustered sampling pulls them apart
-   (`r sprintf("%.2f", ztab$z_A[1])` versus `r sprintf("%.2f", ztab$z_N[1])` on the real
-   map) and lifts both above the SFS prediction of
-   `r sprintf("%.2f", ztab$z_theory[1])`.
+1. **Mutation abundance**: This is summarized by the SFS. This is the part `MARtheory()`
+   predicts. On our `gmexp` example which is randomly mating and randomly distributed. Mutation abundance accounts for the entire curve.
+2. **Breeding structure**: The SFS counts chromosomes, but we sample individuals, and the
+   two coincide only under random mating. The $z$ value will shift higher with more inbreeding, as shown in the *Arabidopsis* `gm1001g` example. 
+3. **Spatial structure**: This is summarized by both the population density ($N \sim A$ relationship) and by how related nearby individuals are (population structure). Random placement makes area a clean proxy for sample size and allows the area-based and size-based $z$ to agree well. While spatial clustering and population structure could shift $z$ in both directions.  
 
-A $z$ estimated from real data mixes all three together. Reading it as a statement about
-genetic diversity requires accounting for the other two first.
+A $z$ estimated from real data contains information from all three aspects, which makes it an elegant and easy-to-interpret way to analyze genetic diversity at macroecological scale, and estimate genetic extinction under . However, it is important to note that, 
 
-# If you are really into the math {#math}
+
+## So which $z$ value am I comparing?
+
+Putting the pieces together: the scaling of $M$ with $n$ is determined by four
+quantities, the number of sites $L$, the number of chromosomes $xN$, the spectrum
+$\sigma(k)$, and the sample size $n$. For real data, two further factors sit between that
+prediction and the observed mutations-area curve: the breeding structure, which controls
+whether sampling individuals is the same as sampling chromosomes, and the spatial
+structure, which controls whether sampling area is the same as sampling individuals. A
+$z$ reported without saying which of the three it is meant to reflect is not comparable
+across datasets, and `MARtheory()` is the tool for separating the first from the other
+two.
+
+# Math appendix: deriving the MAR from SFS {#math}
 
 Throughout, let $N$ be the number of individuals in the full dataset, $x$ the ploidy, and
 $xN$ the total number of sequenced chromosomes. The genotype matrix covers $L$ sites. At
@@ -672,14 +685,3 @@ $j = 400$. This is the same correlation between the two copies within an individ
 made the diploid prediction overshoot in the *Arabidopsis* section, and recasting the data
 as haploid is what removes it.
 
-## So which $z$ value am I comparing?
-
-Putting the pieces together: the scaling of $M$ with $n$ is determined by four
-quantities, the number of sites $L$, the number of chromosomes $xN$, the spectrum
-$\sigma(k)$, and the sample size $n$. For real data, two further factors sit between that
-prediction and the observed mutations-area curve: the breeding structure, which controls
-whether sampling individuals is the same as sampling chromosomes, and the spatial
-structure, which controls whether sampling area is the same as sampling individuals. A
-$z$ reported without saying which of the three it is meant to reflect is not comparable
-across datasets, and `MARtheory()` is the tool for separating the first from the other
-two.
