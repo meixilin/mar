@@ -1,5 +1,3 @@
-context("plotmethods")
-
 test_that("plot methods work with gm1001g", {
     data(gm1001g)
 

@@ -127,7 +127,7 @@ object used by all downstream functions.
 
 ```{r genomaps}
 gm1001g_load <- genomaps(genodata, mapsdata)
-# The created gm1001g_load is the same as the provided example gm1001g 
+# The created gm1001g_load is the same as the provided example gm1001g
 all.equal(gm1001g_load, gm1001g)
 rm(genodata,mapsdata, gm1001g_load)
 ```
@@ -159,13 +159,13 @@ plot(obs_sfs, expected = exp_sfs, log = 'x')
 # Tips: you can also generate a folded SFS
 obs_sfs_folded <- sfs(gm1001g, folded = TRUE)
 
-# Tips: you can overlay the expected SFS by passing the genomaps object 
+# Tips: you can overlay the expected SFS by passing the genomaps object
 plot(obs_sfs_folded, expected = gm1001g, log = 'x')
 ```
 
 ### 3b. Predict the MAR/GDAR using `MARtheory()`
 
-TODO: fill description. Point to the theory vignette on this actually does not work because assumptions of random mating and random distribution is violated. 
+TODO: fill description. Point to the theory vignette on this actually does not work because assumptions of random mating and random distribution is violated.
 
 ```{r mar-theory}
 theorydf <- MARtheory(gm1001g)
@@ -252,7 +252,7 @@ head(extdf)
 # extdf is a extdfinct object
 class(extdf)
 # plot the diversity-by-area sampling results (?mar::plot.marsamp)
-plot(extdf, fit = TRUE) 
+plot(extdf, fit = TRUE)
 ```
 
 We can use the scaling factors inferred in [4b. Fit the mutations-area relationship model using `MARcalc()`](#4b) to predict the extinction.
@@ -280,7 +280,7 @@ str(marfit)
 
 # Model summaries
 print(marfit)
-# This generates the confidence interval 
+# This generates the confidence interval
 summary(marfit)
 ```
 
@@ -378,4 +378,8 @@ TODO: mention the animate option without evaluating
 
 # Troubleshooting
 
+## When to not trust $z$
+
+Sometimes, the fitted (1-m) = (1-a)^z line doesn't align well with the simulated data (for example panels for E in Figure S3). In some examples for the Acropora data, the curves appeared to be very strongly influenced by one or two points and not really capturing the general trend in the simulated data. Have the authors considered why this might be the case and if the predicted values from curves which don't appropriately capture data patterns be trusted? Maybe they could create a vignette in the package going into detail about these aspects.
+>>> R2.18: Although the power-law model is flexible, it does not guarantee fits for all data. We have noticed that the endemic mutations are especially hard to fit (panel for E in Figure S3) but do not have a really good explanation for this. Regardless, we added a cautionary note in the vignettes().
 

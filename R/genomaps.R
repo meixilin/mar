@@ -279,11 +279,13 @@ marmaps <- function(lonlatdf, mapcrs, mapres = NULL, incrs = "EPSG:4326") {
 #' maps <- gm1001g$maps
 #' gm <- genomaps(geno, maps)
 #'
-#' print(gm)
+#' all.equal(gm, gm1001g)
+#' \dontrun{
 #' # genomaps() will fail if sample names are not matching
 #' maps_bad <- gm1001g$maps
 #' maps_bad$sample.id <- 1:1004
 #' gm <- genomaps(geno, maps_bad)
+#' }
 genomaps <- function(geno, maps) {
     # validate inputs
     stopifnot("geno must be a margeno object" = "margeno" %in% class(geno))

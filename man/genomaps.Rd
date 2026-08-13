@@ -25,11 +25,13 @@ geno <- gm1001g$geno
 maps <- gm1001g$maps
 gm <- genomaps(geno, maps)
 
-print(gm)
+all.equal(gm, gm1001g)
+\dontrun{
 # genomaps() will fail if sample names are not matching
 maps_bad <- gm1001g$maps
 maps_bad$sample.id <- 1:1004
 gm <- genomaps(geno, maps_bad)
+}
 }
 \seealso{
 \code{\link[=margeno]{margeno()}} and \code{\link[=marmaps]{marmaps()}} for the two components, and

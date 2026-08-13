@@ -26,7 +26,7 @@
 plot.marmaps <- function(x, ...) {
     sm = .get_samplemap(x)
     terra::plot(sm, plg = list(title = "# of samples"), ...)
-    points(x$lonlat, pch = 20, col = "#D3D3D380")
+    terra::points(x$lonlat, pch = 20, col = "#D3D3D380")
     return(invisible())
 }
 
@@ -101,7 +101,7 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #' @export
 #'
 #' @examples
-#' mardf <- MARsampling(gm1001g, nrep = 5, xfrac = 0.1, myseed = 42)
+#' mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
 #'
 #' # supply c and z directly
 #' plot(mardf, fit = c(c = 0.5, z = 0.25))
@@ -127,10 +127,10 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
     z <- cz$z
     # plot
     graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
-    # M = c*A^z. curve() follows the axes it is drawn on, so this stays correct
+    # M = c*A^z. graphics::curve() follows the axes it is drawn on, so this stays correct
     # when the caller asks for log = "x" / "y" / "xy"
     if (!is.null(c) & !is.null(z)) {
-        curve(c * x^z, add = TRUE, col = .anncol)
+        graphics::curve(c * x^z, add = TRUE, col = .anncol)
     }
     theory <- .resolve_theory(theory)
     if (!is.null(theory)) {
@@ -190,7 +190,7 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
     # m_per = 1 - (1-a_per)^z
     graphics::plot(x = a_per, y = m_per, xlab = paste0("% of ", Atype, " lost"), ylab = paste0("% of ", Mtype, " remained"), ...)
     if (!is.null(z)) {
-        curve((1 - x)^z, add = TRUE, col = .anncol)
+        graphics::curve((1 - x)^z, add = TRUE, col = .anncol)
     }
     theory <- .resolve_theory(theory)
     if (!is.null(theory)) {
@@ -246,10 +246,10 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
     z <- cz$z
     # plot
     graphics::plot(x = tmpdf[, Atype], y = tmpdf[, Mtype], xlab = Atype, ylab = Mtype, ...)
-    # M = c*N^z. curve() follows the axes it is drawn on, so this stays correct
+    # M = c*N^z. graphics::curve() follows the axes it is drawn on, so this stays correct
     # when the caller asks for log = "x" / "y" / "xy"
     if (!is.null(c) & !is.null(z)) {
-        curve(c * x^z, add = TRUE, col = .anncol)
+        graphics::curve(c * x^z, add = TRUE, col = .anncol)
     }
     # the plotted points here ARE the theory rather than observed data
     .ann_legend("bottomright", list(...), "theory",
@@ -304,7 +304,7 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
         leglty <- c(leglty, 1)
     }
     if (length(leglab) > 1) {
-        legend(location, legend = as.expression(leglab), col = legcol, pch = legpch, lty = leglty, bty = "n")
+        graphics::legend(location, legend = as.expression(leglab), col = legcol, pch = legpch, lty = leglty, bty = "n")
     }
     return(invisible())
 }
@@ -330,7 +330,7 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
 # aligning bins by name in case `expected` uses a different bin set.
 .overlay_expsfs <- function(bins, x, expected, col = .theorycol) {
     aligned <- as.vector(expected)[match(names(x), names(expected))]
-    lines(bins, aligned, col = col, type = 'b')
+    graphics::lines(bins, aligned, col = col, type = 'b')
     return(invisible())
 }
 
@@ -390,7 +390,7 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
     }
     tdf <- theory[, c(Atype, Mtype)]
     tdf <- tdf[(tdf[, Mtype] > 0 & !is.na(tdf[, Mtype])), ]
-    lines(x = tdf[, Atype], y = tdf[, Mtype], col = col)
+    graphics::lines(x = tdf[, Atype], y = tdf[, Mtype], col = col)
     return(invisible())
 }
 
@@ -408,6 +408,6 @@ plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
     full <- tdf[which.max(tdf[, Atype]), ]
     a_per <- 1 - tdf[, Atype] / full[, Atype]
     m_per <- tdf[, Mtype] / full[, Mtype]
-    lines(x = a_per, y = m_per, col = col)
+    graphics::lines(x = a_per, y = m_per, col = col)
     return(invisible())
 }

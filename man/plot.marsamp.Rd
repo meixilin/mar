@@ -36,7 +36,7 @@ Invisibly returns NULL
 Creates a plot of genetic diversity against area, optionally with fitted power law
 }
 \examples{
-mardf <- MARsampling(gm1001g, nrep = 5, xfrac = 0.1, myseed = 42)
+mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
 
 # supply c and z directly
 plot(mardf, fit = c(c = 0.5, z = 0.25))

@@ -24,7 +24,8 @@ test_that("print.margeno summarizes geno data", {
 
     expect_output(print(mg), "margeno object")
     expect_output(print(mg), "number of samples:  3")
-    expect_output(print(mg), "number of genomic sites:  2")
+    expect_output(print(mg), "number of SNPs:  2")
+    expect_output(print(mg), "number of sites:  2")
     expect_output(print(mg), "ploidy:  2")
     expect_output(print(mg), "head of variantid, position, chromosome, genotype:")
     expect_output(print(mg), "sample1")

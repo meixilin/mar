@@ -90,7 +90,7 @@ test_that("mutdiv.gridded basic functionality works", {
 
     # Test invalid inputs
     expect_error(mutdiv.gridded(gm, gmarea, bbox = c(1, 2, 3)))
-    expect_error(mutdiv.gridded(gm, gmarea, bbox = c("a", "b", "c", "d")))
+    expect_error(suppressWarnings(mutdiv.gridded(gm, gmarea, bbox = c("a", "b", "c", "d"))))
 })
 
 test_that("mutdiv.cells basic functionality works", {

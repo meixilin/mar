@@ -22,7 +22,7 @@ print.margeno <- function(x, ...) {
     cat("\n")
     cat("head of variantid, position, chromosome, genotype:\n")
     df <- cbind(
-        head(data.frame(
+        utils::head(data.frame(
             variant.id = x$variant.id,
             position = .null_check(x$position),
             chromosome = .null_check(x$chromosome),
@@ -30,7 +30,7 @@ print.margeno <- function(x, ...) {
         )),
         x$genotype[1:min(6, nrow(x$genotype)), 1:min(6, ncol(x$genotype))]
     )
-    colnames(df)[5:length(colnames(df))] <- head(x$sample.id)
+    colnames(df)[5:length(colnames(df))] <- utils::head(x$sample.id)
     print(df)
     return(invisible())
 }
@@ -58,7 +58,7 @@ print.marmaps <- function(x, ...) {
     cat("samplemap raster layer:\n")
     print(x$samplemap)
     cat("head of sampleid and lonlat:\n")
-    print(head(data.frame(sample.id = x$sample.id, longitude = x$lonlat[, 1], latitude = x$lonlat[, 2])))
+    print(utils::head(data.frame(sample.id = x$sample.id, longitude = x$lonlat[, 1], latitude = x$lonlat[, 2])))
     return(invisible())
 }
 
