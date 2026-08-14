@@ -4,34 +4,53 @@
 \alias{margeno}
 \title{Create a margeno object}
 \usage{
-margeno(sample.id, variant.id, position, chromosome, genotype, ploidy)
+margeno(
+  genotype,
+  ploidy,
+  sample.id = NULL,
+  variant.id = NULL,
+  position = NULL,
+  chromosome = NULL
+)
 }
 \arguments{
-\item{sample.id}{Character or integer or numeric vector of unique sample IDs}
-
-\item{variant.id}{Integer vector of unique variant IDs}
-
-\item{position}{Integer vector of variant positions. Or NULL.}
-
-\item{chromosome}{Character or integer vector of chromosome IDs. Or NULL.}
-
 \item{genotype}{Matrix of genotypes, where rows represent samples and columns represent variants. Each value represents the number of alternative alleles.}
 
-\item{ploidy}{Numeric value of ploidy. \emph{Warning} ploidy other than 2 can be used, but result interpretation is not guaranteed.}
+\item{ploidy}{Integer. \emph{Warning} ploidy other than 2 can be used, but result interpretation is not guaranteed.}
+
+\item{sample.id}{Character or integer or numeric vector of unique sample IDs.
+Or NULL (the default), in which case samples are numbered from the genotype columns.}
+
+\item{variant.id}{Integer vector of unique variant IDs.
+Or NULL (the default), in which case variants are numbered from the genotype rows.}
+
+\item{position}{Integer vector of variant positions. Or NULL (the default).}
+
+\item{chromosome}{Character or integer vector of chromosome IDs. Or NULL (the default).}
 }
 \value{
-A margeno object
+A margeno object. In addition to the inputs, it stores \code{allele_count},
+the number of alternative alleles observed at each site across all samples.
 }
 \description{
 Create a margeno object
 }
 \examples{
-sample_id <- c("sample1", "sample2", "sample3")
-variant_id <- 1:4
-position <- as.integer(c(100, 200, 300, 400)) # position has to be integer
-chromosome <- c("chr1", "chr1", "chr1", "chr2")
-position <- NULL; chromosome <- NULL # if no position or chromosome
-genotype <- matrix(c(1,2,0,0,1,1,2,0,1,2,2,1), nrow = 4, ncol = 3)
-ploidy <- 2
-margeno(sample_id, variant_id, position, chromosome, genotype, ploidy)
+# the genotypes behind the 1001 genomes example object
+geno <- gm1001g$geno
+
+# only genotype and ploidy are required
+margeno(geno$genotype, geno$ploidy)
+
+# sample.id, variant.id, position and chromosome are all optional
+margeno(geno$genotype, geno$ploidy,
+    sample.id = geno$sample.id,
+    variant.id = geno$variant.id,
+    position = geno$position,
+    chromosome = geno$chromosome
+)
+}
+\seealso{
+\code{\link[=text_parser]{text_parser()}} and \code{\link[=vcf_parser]{vcf_parser()}}, which build a margeno object
+directly from a file, and \code{\link[=genomaps]{genomaps()}} to pair it with a \code{\link[=marmaps]{marmaps()}} object.
 }

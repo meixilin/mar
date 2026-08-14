@@ -7,25 +7,30 @@
 #' @param ... Additional arguments passed to print
 #'
 #' @return Invisibly returns NULL
+#' @seealso [margeno()]
 #' @export
 #'
 #' @examples
 #' print(gm1001g$geno)
-
 print.margeno <- function(x, ...) {
     cat("margeno object\n")
     cat("    number of samples: ", length(x$sample.id), "\n")
-    cat("    number of genomic sites: ", length(x$variant.id), "\n")
+    cat("    number of SNPs: ", sum(x$allele_count > 0), "\n")
+    cat("    number of sites: ", length(x$variant.id), "\n")
+    cat("    missing rate: ", round(mean(is.na(x$genotype)), digits = 3), "\n")
     cat("    ploidy: ", x$ploidy, "\n")
     cat("\n")
     cat("head of variantid, position, chromosome, genotype:\n")
-    AC <- rowSums(head(x$genotype))
-    df <- cbind(head(data.frame(variant.id = x$variant.id,
-                                position = .null_check(x$position),
-                                chromosome = .null_check(x$chromosome))),
-                AC,
-                x$genotype[1:min(6, nrow(x$genotype)),1:min(6, ncol(x$genotype))])
-    colnames(df)[5:length(colnames(df))] <- head(x$sample.id)
+    df <- cbind(
+        utils::head(data.frame(
+            variant.id = x$variant.id,
+            position = .null_check(x$position),
+            chromosome = .null_check(x$chromosome),
+            AC = x$allele_count
+        )),
+        x$genotype[1:min(6, nrow(x$genotype)), 1:min(6, ncol(x$genotype))]
+    )
+    colnames(df)[5:length(colnames(df))] <- utils::head(x$sample.id)
     print(df)
     return(invisible())
 }
@@ -39,29 +44,28 @@ print.margeno <- function(x, ...) {
 #' @param ... Additional arguments passed to print
 #'
 #' @return Invisibly returns NULL
+#' @seealso [marmaps()]
 #' @export
 #'
 #' @examples
-#' # Create and print a marmaps object
 #' print(gm1001g$maps)
 print.marmaps <- function(x, ...) {
     cat("marmaps object\n")
     cat("    number of samples: ", length(x$sample.id), "\n")
-    cat("    longitude range: [", min(x$lonlat[,1]), ", ", max(x$lonlat[,1]), "]\n", sep = "")
-    cat("    latitude range: [", min(x$lonlat[,2]), ", ", max(x$lonlat[,2]), "]\n", sep = "")
+    cat("    longitude range: [", min(x$lonlat[, 1]), ", ", max(x$lonlat[, 1]), "]\n", sep = "")
+    cat("    latitude range: [", min(x$lonlat[, 2]), ", ", max(x$lonlat[, 2]), "]\n", sep = "")
     cat("\n")
     cat("samplemap raster layer:\n")
     print(x$samplemap)
     cat("head of sampleid and lonlat:\n")
-    print(head(data.frame(sample.id = x$sample.id, longitude = x$lonlat[,1], latitude = x$lonlat[,2])))
+    print(utils::head(data.frame(sample.id = x$sample.id, longitude = x$lonlat[, 1], latitude = x$lonlat[, 2])))
     return(invisible())
 }
 
 .null_check <- function(x) {
-    if(is.null(x)) {
+    if (is.null(x)) {
         return(NA)
     } else {
         return(x)
     }
 }
-

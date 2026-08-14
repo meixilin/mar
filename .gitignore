@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.RDataTmp
 .Ruserdata
 
 mar.Rproj
@@ -24,4 +25,9 @@ ARCHIVE
 marlogo*
 
 data-raw/*
-!data-raw/gm1001g*
+!data-raw/*.py
+!data-raw/*.R
+!data-raw/*.sh
+inst/doc
+/doc/
+/Meta/

@@ -4,9 +4,9 @@ create_mock_margeno <- function() {
     variant.id <- as.integer(1:2)
     position <- as.integer(c(100, 200))
     chromosome <- c("1", "2")
-    genotype <- matrix(c(0,1,2,1,0,2), nrow=2, byrow=TRUE)
+    genotype <- matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE)
     ploidy <- 2
-    return(margeno(sample.id, variant.id, position, chromosome, genotype, ploidy))
+    return(margeno(genotype, ploidy, sample.id, variant.id, position, chromosome))
 }
 
 create_mock_marmaps <- function() {
@@ -21,15 +21,15 @@ create_mock_marmaps <- function() {
 
 test_that("matrix validators work correctly", {
     # Test .valid_genotype
-    valid_matrix <- matrix(c(0,1,2,1,0,2), nrow=2)
+    valid_matrix <- matrix(c(0, 1, 2, 1, 0, 2), nrow = 2)
     expect_invisible(.valid_genotype(valid_matrix, ploidy = 2))
-    invalid_matrix <- matrix(c(0,1,3,1,0,2), nrow=2)
+    invalid_matrix <- matrix(c(0, 1, 3, 1, 0, 2), nrow = 2)
     expect_error(.valid_genotype(invalid_matrix, ploidy = 2))
 
     # Test .valid_lonlat
-    valid_lonlat <- matrix(c(-73.93, 40.73, -118.24, 34.05), nrow=2)
+    valid_lonlat <- matrix(c(-73.93, 40.73, -118.24, 34.05), nrow = 2)
     expect_invisible(.valid_lonlat(valid_lonlat))
-    invalid_lonlat <- matrix(c(-73.93, NA, -118.24, 34.05), nrow=2)
+    invalid_lonlat <- matrix(c(-73.93, NA, -118.24, 34.05), nrow = 2)
     expect_error(.valid_lonlat(invalid_lonlat))
 })
 
@@ -37,15 +37,15 @@ test_that("margeno class works correctly", {
     mg <- create_mock_margeno()
     expect_s3_class(mg, "margeno")
     expect_equal(mg$ploidy, 2)
-    expect_equal(dim(mg$genotype), c(2,3))
+    expect_equal(dim(mg$genotype), c(2, 3))
 
     # Test validation
     expect_error(margeno(
-        sample.id = c('sample1', 'sample1', 'sample2'),  # Duplicate IDs
+        sample.id = c("sample1", "sample1", "sample2"), # Duplicate IDs
         variant.id = as.integer(1:2),
         position = as.integer(c(100, 200)),
         chromosome = c("1", "2"),
-        genotype = matrix(c(0,1,2,1,0,2), nrow=2),
+        genotype = matrix(c(0, 1, 2, 1, 0, 2), nrow = 2),
         ploidy = 2
     ))
 })
@@ -54,7 +54,7 @@ test_that("marmaps class works correctly", {
     mm <- create_mock_marmaps()
     expect_s3_class(mm, "marmaps")
     expect_equal(length(mm$sample.id), 3)
-    expect_s4_class(mm$samplemap, "RasterLayer")
+    expect_true(inherits(mm$samplemap, "PackedSpatRaster"))
 
     # Test auto resolution calculation
     lonlatdf <- data.frame(
@@ -62,8 +62,9 @@ test_that("marmaps class works correctly", {
         longitude = c(-73.93, -118.24),
         latitude = c(40.73, 34.05)
     )
-    mm2 <- marmaps(lonlatdf, mapres=NULL, mapcrs="+proj=longlat +datum=WGS84")
-    expect_type(mm2$samplemap@data@values, "double")
+    mm2 <- marmaps(lonlatdf, mapres = NULL, mapcrs = "+proj=longlat +datum=WGS84")
+    r <- terra::unwrap(mm2$samplemap)
+    expect_true(is.numeric(terra::values(r)))
 })
 
 test_that("genomaps class works correctly", {
@@ -81,8 +82,9 @@ test_that("genomaps class works correctly", {
         variant.id = as.integer(1:2),
         position = as.integer(c(100, 200)),
         chromosome = c("1", "2"),
-        genotype = matrix(c(0,1,2,1,0,2), nrow=2, byrow=TRUE),
+        genotype = matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE),
         ploidy = 2
     )
     expect_error(genomaps(mg_diff, mm))
 })
+

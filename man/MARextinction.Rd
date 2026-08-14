@@ -14,20 +14,28 @@ MARextinction(
 )
 }
 \arguments{
-\item{gm}{A genomaps object.}
+\item{gm}{A \code{\link[=genomaps]{genomaps()}} object created by \code{\link[=genomaps]{genomaps()}}.}
 
-\item{scheme}{The sampling scheme to use for the extinction process. Default is "random", allowed values are random, inwards, outwards, southnorth, northsouth.}
+\item{scheme}{The order in which cells go extinct. Default is "random", allowed values are random, inwards, outwards, southnorth, northsouth.
+\code{inwards} / \code{outwards} remove cells starting from the cell holding the most samples, and \code{southnorth} / \code{northsouth}
+remove them starting from the southern or northern edge.}
 
 \item{nrep}{The number of extinction replicates to perform. Default is 10.}
 
-\item{xfrac}{The fraction of cells to be randomly removed at each extinction step. Default is 0.01 or one raster cell if there are less than 100 cells.}
+\item{xfrac}{The fraction of occupied cells removed at each extinction step.
+Rounded up, so at least one raster cell is removed per step. Default is 0.01.}
 
-\item{animate}{If TRUE, the function will animate the extinction process. Default is FALSE.}
+\item{animate}{If TRUE, the function will animate the extinction process and output to default plotting device. Default is FALSE.}
 
 \item{myseed}{An optional seed value to ensure reproducibility. Implemented as \code{set.seed(myseed)}. Default is NULL.}
 }
 \value{
-A data frame containing the area and diversity metrics for each step of the extinction process.
+A \code{marextinct} object: a data frame with one row per extinction step
+and columns \code{N} (number of remaining samples), \code{M} (number of mutations),
+\code{E} (endemic mutations), \code{thetaw}, \code{thetapi}, \code{A} (remaining area), \code{extl}
+(the surviving cell ids) and \code{repid} (replicate id). Each replicate ends
+with a row of zeros, representing the loss of the whole range. The \code{scheme}
+used is stored as an attribute.
 }
 \description{
 This function performs a simulated extinction process on a map of genomic samples, similar to the
@@ -36,8 +44,14 @@ circling the grid with boxes. The function returns a data frame containing the a
 diversity metrics for each step of the extinction process.
 }
 \examples{
-\dontrun{
-extdf <- MARextinction(gm1001g)
-}
+extdf <- MARextinction(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+head(extdf[, c("N", "M", "thetaw", "thetapi", "A", "repid")])
 
+# diversity remaining against area lost, with the fitted extinction curve
+plot(extdf, fit = TRUE)
+
+}
+\seealso{
+\code{\link[=MARsampling]{MARsampling()}} for the sampling counterpart and \code{\link[=plot.marextinct]{plot.marextinct()}}
+for plotting the extinction curve.
 }

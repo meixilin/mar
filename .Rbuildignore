@@ -5,3 +5,5 @@ tests/
 .lintr
 ^LICENSE\.md$
 ^data-raw$
+^doc$
+^Meta$

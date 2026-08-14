@@ -8,24 +8,28 @@ MARcalc(mardf, Mtype = .Mtype, Atype = .Atype)
 }
 \arguments{
 \item{mardf}{A data frame with columns of diversity metric and area.
-Output from \link{MARsampling} or \link{MARextinction}.}
+Output from \link{MARsampling}, \link{MARextinction} or \link{MARtheory}.}
 
-\item{Mtype}{The diversity metric to use. Default is "M" (richness), allowed values are M, E, thetaw, thetapi.}
+\item{Mtype}{The diversity metric to use. Default is "M" (number of mutation), allowed values are M, E, thetaw, thetapi.}
 
-\item{Atype}{The area metric to use. Default is "A" (area), allowed values are A, Asq.}
+\item{Atype}{The area metric to use. Default is "A" (area), allowed values are A, Asq, N.}
 }
 \value{
-A fitted power model object from sars::sar_power
+A fitted power model object from \code{\link[sars:sar_power]{sars::sar_power()}}
 }
 \description{
 This function calculates the MAR using the power-law model from the provided data frame.
-The data frame should contain columns for the diversity metric (e.g. richness, evenness)
-and the area metric (e.g. total area, area squared).
+The data frame should contain columns for the diversity metric (e.g. number of mutation, nucleotide diversity)
+and the area metric (e.g. occupied area, total squared area).
 }
 \examples{
-area <- 1:10
-mutations <- c(50, 75, 100, 125, 150, 175, 200, 225, 250, 275)
-data <- data.frame(A = area, M = mutations)
-mar <- MARcalc(data, Mtype = "M", Atype = "A")
+mardf <- MARsampling(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+mar <- MARcalc(mardf, Mtype = "M", Atype = "A")
 summary(mar)
+
+# the same power law model fitted against sample size rather than area
+MARcalc(mardf, Mtype = "M", Atype = "N")
+}
+\seealso{
+\code{\link[=MARsampling]{MARsampling()}}, \code{\link[=MARextinction]{MARextinction()}} and \code{\link[=MARtheory]{MARtheory()}} for generating the input \code{mardf}.
 }

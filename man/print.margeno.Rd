@@ -21,3 +21,6 @@ and a preview of the genotype matrix
 \examples{
 print(gm1001g$geno)
 }
+\seealso{
+\code{\link[=margeno]{margeno()}}
+}

@@ -7,29 +7,34 @@
 text_parser(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2)
 }
 \arguments{
-\item{geno.fn}{Path to genotype file. Must be a txt/csv/tsv file (can be gzipped). Should contain a matrix where rows are SNPs and columns are samples, with values representing count of alternative alleles}
+\item{geno.fn}{Path to genotype file. The file must be a txt/csv/tsv file (can be gzipped), and contain a matrix where rows are SNPs and columns are samples, with values representing count of alternative alleles. No headers or row names are allowed.}
 
-\item{samp.fn}{Optional path to sample ID file. Must be a single column file with no header}
+\item{samp.fn}{Optional path to sample ID file. The file must be a single column file with no header.}
 
-\item{pos.fn}{Optional path to position file. Must have header with CHR/CHROM and POS columns}
+\item{pos.fn}{Optional path to chromosome position file. The file must have header with CHR/CHROM and POS columns}
 
 \item{ploidy}{Integer specifying the ploidy level of the samples (default: 2)}
 }
 \value{
-A margeno object containing the parsed genotype data and associated information
+A \code{\link[=margeno]{margeno()}} object containing the parsed genotype data and associated information
 }
 \description{
 Reads genotype data from text files (txt, csv, tsv) along with optional sample IDs and position information
 }
 \examples{
-\dontrun{
-# Basic usage with just genotype file
-geno <- text_parser("genotypes.txt")
+# read the genotypes behind the gm1001g example object
+geno.fn <- system.file("extdata", "1001g_genotypes.txt.gz", package = "mar")
+samp.fn <- system.file("extdata", "1001g_accessions.txt", package = "mar")
+pos.fn <- system.file("extdata", "1001g_chrpos.txt", package = "mar")
 
-# With sample IDs and positions
-geno <- text_parser("genotypes.txt", "samples.txt", "positions.txt")
+# the genotype matrix alone is enough
+geno <- text_parser(geno.fn)
 
-# For haploid data
-geno <- text_parser("genotypes.txt", ploidy=1)
+# sample IDs and positions are optional but recommended
+geno <- text_parser(geno.fn, samp.fn, pos.fn, ploidy = 2)
+print(geno)
 }
+\seealso{
+\code{\link[=vcf_parser]{vcf_parser()}} to read genotypes from a VCF instead, and
+\code{\link[=lonlat_parser]{lonlat_parser()}} to read coordinates.
 }

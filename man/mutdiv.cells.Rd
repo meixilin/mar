@@ -9,27 +9,39 @@ mutdiv.cells(gm, gmarea, cellids)
 \arguments{
 \item{gm}{A genomaps object containing genetic data and geographic informations, created by \code{\link[=genomaps]{genomaps()}} function.}
 
-\item{gmarea}{Raster file that contains area size of each cell}
+\item{gmarea}{Raster file that contains area size of each cell, as returned by
+\code{terra::cellSize(sm, unit = "km")}}
 
 \item{cellids}{Vector of cell IDs to analyze}
 }
 \value{
 A list containing:
 \item{N}{Number of samples}
-\item{M}{Number of segregating sites}
-\item{E}{Number of endemic segregating sites}
+\item{M}{Number of mutations}
+\item{E}{Number of endemic mutations}
 \item{thetaw}{Watterson's theta estimate}
 \item{thetapi}{Pi (pairwise) diversity estimate}
 \item{A}{Total area with data}
-\item{Asq}{Area of the cells being analyzed}
+All entries are \code{NA} when \code{cellids} is empty.
 }
 \description{
 Calculates genetic diversity metrics for a specific set of cells. This function is particularly
 useful for extinction simulations.
 }
 \examples{
-# Calculate genetic diversity for a specific set of cells
-gmarea <- mar:::.areaofraster(gm1001g$maps$samplemap)
-cell_ids <- c(613,726,727)
-div <- mutdiv.cells(gm1001g, gmarea, cellids=cell_ids)
+sm <- terra::unwrap(gm1001g$maps$samplemap)
+gmarea <- terra::cellSize(sm, unit = "km")
+
+# the occupied cells of the sample map
+cellids <- sort(unique(gm1001g$maps$cellid))
+
+# diversity retained in the three northernmost occupied cells
+mutdiv.cells(gm1001g, gmarea, cellids = head(cellids, 3))
+
+# diversity of the whole range
+mutdiv.cells(gm1001g, gmarea, cellids = cellids)
+}
+\seealso{
+\code{\link[=mutdiv.gridded]{mutdiv.gridded()}} for the bounding-box equivalent used by
+\code{\link[=MARsampling]{MARsampling()}}.
 }

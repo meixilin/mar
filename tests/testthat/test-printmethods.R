@@ -6,7 +6,7 @@ create_print_margeno <- function() {
     chromosome <- c("1", "2")
     genotype <- matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE)
     ploidy <- 2
-    margeno(sample.id, variant.id, position, chromosome, genotype, ploidy)
+    margeno(genotype, ploidy, sample.id, variant.id, position, chromosome)
 }
 
 create_print_marmaps <- function() {
@@ -24,7 +24,8 @@ test_that("print.margeno summarizes geno data", {
 
     expect_output(print(mg), "margeno object")
     expect_output(print(mg), "number of samples:  3")
-    expect_output(print(mg), "number of genomic sites:  2")
+    expect_output(print(mg), "number of SNPs:  2")
+    expect_output(print(mg), "number of sites:  2")
     expect_output(print(mg), "ploidy:  2")
     expect_output(print(mg), "head of variantid, position, chromosome, genotype:")
     expect_output(print(mg), "sample1")
@@ -39,7 +40,7 @@ test_that("print.marmaps summarizes map data", {
     expect_output(print(mm), "longitude range:")
     expect_output(print(mm), "latitude range:")
     expect_output(print(mm), "samplemap raster layer:")
-    expect_output(print(mm), "RasterLayer")
+    expect_output(print(mm), "SpatRaster")
     expect_output(print(mm), "head of sampleid and lonlat:")
     expect_output(print(mm), "sample1")
     expect_invisible(print(mm))

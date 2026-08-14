@@ -2,33 +2,34 @@
 % Please edit documentation in R/fileparser.R
 \name{vcf_parser}
 \alias{vcf_parser}
-\title{Convert VCF file to GDS format}
+\title{Parse a VCF file into a margeno object}
 \usage{
-vcf_parser(vcf.fn, gds.fn = NULL, opengds = FALSE)
+vcf_parser(vcf.fn, ploidy = 2)
 }
 \arguments{
 \item{vcf.fn}{Path to the input VCF file. Can be either .vcf or .vcf.gz format}
 
-\item{gds.fn}{Optional. Path for the output GDS file. If NULL, will use the same name as vcf file
-with .gds extension}
-
-\item{opengds}{Logical. If TRUE, opens and returns the GDS file handle. If FALSE, returns the
-path to the created GDS file. Default is FALSE}
+\item{ploidy}{Integer specifying the ploidy level of the samples (default: 2).}
 }
 \value{
-If opengds=TRUE, returns an opened GDS file connection. If opengds=FALSE, returns the
-path to the created GDS file as a character string
+A \code{\link[=margeno]{margeno()}} object containing the parsed genotypes, sample IDs,
+chromosomes and positions.
 }
 \description{
-This function converts a VCF (Variant Call Format) file to GDS (Genomic Data Structure) format
-using SeqArray package.
+Reads the genotypes of a VCF (Variant Call Format) file into a \code{\link[=margeno]{margeno()}}
+object. Only the \code{GT} field is used: each call is converted to a count of
+alternative alleles, and missing calls (\code{./.}) become \code{NA}. Sample IDs,
+chromosomes and positions are taken from the VCF itself. The whole file is
+read into memory, so this is intended for a modest SNP panels used in MAR
+analyses rather than for whole-genome all-sites VCFs.
 }
 \examples{
-\dontrun{
-# Convert VCF to GDS
-gds_file <- vcf_parser("input.vcf")
-
-# Convert and open GDS file
-gds_conn <- vcf_parser("input.vcf.gz", opengds=TRUE)
+# simulated expanding population shipped with the package
+vcf.fn <- system.file("extdata", "gmexp.vcf.gz", package = "mar")
+geno <- vcf_parser(vcf.fn)
+print(geno)
 }
+\seealso{
+\code{\link[=text_parser]{text_parser()}} to read genotype matrices already in text form, and
+\code{\link[=lonlat_parser]{lonlat_parser()}} to read coordinates.
 }

@@ -21,29 +21,7 @@ vcf_content <- c(
     "2\t400\trs4\tC\tG\t99\tPASS\tAF=0.66\tGT:DP\t0/1:31\t1/1:36\t0/1:32"
 )
 
-gds_checks <- function(result, genomat, alleles) {
-    expect_s4_class(result, "SeqVarGDSClass")
-
-    # Check the contents of the GDS file
-    expect_equal(.get_genodata(result, "sample.id"), c("Sample1", "Sample2", "Sample3"))
-    expect_equal(.get_genodata(result, "variant.id"), 1:4) #ID not kept here in GDS
-    expect_equal(.get_genodata(result, "chromosome"), c("1", "1", "2", "2"))
-    expect_equal(.get_genodata(result, "position"), c(100, 200, 300, 400))
-    expect_equal(.get_genodata(result, "genotype"), genomat)
-    expect_equal(SeqArray::seqGetData(result, "allele"), alleles)
-    SeqArray::seqClose(result)
-    return(invisible())
-}
-
-
 # Test cases
-test_that(".strip_ext works correctly", {
-    expect_equal(.strip_ext("file.txt", c(".txt")), "file")
-    expect_equal(.strip_ext("file.txt.gz", c(".txt", ".txt.gz")), "file")
-    expect_error(.strip_ext("file.txt", c(".csv", ".gz")))
-    expect_error(.strip_ext("file.txt.gz", c(".txt.gz", ".gz")))
-})
-
 test_that(".guess_delim works correctly", {
     expect_equal(.guess_delim("A,B,C"), ",")
     expect_equal(.guess_delim("A\tB\tC"), "\t")
@@ -53,11 +31,11 @@ test_that(".guess_delim works correctly", {
 test_that(".read_genotype works correctly", {
     # working case
     res <- .read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\t2\n"), ploidy = 2)
-    expect_equal(res, matrix(c(0,1,2,1,0,2), nrow=2, byrow=TRUE))
+    expect_equal(res, matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE))
     # error case
     expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\t2\n3\t1\t0\t2\n"), ploidy = 3))
     expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\t2\n3\t1\t0\t2\n"), ploidy = 2))
-    expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\tNA\n"), ploidy = 2))
+    expect_no_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\tNA\n"), ploidy = 2))
     unlink_files()
 })
 
@@ -95,7 +73,7 @@ test_that("text_parser works correctly", {
     expect_equal(result$variant.id, c(1, 2))
     expect_equal(result$position, c(100, 200))
     expect_equal(result$chromosome, c(1, 2))
-    expect_equal(result$genotype, matrix(c(0,1,2,1,0,2), nrow=2, byrow=TRUE))
+    expect_equal(result$genotype, matrix(c(0, 1, 2, 1, 0, 2), nrow = 2, byrow = TRUE))
     expect_equal(result$ploidy, 2)
 
     # not input pos.fn
@@ -105,39 +83,41 @@ test_that("text_parser works correctly", {
     unlink_files()
 })
 
-test_that("vcf_parser and .get_genodata works correctly", {
+test_that("vcf_parser returns a correct data frame", {
     temp_vcf <- gen_mock(".vcf", vcf_content)
-    result <- vcf_parser(temp_vcf, opengds = TRUE)
-    genomat <- matrix(c(0,1,2,1,0,0,0,0,1,1,2,1), nrow=4, byrow=TRUE)
-    gds_checks(result, genomat, c("A,T","G,C","T,A","C,G"))
-    unlink(c(temp_vcf, result$filename))
-    unlink_files()
-})
+    on.exit(unlink(temp_vcf))
 
-test_that("plink_parser works correctly", {
-    # requires PLINK installed
-    library(SeqArray)
-    temp_vcf <- gen_mock(".vcf", vcf_content)
-    temp_prefix <- .strip_ext(temp_vcf, ".vcf")
-    plink="/Applications/Lab/plink_mac_20250819/plink" # TODO: cleanup
-    system(paste0(plink, " --vcf ", temp_vcf, " --make-bed --out ", temp_prefix))
-    result <- plink_parser(temp_prefix, opengds = TRUE)
-    # plink automatically flips the alleles by MAF
-    genomat <- matrix(c(0,1,2,1,0,0,0,0,1,1,0,1), nrow=4, byrow=TRUE)
-    gds_checks(result, genomat, c("A,T","G,C","T,A","G,C"))
-    unlink(list.files(pattern = temp_prefix))
-    unlink_files()
+    result <- vcf_parser(temp_vcf)
+
+    expect_s3_class(result, "margeno")
+    expect_equal(result$sample.id, c("Sample1", "Sample2", "Sample3"))
+    expect_equal(result$variant.id, 1:4)
+    expect_equal(result$position, c(100, 200, 300, 400))
+    expect_equal(result$chromosome, c("1", "1", "2", "2"))
+    expect_equal(
+        result$genotype,
+        matrix(
+            c(
+                0, 1, 2, # rs1: 0/0, 0/1, 1/1
+                1, 0, 0, # rs2: 0/1, 0/0, 0/0
+                0, 0, 1, # rs3: 0/0, 0/0, 0/1
+                1, 2, 1 # rs4: 0/1, 1/1, 0/1
+            ),
+            nrow = 4, byrow = TRUE
+        )
+    )
+    expect_equal(result$ploidy, 2)
 })
 
 test_that("lonlat_parser works correctly", {
     # working case
-    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"))
+    result <- lonlat_parser(gen_mock(".txt", "ID\tLONGITUDE\tLATITUDE\nSample1\t-73.935242\t40.730610\nSample2\t-118.243683\t34.052235"), mapcrs = "EPSG:8857")
     lonlat <- data.frame(
         ID = c("Sample1", "Sample2"),
         LONGITUDE = c(-73.935242, -118.243683),
         LATITUDE = c(40.730610, 34.052235)
     )
-    expect_equal(result, lonlat)
+    expect_s3_class(result, "marmaps")
     unlink_files()
 })
 

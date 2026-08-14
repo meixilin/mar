@@ -1,113 +1,9 @@
-# fit sad models (sorted alphabetically)
-.sad_models <- c("bs", "geom", "lnorm", "ls", "mzsm", "weibull")
-
-#' Fit Species Abundance Distribution (SAD) Models to Genotype Data
-#'
-#' @param gm A genotype matrix object containing genetic data
-#' @param sad_models Vector of SAD model names to fit. Default uses internal mar:::.sad_models
-#' @param predict Logical, whether to predict SFS from fitted SAD models. Default TRUE
-#' @param folded Logical, whether to fold the SFS. Default TRUE
-#'
-#' @return A list with S3 class "marsad" containing:
-#'   \item{sadms}{List of fitted SAD models}
-#'   \item{AICtabs}{AIC table comparing model fits}
-#'   \item{sadsfss}{Predicted site frequency spectra if predict=TRUE}
-#' @export
-#'
-#' @examples
-#' # Fit SAD models to genotype data in gm1001g
-#' sad_fit <- MARsad(gm1001g)
-MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) {
-    AC <- .get_AC(gm$geno)
-    N <- length(gm$maps$sample.id)
-    ploidy <- gm$geno$ploidy
-    sadms <- lapply(sad_models, function(x) sads::fitsad(AC, x))
-    names(sadms) <- sad_models
-    AICtabs <- bbmle::AICtab(sadms, base = TRUE, logLik = TRUE, mnames = sad_models)
-    if (predict) {
-        sadsfss <- lapply(sadms, function(x) .sadpred(x, N, ploidy, folded))
-    } else {
-        sadsfss <- NULL
-    }
-    output <- list(sadms = sadms, AICtabs = AICtabs, sadsfss = sadsfss)
-    class(output) <- c(class(output), "marsad")
-    return(output)
-}
-
-# TODO: I used pfunc() instead of qfunc() as described in sads package as the interest is in SFS.
-# Not sure if it makes sense
-.sadpred <- function(sadm, N, ploidy, folded) {
-    sad <- sadm@sad
-    xN <- N*ploidy
-    S <- length(sadm@data$x) # length of AC
-    J <- sum(sadm@data$x) # total number of individuals
-    mycoef <- as.list(bbmle::coef(sadm))
-    psad <- switch(sad,
-        bs = sads::pbs,
-        geom = stats::pgeom,
-        lnorm = stats::plnorm,
-        ls = sads::pls,
-        mzsm = sads::pmzsm,
-        weibull = stats::pweibull
-    )
-    plist <- do.call(psad, c(list(q = 1:(xN-1)), mycoef)) # q = 1:(xN-1)
-    pbins <- c(plist,1) - c(0,plist)
-    stopifnot(sum(pbins) == 1) # sanity check
-    raw_sfs <- c(0, pbins * S) # need to add zero as xN is the same as zero when folded
-    sadsfs <- .new_sfs(raw_sfs, folded, nozero = TRUE)
-    return(sadsfs)
-}
-
-.pipe_sadsfs <- function(gm, marsad, genosfs, folded) {
-    AC <- .get_AC(gm$geno)
-    N <- length(gm$maps$sample.id)
-    ploidy <- gm$geno$ploidy
-    neutralsfs <- expsfs(lenAC = length(AC), N = N, ploidy = ploidy, folded = folded)
-    allsfs <- list(genosfs, neutralsfs)
-    names(allsfs) <- c("data", "neutral")
-    # if SAD predicted
-    if (!is.null(marsad$sadsfss)) {
-        allsfs <- c(allsfs, marsad$sadsfss)
-    }
-    # compare by logLik
-    ll_list <- sapply(allsfs, function(model) ll_sfs(model = model, data = genosfs))
-    statdf <- data.frame(model = names(allsfs),
-                         logLik = unname(ll_list),
-                         stringsAsFactors = FALSE)
-    # return list of statdf and allsfs
-    output <- list(sfs = allsfs, # list of sfs class objects
-                   statdf = statdf)
-    return(output)
-}
-
-# generate per-cell genotype table
-.genotype_bycell <- function(gm) {
-    cellids = gm$maps$cellid
-    ploidy = gm$geno$ploidy
-    geno = sapply(unique(cellids), function(g) {
-        matrixStats::rowMaxs(gm$geno$genotype, cols = which(cellids == g))
-    })
-    return(geno)
-}
-
-# allele counts (revert to earlier)
-.get_AC <- function(gg) {
-    AC <- matrixStats::rowSums2(gg$genotype)
-    # stop if there are any NAs or warn if fully zero ACs (not a SNP in this dataset)
-    stopifnot(all(!is.na(AC)))
-    if (any(AC == 0)) {
-        warning(paste0("There are ", sum(AC == 0)," invariant sites in the genotype matrix"))
-        AC <- AC[AC != 0]
-    }
-    return(AC)
-}
-
 # SFS operations
 .foldsfs <- function(vect) {
-    flen = floor(length(vect)/2)
-    fvect = (vect + rev(vect))[1:flen]
-    if(length(vect) %% 2 == 1) {
-        fvect = c(fvect, vect[flen+1])
+    flen <- floor(length(vect) / 2)
+    fvect <- (vect + rev(vect))[1:flen]
+    if (length(vect) %% 2 == 1) {
+        fvect <- c(fvect, vect[flen + 1])
     }
     return(fvect)
 }
@@ -125,7 +21,7 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
         vect <- vect[-1] # always fold first
         names(vect) <- 1:length(vect)
     } else {
-        names(vect) <- 0:(length(vect)-1)
+        names(vect) <- 0:(length(vect) - 1)
     }
     class(vect) <- c(class(vect), "sfs")
     attr(vect, "folded") <- folded
@@ -133,24 +29,39 @@ MARsad <- function(gm, sad_models = .sad_models, predict = TRUE, folded = TRUE) 
     return(vect)
 }
 
-#' Calculate Site Frequency Spectrum
+#' Calculate the observed site frequency spectrum
 #'
-#' @param AC Vector of allele counts
-#' @param N Number of samples
-#' @param ploidy Ploidy level of the organism
-#' @param folded Logical, whether to fold the spectrum. Default TRUE
-#' @param nozero Logical, whether to remove zero counts. Default TRUE
+#' Tabulates the allele counts stored in a [genomaps()] object into a site
+#' frequency spectrum (SFS): the number of sites carrying `k` alternative
+#' alleles, for `k` from 0 to `N * ploidy`.
 #'
-#' @return An object of class "sfs" containing the site frequency spectrum
+#' @param gm A [genomaps()] object created by [genomaps()].
+#' @param folded Logical, whether to fold the spectrum, collapsing the `k` and
+#'   `N * ploidy - k` bins for sites whose ancestral allele is unknown.
+#'   Default FALSE.
+#' @param nozero Logical, whether to drop the `k = 0` bin (sites with no
+#'   alternative allele in the sample). Default TRUE.
+#'
+#' @return An object of class `sfs`: a numeric vector of site counts, named by
+#'   the allele count `k`, carrying the `folded` and `nozero` attributes.
+#' @seealso [expsfs()] for the neutral expectation and [plot.sfs()] for plotting.
 #' @export
 #'
 #' @examples
-#' # Calculate SFS from allele counts
-#' allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
-#' sfs_result <- sfs(allele_counts, N=50, ploidy=2)
+#' # unfolded spectrum of the 1001 genomes example
+#' obssfs <- sfs(gm1001g)
+#' head(obssfs)
+#' plot(obssfs)
 
-sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
-    xN = N*ploidy
+#' # folded spectrum, for data without a known ancestral allele
+#' head(sfs(gm1001g, folded = TRUE))
+# set folded = FALSE so the MAR sampling theory could work
+sfs <- function(gm, folded = FALSE, nozero = TRUE) {
+    AC <- gm$geno$allele_count
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
+
+    xN <- N * ploidy
     if (any(AC > xN)) {
         warning(paste0(sum(AC > xN), " SNPs had allele counts exceeding N*ploidy"))
     }
@@ -160,75 +71,34 @@ sfs <- function(AC, N, ploidy, folded = TRUE, nozero = TRUE) {
     return(vect)
 }
 
-#' Generate Expected Site Frequency Spectrum
+#' Generate the expected site frequency spectrum under neutrality
 #'
-#' @param lenAC Length of allele count vector. In other words, total number of SNPs surveyed.
-#' @param N Number of samples
-#' @param ploidy Ploidy level of the organism
-#' @param folded Logical, whether to fold the spectrum. Default TRUE
-#' @param nozero Logical, whether to remove zero counts. Default TRUE
+#' Builds the standard neutral expectation `theta / k` for a [genomaps()]
+#' object, scaling `theta` by Watterson's estimator so that the expected and
+#' observed spectra contain the same number of segregating sites and are
+#' directly comparable.
 #'
-#' @return An object of class "sfs" containing the expected site frequency spectrum
+#' @inheritParams sfs
+#'
+#' @return An object of class `sfs`, in the same format as the output of [sfs()],
+#'   holding the expected rather than the observed number of sites per bin.
+#' @seealso [sfs()] for the observed spectrum and [plot.sfs()] for plotting.
 #' @export
 #'
 #' @examples
-#' # Generate expected SFS
-#' exp_sfs <- expsfs(lenAC=1000, N=100, ploidy=2)
-
-expsfs <- function(lenAC, N, ploidy, folded = TRUE, nozero = TRUE) {
-    xN = N*ploidy
-    theta = lenAC / .Hn(xN) # scale theta
-    expsfs = c(0, theta/(1:xN)) # need to add 0 as xN is the same as zero when folded
+#' expsfs(gm1001g)[1:5]
+#'
+#' # compare the observed spectrum against the neutral expectation
+#' plot(sfs(gm1001g), expected = expsfs(gm1001g), log = "x")
+expsfs <- function(gm, folded = FALSE, nozero = TRUE) {
+    N <- length(gm$maps$sample.id)
+    ploidy <- gm$geno$ploidy
+    AC <- gm$geno$allele_count
+    xN <- N * ploidy
+    # get segregating sites
+    M_seg <- sum(AC > 0 & AC < xN)
+    theta <- M_seg / .Hn(xN) # scale theta
+    expsfs <- c(0, theta / (1:xN)) # need to add 0 as xN is the same as zero when folded
     expsfs <- .new_sfs(expsfs, folded, nozero)
     return(expsfs)
-}
-
-# sfs list to dataframe
-.sfsl2df <- function(sfsl) {
-    outdf = data.frame(matrix(nrow = length(sfsl[[1]]), ncol = length(sfsl) + 1), stringsAsFactors = FALSE)
-    colnames(outdf) = c("AC", names(sfsl))
-    outdf[,1] = as.integer(names(sfsl[[1]]))
-    for (ii in seq_along(sfsl)) {
-        outdf[, ii+1] = as.vector(sfsl[[ii]])
-    }
-    return(outdf)
-}
-
-# adapt it from dadi.Inference.ll (Original function available at Gutenkust et al. 2009)
-..ll_per_bin <- function(model, data) {
-    if (data == 0 | model == 0) {
-        out = 0
-    } else {
-        out = - model + log(model) * data - lgamma(data + 1)
-    }
-    return(out)
-}
-
-.ll_per_bin <- Vectorize(..ll_per_bin)
-
-#' Calculate Log-Likelihood Between Model and Data SFS
-#'
-#' @param model An object of class "sfs" containing model predictions
-#' @param data An object of class "sfs" containing observed data
-#' @param missing_model_cutoff Threshold for warning about SFS entries that are zeros in the model but non-zero in the data. Default 1e-6.
-#'
-#' @return Log-likelihood value comparing model to data
-#' @export
-#'
-#' @examples
-#' # Calculate log-likelihood between model and data SFS
-#' model_sfs <- expsfs(lenAC=1000, N=50, ploidy=2)
-#' data_sfs <- sfs(AC=c(1,1,0,2,0,1,1,0,0,2,30), N=50, ploidy=2)
-#' ll <- ll_sfs(model_sfs, data_sfs)
-ll_sfs <- function(model, data, missing_model_cutoff = 1e-6) {
-    stopifnot("sfs" %in% c(class(model), class(data)))
-    stopifnot(length(model) == length(data)) # same length
-    stopifnot(all(names(model) == names(data))) # same entries
-    # check for zeros in models
-    d0 = data[which(model == 0)]
-    if (sum(d0)/sum(data) > missing_model_cutoff) {
-        warning(paste0("In ", sprintf("%.2f%%", 100 * sum(d0) / sum(data)), " of data. Model is 0 where data is neither masked nor 0."))
-    }
-    ll <- sum(.ll_per_bin(model, data))
-    return(ll)
 }

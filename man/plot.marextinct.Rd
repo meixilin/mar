@@ -4,18 +4,26 @@
 \alias{plot.marextinct}
 \title{Plot Method for Mutations Extinction Curves}
 \usage{
-\method{plot}{marextinct}(x, z = NULL, Mtype = .Mtype, Atype = .Atype, ...)
+\method{plot}{marextinct}(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...)
 }
 \arguments{
-\item{x}{A data frame containing extinction data}
+\item{x}{An object of class "marextinct", the output of \link{MARextinction}}
 
-\item{z}{Fitted extinction curve parameter}
+\item{fit}{Whether to draw the fitted extinction curve. \code{FALSE} (default)
+draws nothing; \code{TRUE} fits \code{z} via \link{MARcalc}; a named \code{c(z = )}
+vector supplies it directly.}
 
 \item{Mtype}{Type of genetic diversity metric to plot}
 
 \item{Atype}{Type of area metric to plot}
 
-\item{...}{Additional arguments passed to plot}
+\item{theory}{What theoretical MAR prediction to overlay (rescaled to the
+same \% lost / \% remained axes): \code{NULL} (default, no overlay), a
+\code{martheory} object (output of \link{MARtheory}, used as-is), or a
+\code{genomaps} object (a \code{martheory} is generated from it via
+\link{MARtheory}). Only supported when \code{Atype = "N"}.}
+
+\item{...}{Additional arguments passed to \link[graphics]{plot}}
 }
 \value{
 Invisibly returns NULL
@@ -24,7 +32,14 @@ Invisibly returns NULL
 Creates a plot showing relationship between area loss and genetic diversity loss
 }
 \examples{
-\dontrun{
-    plot(marextinct_object, z=0.25)
+extdf <- MARextinction(gm1001g, nrep = 2, xfrac = 0.1, myseed = 42)
+
+# supply z directly
+plot(extdf, fit = c(z = 0.25))
+
+# fit z automatically, and overlay the MARtheory prediction generated from gm
+plot(extdf, Atype = "N", fit = TRUE, theory = gm1001g)
 }
+\seealso{
+\code{\link[=MARextinction]{MARextinction()}} and \code{\link[=MARcalc]{MARcalc()}}
 }

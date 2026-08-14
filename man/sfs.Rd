@@ -2,29 +2,37 @@
 % Please edit documentation in R/MARsadsfs.R
 \name{sfs}
 \alias{sfs}
-\title{Calculate Site Frequency Spectrum}
+\title{Calculate the observed site frequency spectrum}
 \usage{
-sfs(AC, N, ploidy, folded = TRUE, nozero = TRUE)
+sfs(gm, folded = FALSE, nozero = TRUE)
 }
 \arguments{
-\item{AC}{Vector of allele counts}
+\item{gm}{A \code{\link[=genomaps]{genomaps()}} object created by \code{\link[=genomaps]{genomaps()}}.}
 
-\item{N}{Number of samples}
+\item{folded}{Logical, whether to fold the spectrum, collapsing the \code{k} and
+\code{N * ploidy - k} bins for sites whose ancestral allele is unknown.
+Default FALSE.}
 
-\item{ploidy}{Ploidy level of the organism}
-
-\item{folded}{Logical, whether to fold the spectrum. Default TRUE}
-
-\item{nozero}{Logical, whether to remove zero counts. Default TRUE}
+\item{nozero}{Logical, whether to drop the \code{k = 0} bin (sites with no
+alternative allele in the sample). Default TRUE.}
 }
 \value{
-An object of class "sfs" containing the site frequency spectrum
+An object of class \code{sfs}: a numeric vector of site counts, named by
+the allele count \code{k}, carrying the \code{folded} and \code{nozero} attributes.
 }
 \description{
-Calculate Site Frequency Spectrum
+Tabulates the allele counts stored in a \code{\link[=genomaps]{genomaps()}} object into a site
+frequency spectrum (SFS): the number of sites carrying \code{k} alternative
+alleles, for \code{k} from 0 to \code{N * ploidy}.
 }
 \examples{
-# Calculate SFS from allele counts
-allele_counts <- c(1,1,0,2,0,1,1,0,0,2,30)
-sfs_result <- sfs(allele_counts, N=50, ploidy=2)
+# unfolded spectrum of the 1001 genomes example
+obssfs <- sfs(gm1001g)
+head(obssfs)
+plot(obssfs)
+# folded spectrum, for data without a known ancestral allele
+head(sfs(gm1001g, folded = TRUE))
+}
+\seealso{
+\code{\link[=expsfs]{expsfs()}} for the neutral expectation and \code{\link[=plot.sfs]{plot.sfs()}} for plotting.
 }

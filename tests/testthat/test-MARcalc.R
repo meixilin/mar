@@ -42,8 +42,10 @@ test_that(".marsummary works correctly", {
     # Test successful summary
     result <- .marsummary(mar)
     expect_type(result, "list")
-    expect_equal(names(result),
-                c("model", "c", "z", "c_p", "z_p", "R2_adj"))
+    expect_equal(
+        names(result),
+        c("model", "c", "z", "c_p", "z_p", "R2_adj")
+    )
     expect_equal(result$model, "Power")
     expect_true(is.numeric(result$c))
     expect_true(is.numeric(result$z))
@@ -53,22 +55,6 @@ test_that(".marsummary works correctly", {
     expect_true(all(is.na(unlist(null_result))))
 })
 
-test_that(".pipe_MARcalc works correctly", {
-    mardf <- create_test_data()
-    attr(mardf, "scheme") <- "test_scheme"
-
-    # Test basic functionality
-    result <- .pipe_MARcalc(mardf, verbose = FALSE)
-    expect_s3_class(result, "marcalc")
-    expect_equal(nrow(result), length(.Mtype) * length(.Atype))
-    expect_equal(ncol(result), 8) # M, A, model, c, z, c_p, z_p, R2_adj
-
-    # Check column names and types
-    expect_equal(colnames(result),
-                c("M", "A", "model", "c", "z", "c_p", "z_p", "R2_adj"))
-    expect_true(all(result$M %in% .Mtype))
-    expect_true(all(result$A %in% .Atype))
-})
 
 test_that("MARcalc handles invalid inputs correctly", {
     # Test invalid Mtype
@@ -78,14 +64,14 @@ test_that("MARcalc handles invalid inputs correctly", {
     expect_error(MARcalc(create_test_data(), Atype = "invalid"))
 
     # Test empty data frame
-    expect_warning(MARcalc(data.frame(A=numeric(), M=numeric())))
+    expect_warning(MARcalc(data.frame(A = numeric(), M = numeric())))
 
     # Test data frame with all NA values
-    df_na <- data.frame(A=c(NA,NA), M=c(NA,NA))
+    df_na <- data.frame(A = c(NA, NA), M = c(NA, NA))
     expect_warning(MARcalc(df_na))
 
     # Test data frame with all zero values
-    df_zero <- data.frame(A=1:2, M=c(0,0))
+    df_zero <- data.frame(A = 1:2, M = c(0, 0))
     expect_warning(MARcalc(df_zero))
 })
 
@@ -95,18 +81,18 @@ test_that("MARcalc produces expected power-law relationships", {
     # Test with M (richness)
     mar_m <- MARcalc(mardf, Mtype = "M", Atype = "A")
     sum_m <- summary(mar_m)
-    expect_true(sum_m$Parameters[2,"Estimate"] > 0) # z should be positive
+    expect_true(sum_m$Parameters[2, "Estimate"] > 0) # z should be positive
     expect_true(sum_m$R2a > 0.9) # Should have good fit
 
     # Test with E (evenness)
     mar_e <- MARcalc(mardf, Mtype = "E", Atype = "A")
     sum_e <- summary(mar_e)
-    expect_true(sum_e$Parameters[2,"Estimate"] > 0)
+    expect_true(sum_e$Parameters[2, "Estimate"] > 0)
     expect_true(sum_e$R2a > 0.9)
 
     # Test with different area metrics
     mar_asq <- MARcalc(mardf, Mtype = "M", Atype = "Asq")
     sum_asq <- summary(mar_asq)
-    expect_true(sum_asq$Parameters[2,"Estimate"] > 0)
+    expect_true(sum_asq$Parameters[2, "Estimate"] > 0)
     expect_true(sum_asq$R2a > 0.9)
 })
