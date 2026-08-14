@@ -29,9 +29,17 @@ rm(list = ls())
 
 ## Overview
 
-This vignette demonstrates the stepwise workflow for conducting a Mutation-Area
-Relationship (MAR) analysis using the `mar` package, illustrated with the included
- *Arabidopsis thaliana* demo data.
+This vignette walks through the standard workflow for a mutations-area relationship (MAR)
+and genetic-diversity-area relationship (GDAR) analysis in the `mar` package, using the
+bundled *Arabidopsis thaliana* 1001 Genomes data. The workflow comprises five modules:
+read genotype and coordinate files into the core `genomaps` object; compute the site
+frequency spectrum and predict the MAR/GDAR theoretically; build it empirically by
+sampling the geographic range; simulate the extinction process; and fit the power-law
+model $M = cA^z$ to estimate the scaling factor $z$, which describes the rate of genetic
+diversity loss.
+
+For the sampling theory behind the relationship, and for guidance on which $z$ to carry
+into a conservation prediction, see `vignette('mar-theory')`.
 
 ```{r setup}
 library(mar)
@@ -50,8 +58,8 @@ print(gm1001g)
 gm1001g$geno
 gm1001g$maps
 
-# Tips: all operations in `mar` package takes `genomaps` as the input.
-# Therefore, you do not have to extract the marmaps and margeno objects most if not all the time.
+# Tips: all operations in the `mar` package take `genomaps` as the input.
+# Therefore, you rarely need to extract the marmaps and margeno objects yourself.
 ```
 
 If you do not need to load your own data, skip to [Step 3: Explore the Site Frequency Spectrum (SFS)](#s3).
@@ -65,7 +73,13 @@ Otherwise, continue to [Step 1: Import raw data](#s1)
 `text_parser()` reads the genotype matrix and returns a `margeno` object
 containing the genotype data alongside sample and variant metadata.
 
-TODO: Add file specific instructions in marApp.
+The genotype file is a delimited text file of alternative allele counts, one row per
+variant and one column per sample, with no header and no row names. Entries are integers
+from 0 to `ploidy`, so 0, 1 or 2 under the diploid default, and `NA` marks a missing
+genotype. To avoid violating the model assumptions, sites must be biallelic SNPs or
+invariant sites. Two optional files supply the metadata: a single-column file of sample
+identifiers in the same order as the genotype columns, and a two-column `CHR`/`POS` file
+of variant positions.
 
 ```{r import genotype}
 # Tips: Begin by locating and importing the bundled example data included with the
@@ -98,9 +112,11 @@ print(genodata)
 
 `lonlat_parser()` reads the coordinate file (TXT, CSV, or TSV) and returns a `marmaps` object.
 
-TODO: this needs to be updated when `lonlat_parser()` returns `marmaps` object
-
-TODO: fix the figure resolution problem (now it looks very blurry)
+The coordinate file holds exactly three columns, `ID`, `LON` and `LAT` (or `LONGITUDE` and
+`LATITUDE`), with a header and one row for every sample in the genotype matrix. Alongside
+the coordinates, the `marmaps` object stores a raster map that summarises where samples
+fall and serves as the reference grid for every downstream analysis. Resolution can be set
+manually or, as here, determined automatically from the map extent and sample density.
 
 ```{r import coordinates}
 # Locate sample coordinates
@@ -129,7 +145,7 @@ object used by all downstream functions.
 gm1001g_load <- genomaps(genodata, mapsdata)
 # The created gm1001g_load is the same as the provided example gm1001g
 all.equal(gm1001g_load, gm1001g)
-rm(genodata,mapsdata, gm1001g_load)
+rm(genodata, mapsdata, gm1001g_load)
 ```
 
 
@@ -137,10 +153,16 @@ rm(genodata,mapsdata, gm1001g_load)
 
 ### 3a: Build SFS using `sfs()`
 
-TODO: fill in the marApp description on SFS here.
+The site frequency spectrum is a histogram of mutation abundances and the basic summary of
+a genetic dataset. In a `genomaps` object of $J$ individuals with ploidy $x$ there are $xJ$
+chromosomes and $L$ genotyped biallelic sites. At any one site, count how many of the $xJ$
+chromosomes carry the mutation and call that count $k$: `sfs()` reports how many sites have
+$k = 0$ (invariants), how many have $k = 1$ (singletons), and so on. Most mutations sit at
+low frequency and few reach high frequency, and this commonness of rarity is what
+ultimately generates the MAR.
 
-The observed SFS summarises how allele counts are distributed across sites;
-the expected SFS provides a neutral-theory baseline for comparison.
+The observed SFS summarises how allele counts are distributed across sites, and `expsfs()`
+returns the neutral coalescent expectation $E(k) = \theta/k$ as a baseline for comparison.
 
 ```{r sfs}
 # Generate observed SFS from the genomaps object
@@ -159,13 +181,25 @@ plot(obs_sfs, expected = exp_sfs, log = 'x')
 # Tips: you can also generate a folded SFS
 obs_sfs_folded <- sfs(gm1001g, folded = TRUE)
 
-# Tips: you can overlay the expected SFS by passing the genomaps object
+# Tips: you can overlay the expected SFS by passing the genomaps object directly
+# No need to run the expsfs() function first
 plot(obs_sfs_folded, expected = gm1001g, log = 'x')
 ```
 
 ### 3b. Predict the MAR/GDAR using `MARtheory()`
 
-TODO: fill description. Point to the theory vignette on this actually does not work because assumptions of random mating and random distribution is violated.
+`MARtheory()` predicts the MAR/GDAR analytically from the site frequency spectrum alone,
+assuming individuals mate at random and are distributed at random in space. Under those two
+assumptions, sampling a larger area is equivalent to sampling more individuals, and the
+spectrum by itself determines how fast mutations accumulate. The function returns a
+`martheory` data frame indexed by the number of sampled individuals `N`, so its output
+lines up with `MARsampling()` in Step 4.
+
+The *Arabidopsis* accessions satisfy neither assumption: they are selfing inbred lines, and
+they are spatially structured across the native range. The prediction below consequently
+overshoots the empirical curve, and that gap is informative rather than a failure of the
+theory. `vignette('mar-theory')` takes the two assumptions apart one at a time and shows
+how much each contributes to the fitted $z$.
 
 ```{r mar-theory}
 theorydf <- MARtheory(gm1001g)
@@ -186,7 +220,23 @@ The MAR is estimated in two steps.
 
 ### 4a. Generate the diversity-by-area sampling table using `MARsampling()`
 
-TODO: Description here on the output table. and the default options (e.g. nrep, xfrac). Use the marApp documentation or the manuscript when needed.
+`MARsampling()` builds the MAR/GDAR empirically. Working from the reference raster in the
+`marmaps` object, it draws replicated square subsamples of the range, stepping from a
+single raster cell up to the shorter side of the map, and computes the genetic diversity
+inside each box. Boxes are placed under one of five schemes: `random`; the directional
+`southnorth` and `northsouth`, which simulate climate-driven range shifts; and the focal
+`outwards` and `inwards`, which simulate habitat destruction spreading from or towards the
+most densely sampled cell. By default `nrep = 10` boxes are drawn at each size, box size
+steps by `xfrac = 0.01` of the shorter map side, and `quorum = TRUE` discards boxes that
+contain no occupied cell.
+
+The returned `marsamp` data frame carries one row per box and four genetic diversity
+metrics: the number of mutations `M`, endemic mutations `E`, Watterson's $\theta$ `thetaw`, and
+nucleotide diversity `thetapi`. Area follows two strategies. `Asq` is the area of the whole
+sampling square regardless of occupancy, and `A` sums only the occupied cells. `Asq`
+accounts for variation in sample density across space, while `A` typically gives the
+stronger correlation. The number of individuals in the box, `N`, is recorded as well, which
+is what makes the table directly comparable with `MARtheory()`.
 
 ```{r mar-sampling}
 mardf <- MARsampling(gm1001g, myseed = 91)
@@ -198,16 +248,24 @@ class(mardf)
 # plot the diversity-by-area sampling results
 plot(mardf)
 
-# Tips: alternative genetic divrsity metrics or area metrics can be passed
+# Tips: alternative genetic diversity metrics or area metrics can be passed
 plot(mardf, Mtype = 'M', Atype = 'Asq')
 plot(mardf, Mtype = 'thetapi', Atype = 'A')
 ```
 
 ### 4b. Fit the mutations-area relationship model using `MARcalc()` {#4b}
 
-TODO: Description here
+`MARcalc()` fits the power-law model $M = cA^z$ using `sars::sar_power()` and returns the
+fitted `sars` object. The scaling factor $z$ is the quantity of interest: it describes the
+rate of genetic diversity loss and reflects the mutation abundance pattern, spatial structure, and breeding structure (see `vignette('mar-theory')` for details). `MARcalc()` accepts any of the `martheory`, `marsamp` or
+`marextinct` objects, together with any combination of diversity metric (`Mtype`) and area
+metric (`Atype`).
 
 ```{r mar-fit}
+# print available Mtype and Atype
+mar:::.Mtype
+mar:::.Atype
+
 marfit <- MARcalc(mardf)
 # marfit is a sars object (from R package sars)
 class(marfit)
@@ -219,14 +277,26 @@ plot(mardf, fit = marfit$par)
 
 # Alternatively, the plot.marsamp method can automatically fit the power-law model
 plot(mardf, fit = TRUE)
+
+# The same mutations fitted against the total square area instead
+marfit_Asq <- MARcalc(mardf, Mtype = "M", Atype = "Asq")
+summary(marfit_Asq)
+plot(mardf, fit = marfit_Asq$par, Mtype = "M", Atype = "Asq")
 ```
 
-You can also fit other mutation relationships. For example, nucleotide diversity thetapi
+`Asq` counts the empty space inside each box, so it captures uneven sampling density at the
+cost of a weaker fit ($R^2$ `r round(summary(marfit)$R2, 2)` against `A`,
+`r round(summary(marfit_Asq)$R2, 2)` against `Asq`). 
+We recommend exploring both options for your data, especially if spatial sampling is uneven. 
 
-TODO: description here. What does theta_pi measures.
+The same machinery also fits the other diversity metrics, giving the broader GDAR.
+Nucleotide diversity (`thetapi`) measures the average number of pairwise differences per
+site between sampled sequences. Being dominated by common variants and largely insensitive
+to rare ones, it saturates with area far faster than the number of mutations does, so its
+$z$ is much shallower and its relationship noisier.
 
 ```{r mar-fit-pi}
-marfit_pi <- MARcalc(mardf, Mtype = "thetapi", Atype = "Asq")
+marfit_pi <- MARcalc(mardf, Mtype = "thetapi")
 
 # marfit is a sars object (from R package sars)
 class(marfit_pi)
@@ -234,43 +304,69 @@ class(marfit_pi)
 summary(marfit_pi)
 
 # Plot the fitted power-law model
-plot(mardf, fit = marfit_pi$par, Mtype = "thetapi", Atype = "Asq")
+plot(mardf, fit = marfit_pi$par, Mtype = "thetapi")
 ```
 
 **Alternative workflow**:
     For alternative sampling schemes and other MARsampling options. See [Alternative 3: More on `MARsampling()`](#a3).
 
-## Step 5: Estimate Extinction / Diversity Loss
+## Step 5: Estimate extinction and genetic diversity loss
 
-`MARextinction()` projects the expected loss of genetic diversity under
-hypothetical area reduction scenarios.
+The MAR framework can be applied in reverse to project the genetic diversity lost when
+habitat disappears. `MARextinction()` removes raster cells iteratively, modelling local
+extinctions where habitat becomes unavailable, and tracks the diversity remaining in the
+surviving samples. It offers the same five schemes and the same four diversity metrics as
+`MARsampling()`. Because individuals are removed directly from occupied cells and no
+sampling square is ever constructed, however, area is reported only as `A`.
 
 ```{r mar-extinction}
 extdf <- MARextinction(gm1001g, myseed = 91)
-head(extdf)
+tail(extdf)
 
-# extdf is a extdfinct object
+# extdf is a marextinct object
 class(extdf)
-# plot the diversity-by-area sampling results (?mar::plot.marsamp)
-plot(extdf, fit = TRUE)
 ```
 
-We can use the scaling factors inferred in [4b. Fit the mutations-area relationship model using `MARcalc()`](#4b) to predict the extinction.
+Rearranging $M = cA^z$ gives the genetic extinction prediction. If a proportion
+$a$ of the area is lost and a proportion $m$ of genetic diversity is lost with it, then
+$M(1-m) = c[A(1-a)]^z$, which reduces to $1 - m = (1 - a)^z$. We can therefore take the
+scaling factor fitted in
+[4b. Fit the mutations-area relationship model using `MARcalc()`](#4b) and overlay its
+prediction on the simulated extinction curve.
 
 ```{r mar-extinct-plot}
 # plot the extinction mar fit
 plot(extdf, fit = marfit$par)
 ```
 
+`extdf` shares its structure with `mardf`, so it too can be passed to `MARcalc()`: sampling
+and extinction are simply two ways of sampling the same spatial data. The $z$ they return
+is not the same one.
+
+```{r mar-extinct-fit}
+extfit <- MARcalc(extdf)
+plot(extdf, fit = extfit$par)
+```
+
+`MARextinction()` removes cells at random across the whole map, so the accessions left
+behind approximate a random draw of genotypes. `MARsampling()` draws contiguous boxes
+instead, and because *Arabidopsis* accessions are spatially structured, individuals within
+one box are more closely related than a random draw would be (isolation-by-distance). A box
+therefore captures fewer distinct mutations than an equally sized random sample, while both
+converge on the same total across the full range. The sampled curve climbs more steeply as
+a result, giving the higher $z$ of `r round(marfit$par['z'], 2)` against
+`r round(extfit$par['z'], 2)` here.
+
 **Alternative workflow**:
     For alternative sampling schemes and other MARextinction options. See [Alternative 4: More on `MARextinction()`](#a4).
 
 
-## Step 7: Inspect and Export Outputs
+## Step 6: Inspect and export outputs
 
-TODO: elaborate
-
-Use `str()`, `print()`, and `summary()` to inspect any result object.
+Every object in the workflow is a plain data frame or list underneath its class, so `str()`,
+`print()` and `summary()` work throughout. To obtain the $z$ values, run `summary()` on
+the fitted `sars` object: it reports $c$ and $z$ with their confidence intervals along with
+the fit diagnostics you need to judge whether the power law describes your data well.
 
 ```{r inspect}
 # Object structures
@@ -278,7 +374,7 @@ str(extdf)
 str(gm1001g)
 str(marfit)
 
-# Model summaries
+# Power-law model summaries
 print(marfit)
 # This generates the confidence interval
 summary(marfit)
@@ -360,7 +456,7 @@ match a specific spatial scale.
 # Locate sample coordinates
 lonlatfile <- system.file("extdata", "1001g_lonlat.txt", package = "mar")
 # Tips: mapres is expressed in the units of mapcrs (meters, for EPSG:8857)
-mapsdata <- lonlat_parser(lonlatfile, mapcrs = "EPSG:8857", mapres = 100000)
+mapsdata <- lonlat_parser(lonlatfile, mapcrs = "EPSG:8857", mapres = 500000)
 
 print(mapsdata)
 plot(mapsdata)
@@ -368,13 +464,54 @@ plot(mapsdata)
 
 ## Alternative 3: More on `MARsampling()` {#a3}
 
-TODO: mention the animate option
+The default `random` scheme places boxes uniformly across the map. The other four weight
+placement using a beta distribution. `southnorth` and `northsouth` put boxes towards the southern or
+northern edge, standing in for a climate-driven range shift, while `outwards` and `inwards`
+put them away from or towards the most densely sampled cell, standing in for habitat
+destruction radiating from a focal point. Comparing schemes is a quick way to see how
+sensitive your $z$ is to the direction in which the range is sampled.
 
-TODO
+```{r sampling-schemes}
+# a directional scheme, sampling from the south
+mardf_sn <- MARsampling(gm1001g, scheme = "southnorth", myseed = 91)
+plot(mardf_sn, fit = TRUE)
+
+# the scheme used is stored as an attribute
+attr(mardf_sn, "scheme")
+```
+
+`nrep` and `xfrac` trade resolution against runtime: `nrep` sets how many boxes are drawn
+at each size, and `xfrac` sets the step between consecutive box sizes as a fraction of the
+shorter map side. The defaults (`nrep = 10`, `xfrac = 0.01`) give a dense curve at some
+cost, and coarsening them as above is the fastest way to explore a new dataset.
+
+Setting `animate = TRUE` replays the sampling boxes on the reference map one at a time,
+which is the quickest way to confirm that a scheme is doing what you expect. It outputs to
+the default plotting device, so we do not evaluate it here.
+
+```{r sampling-animate, eval=FALSE}
+MARsampling(gm1001g, scheme = "outwards", nrep = 2, xfrac = 0.1, animate = TRUE, myseed = 91)
+```
 
 ## Alternative 4: More on `MARextinction()` {#a4}
 
-TODO: mention the animate option without evaluating
+`MARextinction()` takes the same `scheme`, `nrep` and `xfrac` arguments, but they describe
+removal rather than sampling. The scheme sets the order in which cells go extinct, `nrep`
+sets how many independent extinction replicates are run, and `xfrac` sets the fraction of
+occupied cells removed at each step. Each replicate ends with a row of zeros, representing
+the loss of the whole range.
+
+```{r extinction-schemes}
+# extinction radiating outwards from the most densely sampled cell
+extdf_out <- MARextinction(gm1001g, scheme = "outwards", nrep = 2, xfrac = 0.1, myseed = 91)
+plot(extdf_out, fit = TRUE)
+```
+
+`animate = TRUE` likewise replays the extinction process on the map.
+
+```{r extinction-animate, eval=FALSE}
+MARextinction(gm1001g, scheme = "outwards", nrep = 2, xfrac = 0.1, animate = TRUE, myseed = 91)
+```
 
 # Troubleshooting
 
@@ -387,13 +524,12 @@ Here are the list of checks that are performed, and some tips on how to prepare 
 
 ### Genotype Data
 
-- Require The pipeline requires bi-allelic SNP genotype data.
+- The pipeline requires bi-allelic SNP or invariant sites, so that the model assumptions hold.
   - Example `bcftools` command: `bcftools view -m2 -M2 -v snps ${VCF}`
-- We recommend remoThe genotype data must not contain any missing values.
+- Missing data is allowed and accounted for. `mar` applies `pixy`'s site-level denominator and effective sequence length adjustments, which keep `thetaw` and `thetapi` unbiased in the presence of missing genotypes. Excessive missingness will still bias the summary, so we recommend imputing beforehand.
   - You can use tools like [beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute missing data.
   - You can also filter the genotype data to retain only sites without missing data, e.g., `bcftools view -i 'N_MISSING == 0' ${VCF}`.
 - It works best with diploid genotype data, but can handle any ploidy as long as it is consistent across all samples. Use caution when interpreting results for non-diploid data.
-  - If heterozygous genotypes are not confidently called, you can force the data to be haploid (`option_geno$ploidy = 1`) by converting heterozygous genotypes to the alternative allele. Use caution when interpreting results.
 - If the reference genome is divergent from the species/population of interest, set the major allele as the reference allele to avoid issues with ancestral state identification.
 
 ### Geographic data
@@ -402,10 +538,4 @@ Here are the list of checks that are performed, and some tips on how to prepare 
 - File format should be tab-delimited or comma-delimited with header (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Only three columns are allowed (ID, LON/LONGITUDE, LAT/LATITUDE)
 - Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
-
-
-## When to not trust $z$
-
-Sometimes, the fitted (1-m) = (1-a)^z line doesn't align well with the simulated data (for example panels for E in Figure S3). In some examples for the Acropora data, the curves appeared to be very strongly influenced by one or two points and not really capturing the general trend in the simulated data. Have the authors considered why this might be the case and if the predicted values from curves which don't appropriately capture data patterns be trusted? Maybe they could create a vignette in the package going into detail about these aspects.
->>> R2.18: Although the power-law model is flexible, it does not guarantee fits for all data. We have noticed that the endemic mutations are especially hard to fit (panel for E in Figure S3) but do not have a really good explanation for this. Regardless, we added a cautionary note in the vignettes().
 
