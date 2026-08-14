@@ -30,6 +30,16 @@ loss in a species from habitat reduction.
 throughout the examples and vignettes.
 }
 
+\section{Vignettes}{
+
+\describe{
+\item{\code{vignette("mar-workflow", package = "mar")}}{MAR Analysis Workflow}
+\item{\code{vignette("mar-theory", package = "mar")}}{The sampling theory behind MAR}
+\item{\code{vignette("mar-paper", package = "mar")}}{Worked example: global Arabidopsis 1001G dataset}
+}
+Use \code{browseVignettes("mar")} to list them all.
+}
+
 \seealso{
 Useful links:
 \itemize{

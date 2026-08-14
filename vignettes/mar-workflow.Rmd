@@ -378,6 +378,32 @@ TODO: mention the animate option without evaluating
 
 # Troubleshooting
 
+## Preparing input data
+
+The `mar` package performs extensive checks on the input data to ensure that the results are reliable and interpretable.
+Please make sure to check the `inst/extdata` folder for example files.
+
+Here are the list of checks that are performed, and some tips on how to prepare the data:
+
+### Genotype Data
+
+- Require The pipeline requires bi-allelic SNP genotype data.
+  - Example `bcftools` command: `bcftools view -m2 -M2 -v snps ${VCF}`
+- We recommend remoThe genotype data must not contain any missing values.
+  - You can use tools like [beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute missing data.
+  - You can also filter the genotype data to retain only sites without missing data, e.g., `bcftools view -i 'N_MISSING == 0' ${VCF}`.
+- It works best with diploid genotype data, but can handle any ploidy as long as it is consistent across all samples. Use caution when interpreting results for non-diploid data.
+  - If heterozygous genotypes are not confidently called, you can force the data to be haploid (`option_geno$ploidy = 1`) by converting heterozygous genotypes to the alternative allele. Use caution when interpreting results.
+- If the reference genome is divergent from the species/population of interest, set the major allele as the reference allele to avoid issues with ancestral state identification.
+
+### Geographic data
+
+- Every sample with genotype data must have pairing longitude and latitude data.
+- File format should be tab-delimited or comma-delimited with header (ID, LON/LONGITUDE, LAT/LATITUDE)
+- Only three columns are allowed (ID, LON/LONGITUDE, LAT/LATITUDE)
+- Sample IDs must be unique and in the same order as the Sample IDs provided in the genotype matrix.
+
+
 ## When to not trust $z$
 
 Sometimes, the fitted (1-m) = (1-a)^z line doesn't align well with the simulated data (for example panels for E in Figure S3). In some examples for the Acropora data, the curves appeared to be very strongly influenced by one or two points and not really capturing the general trend in the simulated data. Have the authors considered why this might be the case and if the predicted values from curves which don't appropriately capture data patterns be trusted? Maybe they could create a vignette in the package going into detail about these aspects.
