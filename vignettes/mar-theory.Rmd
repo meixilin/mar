@@ -376,7 +376,12 @@ lines(M ~ A, data = theorydf, col = 'blue')
 
 We deliberately left this last step out of `MARtheory()`. In real-life practice, we are more interested in
 the scaling value $z$ rather than the constant $c$ in the $M = cA^z$ relationship.
-When the population density $\rho$ is a constant fitted from the `MARsampling()` output, the scaling factor $z$ for area is very similar to the scaling factor $z$ for sample size, as shown below:
+Note that although `MARtheory()` only fits $M = cN^z$, this is not a limitation: when $N = \rho A$
+holds strictly, rescaling the predictor by the constant $\rho$ shifts only the intercept in log-log
+space, so the fitted $z$ against $N$ is exactly the fitted $z$ against $A$, regardless of the value
+of $\rho$. When the population density $\rho$ is instead a constant fitted from the `MARsampling()`
+output, as below, the scaling factor $z$ for area is only very similar to the scaling factor $z$ for
+sample size, since $\hat\rho$ itself carries sampling noise from `mardf`:
 
 ```{r z-N-A}
 mardf_fit_A <- MARcalc(mardf)

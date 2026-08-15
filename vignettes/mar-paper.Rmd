@@ -41,6 +41,11 @@ summary(cellinfo)
 
 ```{r mar}
 marfitsum <- summary(marfit)
+
+# print full outputs
+print(marfitsum)
+
+# print the z values
 round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
 round(marfitsum$Parameters['z', 'Pr(>|t|)'], digits = 3)
 round(marfitsum$R2a, digits = 2)
@@ -48,10 +53,16 @@ round(marfitsum$R2a, digits = 2)
 
 ```{r marasq}
 marfit_asq <- MARcalc(mardf, Atype = 'Asq')
-marfitsum <- summary(marfit_asq)
-round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
-round(marfitsum$Parameters['z', 'Pr(>|t|)'], digits = 3)
-round(marfitsum$R2a, digits = 2)
+marfitsum_asq <- summary(marfit_asq)
+
+# print full outputs
+print(marfitsum_asq)
+
+
+# print the z values
+round(marfitsum_asq$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
+round(marfitsum_asq$Parameters['z', 'Pr(>|t|)'], digits = 3)
+round(marfitsum_asq$R2a, digits = 2)
 ```
 
 ```{r extpred}
@@ -72,11 +83,18 @@ extract_summary <- function(x) {
 }
 Mtypes = c('E', 'thetaw', 'thetapi')
 marfit_list <- lapply(Mtypes, MARcalc, mardf = mardf)
+
+# print full outputs
+lapply(marfit_list, summary)
+
+# print the z values
 summarydf <- do.call(rbind, lapply(marfit_list, extract_summary))
 dimnames(summarydf)[[1]] <- Mtypes
 dimnames(summarydf)[[2]][4:5] <- c('Pr(>|t|)', 'R2_adj')
 print(summarydf)
 ```
+
+# Figures
 
 ```{r Fig2, eval = FALSE}
 pdf(file = 'Fig2.pdf', width = 10, height = 8)
@@ -92,14 +110,11 @@ mtext("D", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
 dev.off()
 ```
 
-
 ```{r FigS1, eval = FALSE}
 pdf(file = 'FigS1.pdf', width = 6, height = 5)
 plot(mardf, fit = TRUE, Atype = 'N', theory = theorydf)
 dev.off()
 ```
-
-
 
 ```{r FigS2, eval = FALSE}
 pdf(file = 'FigS2.pdf', width = 6, height = 5)
@@ -109,20 +124,10 @@ dev.off()
 
 ```{r FigS3, eval = FALSE}
 Mtypes = c('E', 'thetaw', 'thetapi')
-pdf(file = 'FigS3.pdf', width = 5, height = 12)
-par(mfrow = c(1,3))
+pdf(file = 'FigS3.pdf', width = 4, height = 10)
+par(mfrow = c(3,1))
 for (Mtype in Mtypes) {
-    mtext("A", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
     plot(mardf, fit = TRUE, Mtype = Mtype)
 }
 dev.off()
 ```
-
-```{r FigS4, eval = FALSE}
-pdf(file = 'FigS4.pdf', width = 6, height = 5)
-plot(extdf, fit = TRUE)
-curve((1 - x)^marfit$par['z'], add = TRUE, col = 'red')
-dev.off()
-```
-
-
