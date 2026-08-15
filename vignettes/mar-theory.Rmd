@@ -555,13 +555,13 @@ now identified them one by one.
 3. **Spatial structure**, which enters twice: through population density, the $N \sim A$
    relationship, and through how related nearby individuals are. Random placement makes
    area a clean proxy for sample size and brings the area-based and size-based $z$ into
-   agreement, whereas spatial distribution can move $z$ in either direction. Stronger 
+   agreement, whereas spatial distribution can move $z$ in either direction. Stronger
    population structure and isolation-by-distance usually moves $z$ higher.
 
-A $z$ estimated from real data contains information from all three aspects, which makes 
-it an elegant and easy-to-interpret method to analyze genetic diversity at macroecological scale. 
-One scaling factor on a percentage scale summarizes how genetic diversity is distributed on a landscape 
-and how fast it would be lost if the area shrank. The `MARtheory()` function predicts a null $z$ value 
+A $z$ estimated from real data contains information from all three aspects, which makes
+it an elegant and easy-to-interpret method to analyze genetic diversity at macroecological scale.
+One scaling factor on a percentage scale summarizes how genetic diversity is distributed on a landscape
+and how fast it would be lost if the area shrank. The `MARtheory()` function predicts a null $z$ value
 for a given data set, separating the contributions of the mutation abundance patterns from the breeding structure, and spatial structure.
 
 ## So which $z$ value do I use for conservation?
@@ -577,8 +577,8 @@ is shallower still.
 
 They disagree because each samples the landscape in a different way, not because one of
 them is wrong. We therefore recommend fitting both area strategies, inspecting the curves
-from all three functions side by side. Finally, use the $z$ value from `MARsampling()` to predict 
-genetic extinction with area loss. Alternatively, a range of $z$ values 
+from all three functions side by side. Finally, use the $z$ value from `MARsampling()` to predict
+genetic extinction with area loss. Alternatively, a range of $z$ values
 should be employed when a single estimate is hard to ascertain.
 
 ## What this $z$ does not cover
@@ -670,7 +670,7 @@ E[\theta_w] \;=\; \frac{1}{H_{xN-1}} \sum_{k=0}^{xJ} \sigma(k)
 $$
 
 **Nucleotide diversity** measures the average number of differences per site between DNA sequences.
-$E[\theta_\pi]$ is invariant in $xN$, for any SFS. At a single
+$E[\theta_\pi]$ does not change with regards to $xN$, for any SFS. At a single
 site, $\hat\theta_\pi = \Delta / \binom{xN}{2}$, where $\Delta$ counts discordant pairs
 among the sampled chromosomes. By exchangeability of sampling without replacement, each of
 the $\binom{xN}{2}$ sampled pairs is marginally a uniformly random pair drawn from the

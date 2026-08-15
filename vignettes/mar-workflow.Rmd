@@ -76,8 +76,8 @@ containing the genotype data alongside sample and variant metadata.
 The genotype file is a delimited text file of alternative allele counts, one row per
 variant and one column per sample, with no header and no row names. Entries are integers
 from 0 to `ploidy`, so 0, 1 or 2 under the diploid default, and `NA` marks a missing
-genotype. To avoid violating the model assumptions, sites must be biallelic SNPs or
-invariant sites. Two optional files supply the metadata: a single-column file of sample
+genotype. To avoid violating the model assumptions, sites must be biallelic SNP sites.
+Two optional files supply the metadata: a single-column file of sample
 identifiers in the same order as the genotype columns, and a two-column `CHR`/`POS` file
 of variant positions.
 
@@ -286,8 +286,8 @@ plot(mardf, fit = marfit_Asq$par, Mtype = "M", Atype = "Asq")
 
 `Asq` counts the empty space inside each box, so it captures uneven sampling density at the
 cost of a weaker fit ($R^2$ `r round(summary(marfit)$R2, 2)` against `A`,
-`r round(summary(marfit_Asq)$R2, 2)` against `Asq`). 
-We recommend exploring both options for your data, especially if spatial sampling is uneven. 
+`r round(summary(marfit_Asq)$R2, 2)` against `Asq`).
+We recommend exploring both options for your data, especially if spatial sampling is uneven.
 
 The same machinery also fits the other diversity metrics, giving the broader GDAR.
 Nucleotide diversity (`thetapi`) measures the average number of pairwise differences per
@@ -524,7 +524,7 @@ Here are the list of checks that are performed, and some tips on how to prepare 
 
 ### Genotype Data
 
-- The pipeline requires bi-allelic SNP or invariant sites, so that the model assumptions hold.
+- The pipeline requires bi-allelic SNP sites, so that the model assumptions hold.
   - Example `bcftools` command: `bcftools view -m2 -M2 -v snps ${VCF}`
 - Missing data is allowed and accounted for. `mar` applies `pixy`'s site-level denominator and effective sequence length adjustments, which keep `thetaw` and `thetapi` unbiased in the presence of missing genotypes. Excessive missingness will still bias the summary, so we recommend imputing beforehand.
   - You can use tools like [beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute missing data.

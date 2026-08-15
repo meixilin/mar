@@ -9,7 +9,6 @@ Description: Fitting Mutations-Area Relationships using population genomic sampl
 License: MIT + file LICENSE
 Depends:
     R (>= 4.0.0)
-biocViews:
 Imports:
     terra,
     sars,
