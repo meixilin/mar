@@ -113,8 +113,8 @@
 #' print(geno)
 text_parser <- function(geno.fn, samp.fn = NULL, pos.fn = NULL, ploidy = 2) {
     # check if geno.fn is a valid txt file
-    txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")
-    stopifnot("Invalid file type. Must be txt, csv, or tsv" = any(sapply(txt.ext, function(xx) grepl(xx, geno.fn))))
+    txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz", ".gz")
+    stopifnot("Invalid file type. Must be txt, csv, tsv or gz" = any(sapply(txt.ext, function(xx) grepl(xx, geno.fn))))
     # read txt file
     genotype <- .read_genotype(geno.fn, ploidy)
     # read sample file if exists
