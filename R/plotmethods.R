@@ -114,8 +114,8 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #' # the power law as a straight line on log-log axes
 #' plot(mardf, fit = TRUE, log = "xy")
 plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
-    Mtype <- match.arg(Mtype)
-    Atype <- match.arg(Atype)
+    Mtype <- .match_choice(Mtype, .Mtype, "Mtype")
+    Atype <- .match_choice(Atype, .Atype, "Atype")
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]
     # previously had a check for length(unique(tmpdf[,Mtype])) < 4
@@ -177,8 +177,8 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
 #' # fit z automatically, and overlay the MARtheory prediction generated from gm
 #' plot(extdf, Atype = "N", fit = TRUE, theory = gm1001g)
 plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
-    Mtype <- match.arg(Mtype)
-    Atype <- match.arg(Atype)
+    Mtype <- .match_choice(Mtype, .Mtype, "Mtype")
+    Atype <- .match_choice(Atype, .Atype, "Atype")
     # remove NA or zero data
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]
@@ -237,7 +237,7 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #' # Watterson's theta is flat with sample size under neutrality
 #' plot(theory, Mtype = "thetaw")
 plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
-    Mtype <- match.arg(Mtype)
+    Mtype <- .match_choice(Mtype, .Mtype_theory, "Mtype")
     Atype <- "N" # martheory is always predicted against N (number of individuals)
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]

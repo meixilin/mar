@@ -34,12 +34,13 @@
 #'
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------
+    .check_controls(nrep, xfrac, animate)
     # set seed if specified
     if (!is.null(myseed)) {
         set.seed(myseed)
     }
     # match schemes (default to random)
-    scheme <- match.arg(scheme)
+    scheme <- .match_choice(scheme, .MARsampling_schemes, "scheme")
     # unwrap the samplemap raster once for the terra operations below
     sm <- .get_samplemap(gm$maps)
     # calculate and store raster area in the given samplemap

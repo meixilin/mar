@@ -1,5 +1,19 @@
 .MARsampling_schemes <- c("random", "inwards", "outwards", "southnorth", "northsouth")
 
+# control values shared by MARsampling() and MARextinction(), checked up front
+# so they fail here rather than inside seq() / sample()
+.check_controls <- function(nrep, xfrac, animate, quorum = TRUE) {
+    stopifnot(
+        "`nrep` must be a single positive whole number" =
+            is.numeric(nrep) && length(nrep) == 1 && !is.na(nrep) && nrep >= 1 && nrep == round(nrep),
+        "`xfrac` must be a single number greater than 0" =
+            is.numeric(xfrac) && length(xfrac) == 1 && !is.na(xfrac) && xfrac > 0,
+        "`quorum` must be TRUE or FALSE" = isTRUE(quorum) || isFALSE(quorum),
+        "`animate` must be TRUE or FALSE" = isTRUE(animate) || isFALSE(animate)
+    )
+    return(invisible())
+}
+
 #' Sample the mutations-area relationship (MAR) across spatial scales
 #'
 #' Draws square bounding boxes of increasing side length across the sample map
@@ -48,12 +62,13 @@ MARsampling <-
              quorum = TRUE,
              animate = FALSE,
              myseed = NULL) {
+        .check_controls(nrep, xfrac, animate, quorum)
         # set seed if specified
         if (!is.null(myseed)) {
             set.seed(myseed)
         }
         # match schemes (default to random)
-        scheme <- match.arg(scheme)
+        scheme <- .match_choice(scheme, .MARsampling_schemes, "scheme")
         # if scheme is inwards, reverse the bounding box
         revbbox <- ifelse(scheme == "inwards", TRUE, FALSE)
         # unwrap the samplemap raster once for the terra operations below
