@@ -281,9 +281,9 @@ vcf_parser <- function(vcf.fn, ploidy = 2) {
 #' print(maps)
 #' plot(maps)
 #'
-#' # simulated locations without a coordinate reference system, so no projection is applied
+#' # simulated locations on an arbitrary plane, so no real-world projection is applied
 #' lonlat.fn <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
-#' lonlat_parser(lonlat.fn, incrs = "", mapcrs = "")
+#' lonlat_parser(lonlat.fn, incrs = "local", mapcrs = "local")
 lonlat_parser <- function(lonlat.fn, ...) {
     # check if lonlat.fn is a valid txt file
     txt.ext <- c(".txt", ".txt.gz", ".csv", ".csv.gz", ".tsv", ".tsv.gz")

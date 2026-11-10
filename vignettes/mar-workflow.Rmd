@@ -388,7 +388,7 @@ Sample coordinates are still imported separately with `lonlat_parser()`, as in
 lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
 # Tips: this example uses arbitrary planar coordinates rather than longitude/latitude,
 # so no coordinate reference system conversion is needed
-mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+mapsdata <- lonlat_parser(lonlatfile, incrs = "local", mapcrs = "local")
 
 print(mapsdata)
 ```
@@ -410,8 +410,8 @@ set `incrs` to match `mapcrs` so that `lonlat_parser()` skips reprojection.
 ```{r skip reprojection}
 # Locate example coordinates (arbitrary planar units, not longitude/latitude)
 lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
-# Tips: setting incrs = mapcrs (here, both "") skips reprojection entirely
-mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+# Tips: setting incrs = mapcrs (here, both "local") skips reprojection entirely
+mapsdata <- lonlat_parser(lonlatfile, incrs = "local", mapcrs = "local")
 
 print(mapsdata)
 ```

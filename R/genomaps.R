@@ -183,8 +183,9 @@ margeno <- function(genotype, ploidy, sample.id = NULL, variant.id = NULL, posit
 #'   Defaults to "EPSG:4326" (WGS84 longitude/latitude). When `incrs` differs from `mapcrs`,
 #'   the coordinates are reprojected into `mapcrs` before the resolution, extent, and cell
 #'   assignment are computed, so those stay consistent with the map units.
-#'   Set both `incrs` and `mapcrs` to `""` for coordinates on an arbitrary plane,
-#'   such as those of a spatial simulation.
+#'   Set both `incrs` and `mapcrs` to `"local"` for coordinates on an arbitrary plane,
+#'   such as those of a spatial simulation. `"local"` gives `terra` a Cartesian
+#'   (meter) engineering CRS, so area is still well-defined (unlike an empty CRS).
 #'
 #' @return A marmaps object, holding the sample IDs, the coordinates in `mapcrs`,
 #'   the sample map raster (wrapped with `terra::wrap()` so that it can be saved,

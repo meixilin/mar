@@ -11,7 +11,7 @@ Depends:
     R (>= 4.0.0)
 biocViews:
 Imports:
-    terra,
+    terra (>= 1.9-25),
     sars,
     matrixStats
 Encoding: UTF-8
