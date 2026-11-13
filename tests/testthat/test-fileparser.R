@@ -36,7 +36,16 @@ test_that(".read_genotype works correctly", {
     expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\t2\n3\t1\t0\t2\n"), ploidy = 3))
     expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\t2\n3\t1\t0\t2\n"), ploidy = 2))
     expect_no_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\tNA\n"), ploidy = 2))
+    # invalid, non-numeric text must error instead of being silently coerced
+    expect_error(.read_genotype(gen_mock(".txt", "0\t1\t2\n1\t0\tfoo\n"), ploidy = 2))
     unlink_files()
+})
+
+test_that(".gt_to_dosage rejects invalid GT text", {
+    expect_equal(.gt_to_dosage("0/1"), 1)
+    expect_equal(.gt_to_dosage("1|1"), 2)
+    expect_true(is.na(.gt_to_dosage("./.")))
+    expect_error(.gt_to_dosage("A/T"))
 })
 
 test_that(".read_pos works correctly", {

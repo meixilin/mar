@@ -14,9 +14,11 @@ nothing; \code{TRUE} fits both \code{c} and \code{z} via \link{MARcalc}; a named
 \code{c(c = , z = )} vector supplies one or both directly, and leaves the rest
 to be fitted via \link{MARcalc}.}
 
-\item{Mtype}{Type of genetic diversity metric to plot}
+\item{Mtype}{Type of genetic diversity metric to plot. Default is "M"
+(number of mutations), allowed values are M, E, thetaw, thetapi.}
 
-\item{Atype}{Type of area metric to plot}
+\item{Atype}{Type of area metric to plot. Default is "A" (area), allowed
+values are A, Asq, N.}
 
 \item{theory}{What theoretical MAR prediction to overlay: \code{NULL} (default,
 no overlay), a \code{martheory} object (output of \link{MARtheory}, used

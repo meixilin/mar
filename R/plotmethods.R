@@ -84,8 +84,10 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #'   nothing; `TRUE` fits both `c` and `z` via \link{MARcalc}; a named
 #'   `c(c = , z = )` vector supplies one or both directly, and leaves the rest
 #'   to be fitted via \link{MARcalc}.
-#' @param Mtype Type of genetic diversity metric to plot
-#' @param Atype Type of area metric to plot
+#' @param Mtype Type of genetic diversity metric to plot. Default is "M"
+#'   (number of mutations), allowed values are `r toString(.Mtype)`.
+#' @param Atype Type of area metric to plot. Default is "A" (area), allowed
+#'   values are `r toString(.Atype)`.
 #' @param theory What theoretical MAR prediction to overlay: `NULL` (default,
 #'   no overlay), a `martheory` object (output of \link{MARtheory}, used
 #'   as-is), or a `genomaps` object (a `martheory` is generated from it via
@@ -112,8 +114,8 @@ plot.sfs <- function(x, expected = NULL, ...) {
 #' # the power law as a straight line on log-log axes
 #' plot(mardf, fit = TRUE, log = "xy")
 plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
-    Mtype <- match.arg(Mtype)
-    Atype <- match.arg(Atype)
+    Mtype <- .match_choice(Mtype, .Mtype, "Mtype")
+    Atype <- .match_choice(Atype, .Atype, "Atype")
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]
     # previously had a check for length(unique(tmpdf[,Mtype])) < 4
@@ -151,8 +153,10 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
 #' @param fit Whether to draw the fitted extinction curve. `FALSE` (default)
 #'   draws nothing; `TRUE` fits `z` via \link{MARcalc}; a named `c(z = )`
 #'   vector supplies it directly.
-#' @param Mtype Type of genetic diversity metric to plot
-#' @param Atype Type of area metric to plot
+#' @param Mtype Type of genetic diversity metric to plot. Default is "M"
+#'   (number of mutations), allowed values are `r toString(.Mtype)`.
+#' @param Atype Type of area metric to plot. Default is "A" (area), allowed
+#'   values are `r toString(.Atype)`.
 #' @param theory What theoretical MAR prediction to overlay (rescaled to the
 #'   same % lost / % remained axes): `NULL` (default, no overlay), a
 #'   `martheory` object (output of \link{MARtheory}, used as-is), or a
@@ -173,8 +177,8 @@ plot.marsamp <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory 
 #' # fit z automatically, and overlay the MARtheory prediction generated from gm
 #' plot(extdf, Atype = "N", fit = TRUE, theory = gm1001g)
 plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theory = NULL, ...) {
-    Mtype <- match.arg(Mtype)
-    Atype <- match.arg(Atype)
+    Mtype <- .match_choice(Mtype, .Mtype, "Mtype")
+    Atype <- .match_choice(Atype, .Atype, "Atype")
     # remove NA or zero data
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]
@@ -213,7 +217,8 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #'   nothing; `TRUE` fits both `c` and `z` via \link{MARcalc}; a named
 #'   `c(c = , z = )` vector supplies one or both directly, and leaves the rest
 #'   to be fitted via \link{MARcalc}.
-#' @param Mtype Type of genetic diversity metric to plot. Allowed values are `r toString(.Mtype_theory)`.
+#' @param Mtype Type of genetic diversity metric to plot. Default is "M"
+#'   (number of mutations), allowed values are `r toString(.Mtype_theory)`.
 #' @param ... Additional arguments passed to \link[graphics]{plot}. Pass
 #'   `log = "xy"` (or `"x"` / `"y"`) for a log-log (or semi-log) plot; the
 #'   fitted curve follows the axes.
@@ -232,7 +237,7 @@ plot.marextinct <- function(x, fit = FALSE, Mtype = .Mtype, Atype = .Atype, theo
 #' # Watterson's theta is flat with sample size under neutrality
 #' plot(theory, Mtype = "thetaw")
 plot.martheory <- function(x, fit = FALSE, Mtype = .Mtype_theory, ...) {
-    Mtype <- match.arg(Mtype)
+    Mtype <- .match_choice(Mtype, .Mtype_theory, "Mtype")
     Atype <- "N" # martheory is always predicted against N (number of individuals)
     tmpdf <- x[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]

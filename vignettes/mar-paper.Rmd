@@ -20,33 +20,51 @@ library(terra)
 ```
 
 ```{r core commands}
+# genomaps object: genotypes (10,000 biallelic SNPs) and coordinates of 1004 A. thaliana samples
 data(gm1001g)
+# site-frequency spectrum: number of sites with k = 0, 1, 2, ... mutated chromosomes
 obssfs <- sfs(gm1001g)
+# theoretical MAR predicted from the SFS, assuming random mating and random spatial distribution
 theorydf <- MARtheory(gm1001g)
+# empirical MAR: genetic diversity and area in replicated square subsamples of increasing size
 mardf <- MARsampling(gm1001g, myseed = 91)
+# extinction simulation: iteratively remove raster cells and track the remaining genetic diversity
 extdf <- MARextinction(gm1001g, myseed = 91)
+# fit the power-law model M = cA^z to estimate the scaling factor z
 marfit <- MARcalc(mardf)
 ```
 
 ```{r results}
-# extract resolution
-sm <- mar:::.get_samplemap(gm1001g$maps)
+# extract resolution of the reference raster map (determined automatically, Hengl 2006)
+# samplemap is stored wrapped, unwrap it with terra::unwrap() before use (see ?marmaps)
+sm <- terra::unwrap(gm1001g$maps$samplemap)
 sm
 
-# cell info
+# number of raster cells occupied, and number of samples per cell
 cellinfo <- as.vector(table(gm1001g$maps$cellid))
 length(cellinfo)
 summary(cellinfo)
 ```
 
 ```{r mar}
+# summary of the sars power-law fit (S == c * A^z; S here is the number of mutations M):
+#   Parameters: c (intercept) and z (scaling factor, the rate of genetic diversity loss),
+#     with standard error, t-test p-value Pr(>|t|), and 95% confidence interval (2.5%, 97.5%)
+#   R2 / R2a: (adjusted) proportion of variation in M explained by area
+#   AIC/AICc/BIC compare models fitted to the same data only
 marfitsum <- summary(marfit)
+marfitsum
+# z and 95% confidence interval, using occupied grid cell areas (A)
 round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
+# p-value of z
 round(marfitsum$Parameters['z', 'Pr(>|t|)'], digits = 3)
+# adjusted R2
 round(marfitsum$R2a, digits = 2)
 ```
 
 ```{r marasq}
+# refit using the total square area (Asq) regardless of individual occupancy:
+# accounts for variation in sample size across space, but weakens the correlation
 marfit_asq <- MARcalc(mardf, Atype = 'Asq')
 marfitsum <- summary(marfit_asq)
 round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
@@ -55,13 +73,21 @@ round(marfitsum$R2a, digits = 2)
 ```
 
 ```{r extpred}
-a = 0.38
-z = 0.46
+# genetic diversity loss prediction: 1 - m = (1 - a)^z
+a = 0.38  # proportion of area lost (38% global terrestrial area transformed, Millennium Ecosystem Assessment)
+z = 0.46  # scaling factor inferred from MARsampling (M ~ A)
+# proportion of genetic diversity (number of mutations) remaining, ~80%
+# note: this estimates short-term loss; genetic drift will continue eroding diversity over time
 m_remaining = (1-a)^z
 m_remaining
 ```
 
 ```{r marother}
+# genetic-diversity-area relationship (GDAR) for additional genetic diversity metrics:
+#   E: endemic mutations, only existing in the sampled region
+#   thetaw: Watterson's theta, number of segregating sites with a sample size scaling factor
+#   thetapi: nucleotide diversity, average pairwise differences between samples (less sensitive to rare alleles)
+# extract z (95% CI), p-value of z, and adjusted R2 from each sars fit
 extract_summary <- function(x) {
     sumx <- summary(x)
     a = round(sumx$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
@@ -72,14 +98,14 @@ extract_summary <- function(x) {
 }
 Mtypes = c('E', 'thetaw', 'thetapi')
 marfit_list <- lapply(Mtypes, MARcalc, mardf = mardf)
+# higher z: diversity saturates slower with area, and is lost faster with area loss
 summarydf <- do.call(rbind, lapply(marfit_list, extract_summary))
 dimnames(summarydf)[[1]] <- Mtypes
 dimnames(summarydf)[[2]][4:5] <- c('Pr(>|t|)', 'R2_adj')
 print(summarydf)
 ```
 
-```{r Fig2, eval = FALSE}
-pdf(file = 'Fig2.pdf', width = 10, height = 8)
+```{r Fig2, fig.width = 10, fig.height = 8, fig.cap = "Sample map (A), observed site-frequency spectrum (B), MAR sampling curve (C), and extinction curve (D) for the global Arabidopsis 1001G dataset."}
 par(mfrow = c(2,2), mar = c(4,4,3,2))
 plot(gm1001g$maps, xlab = "Easting (EPSG:8857)", ylab = "Northing", pax = list(cex.lab = 1))
 mtext("A", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
@@ -89,40 +115,29 @@ plot(mardf, fit = marfit$par)
 mtext("C", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
 plot(extdf, fit = marfit$par)
 mtext("D", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
-dev.off()
 ```
 
-
-```{r FigS1, eval = FALSE}
-pdf(file = 'FigS1.pdf', width = 6, height = 5)
+```{r FigS1, fig.width = 6, fig.height = 5, fig.cap = "MAR sampling curve fit using area in number of samples (Atype = 'N'), with the theoretical expectation overlaid."}
 plot(mardf, fit = TRUE, Atype = 'N', theory = theorydf)
-dev.off()
 ```
 
-
-
-```{r FigS2, eval = FALSE}
-pdf(file = 'FigS2.pdf', width = 6, height = 5)
+```{r FigS2, fig.width = 6, fig.height = 5, fig.cap = "MAR sampling curve fit using squared area (Atype = 'Asq')."}
 plot(mardf, fit = TRUE, Atype = 'Asq')
-dev.off()
 ```
 
-```{r FigS3, eval = FALSE}
+```{r FigS3, fig.width = 5, fig.height = 12, fig.cap = "MAR sampling curves fit to the number of segregating sites (E), Watterson's theta (thetaw), and nucleotide diversity (thetapi)."}
 Mtypes = c('E', 'thetaw', 'thetapi')
-pdf(file = 'FigS3.pdf', width = 5, height = 12)
+panel_labels <- c('A', 'B', 'C')
 par(mfrow = c(1,3))
-for (Mtype in Mtypes) {
-    mtext("A", side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
-    plot(mardf, fit = TRUE, Mtype = Mtype)
+for (i in seq_along(Mtypes)) {
+    plot(mardf, fit = TRUE, Mtype = Mtypes[i])
+    mtext(panel_labels[i], side = 3, line = 1, adj = 0, cex = 1.4, font = 2)
 }
-dev.off()
 ```
 
-```{r FigS4, eval = FALSE}
-pdf(file = 'FigS4.pdf', width = 6, height = 5)
+```{r FigS4, fig.width = 6, fig.height = 5, fig.cap = "Extinction curve with the power-law relationship predicted from the MAR fit (red line) overlaid."}
 plot(extdf, fit = TRUE)
 curve((1 - x)^marfit$par['z'], add = TRUE, col = 'red')
-dev.off()
 ```
 
 

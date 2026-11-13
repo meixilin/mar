@@ -14,7 +14,8 @@ nothing; \code{TRUE} fits both \code{c} and \code{z} via \link{MARcalc}; a named
 \code{c(c = , z = )} vector supplies one or both directly, and leaves the rest
 to be fitted via \link{MARcalc}.}
 
-\item{Mtype}{Type of genetic diversity metric to plot. Allowed values are M, thetaw, thetapi.}
+\item{Mtype}{Type of genetic diversity metric to plot. Default is "M"
+(number of mutations), allowed values are M, thetaw, thetapi.}
 
 \item{...}{Additional arguments passed to \link[graphics]{plot}. Pass
 \code{log = "xy"} (or \code{"x"} / \code{"y"}) for a log-log (or semi-log) plot; the

@@ -133,5 +133,5 @@ test_that(".animate_MARextinction works", {
     extlist <- .extlist_sample(gm, xfrac = 0.1, scheme = "random", nrep = 1, r0c0 = c(1, 1))
 
     # Test animation function doesn't error
-    expect_invisible(.animate_MARextinction(extlist[[1]], gm))
+    expect_invisible(.animate_MARextinction(gm, extlist[[1]]))
 })

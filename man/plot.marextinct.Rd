@@ -13,9 +13,11 @@
 draws nothing; \code{TRUE} fits \code{z} via \link{MARcalc}; a named \code{c(z = )}
 vector supplies it directly.}
 
-\item{Mtype}{Type of genetic diversity metric to plot}
+\item{Mtype}{Type of genetic diversity metric to plot. Default is "M"
+(number of mutations), allowed values are M, E, thetaw, thetapi.}
 
-\item{Atype}{Type of area metric to plot}
+\item{Atype}{Type of area metric to plot. Default is "A" (area), allowed
+values are A, Asq, N.}
 
 \item{theory}{What theoretical MAR prediction to overlay (rescaled to the
 same \% lost / \% remained axes): \code{NULL} (default, no overlay), a

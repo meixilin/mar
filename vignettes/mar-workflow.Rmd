@@ -65,6 +65,39 @@ Otherwise, continue to [Step 1: Import raw data](#s1)
 `text_parser()` reads the genotype matrix and returns a `margeno` object
 containing the genotype data alongside sample and variant metadata.
 
+**Expected input files**: `text_parser()` takes up to three plain-text files
+(`.txt`/`.csv`/`.tsv`, gzipped or not). Only `geno.fn` is required; `samp.fn`
+and `pos.fn` are optional but recommended. Below is the structure of each,
+illustrated with the bundled `1001g_*` example files:
+
+```text
+geno.fn: 1001g_genotypes.txt.gz
+    SNP x sample matrix of ALT allele counts. NO header, NO row names.
+    Rows = SNPs, columns = samples (same order as samp.fn, if provided).
+
+    0   0   0   2   0   ...
+    0   2   0   0   0   ...
+    0   0   0   0   0   ...
+
+samp.fn: 1001g_accessions.txt  (optional)
+    One sample ID per line, NO header.
+    Same length and order as the columns of geno.fn.
+
+    88
+    108
+    139
+    159
+
+pos.fn: 1001g_chrpos.txt  (optional)
+    Header with CHR/CHROM and POS columns, tab- or comma-delimited.
+    Same length and order as the rows of geno.fn.
+
+    CHR     POS
+    1       1149
+    1       4880
+    1       6288
+```
+
 TODO: Add file specific instructions in marApp.
 
 ```{r import genotype}
@@ -97,6 +130,22 @@ print(genodata)
 ### 1b: Import geographic data using `lonlat_parser()` {#s1b}
 
 `lonlat_parser()` reads the coordinate file (TXT, CSV, or TSV) and returns a `marmaps` object.
+
+**Expected input file**: a single delimited file with a header row of exactly
+three columns, `ID`, `LON`/`LONGITUDE`, and `LAT`/`LATITUDE` (in that order,
+no missing values). Sample IDs must be unique and appear in the same order as
+the sample columns in the genotype matrix (or as the `samp.fn` file, if one
+was provided to `text_parser()`/`vcf_parser()`). For example, the bundled
+`1001g_lonlat.txt`:
+
+```text
+lonlat.fn: 1001g_lonlat.txt
+    ID      LON         LAT
+    88      0.683333    47.4
+    108     -4.06667    48.5167
+    139     -4.06667    48.5167
+    159     3.93333     47.35
+```
 
 TODO: this needs to be updated when `lonlat_parser()` returns `marmaps` object
 
@@ -302,6 +351,22 @@ object, the same type of object returned by `text_parser()`. Use it in place
 of [1a: Import genotype data using `text_parser()`](#s1) whenever your
 genotype data is already in VCF format.
 
+**Expected input file**: a standard VCF (v4.2+), single file, `.vcf` or
+`.vcf.gz`. Only the `GT` field is read; genotypes are converted to ALT allele
+counts (`./.` becomes `NA`). Sample IDs, chromosomes, and positions are taken
+directly from the file, so no separate `samp.fn`/`pos.fn` are needed. For
+example, the bundled `gmexp.vcf.gz` (truncated to a few samples/columns):
+
+```text
+vcf.fn: gmexp.vcf.gz
+    ##fileformat=VCFv4.2
+    ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+    #CHROM  POS    ID  REF  ALT  QUAL  FILTER  INFO  FORMAT  tsk_0  tsk_1  tsk_2  ...
+    1       3500   0   0    1    .     PASS    .     GT      0|0    0|0    0|0    ...
+    1       8201   1   0    1    .     PASS    .     GT      0|0    0|0    0|1    ...
+    1       13273  2   0    1    .     PASS    .     GT      0|1    0|0    0|0    ...
+```
+
 ```{r import vcf}
 # Tips: vcf_parser reads both gzipped and uncompressed VCF files.
 
@@ -323,7 +388,7 @@ Sample coordinates are still imported separately with `lonlat_parser()`, as in
 lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
 # Tips: this example uses arbitrary planar coordinates rather than longitude/latitude,
 # so no coordinate reference system conversion is needed
-mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+mapsdata <- lonlat_parser(lonlatfile, incrs = "local", mapcrs = "local")
 
 print(mapsdata)
 ```
@@ -345,8 +410,8 @@ set `incrs` to match `mapcrs` so that `lonlat_parser()` skips reprojection.
 ```{r skip reprojection}
 # Locate example coordinates (arbitrary planar units, not longitude/latitude)
 lonlatfile <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
-# Tips: setting incrs = mapcrs (here, both "") skips reprojection entirely
-mapsdata <- lonlat_parser(lonlatfile, incrs = "", mapcrs = "")
+# Tips: setting incrs = mapcrs (here, both "local") skips reprojection entirely
+mapsdata <- lonlat_parser(lonlatfile, incrs = "local", mapcrs = "local")
 
 print(mapsdata)
 ```

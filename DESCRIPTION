@@ -11,11 +11,11 @@ Depends:
     R (>= 4.0.0)
 biocViews:
 Imports:
-    terra,
+    terra (>= 1.9-25),
     sars,
     matrixStats
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 LazyData: true
 Suggests:
