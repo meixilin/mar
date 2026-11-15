@@ -43,8 +43,8 @@ Use \code{browseVignettes("mar")} to list them all.
 \seealso{
 Useful links:
 \itemize{
-\item{Package repository: \url{https://github.com/meixilin/mar}}
-\item{Package paper: \url{https://www.biorxiv.org/content/10.1101/2025.09.09.675155v1.full}}
+\item{Package repository: ANONYMOUS}
+\item{Package paper: ANONYMOUS}
 }
 }
 \keyword{internal}

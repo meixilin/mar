@@ -1,7 +1,7 @@
 test_that("MARsampling works with gm1001g genomaps data", {
-    data("gm1001g", package = "mar")
+    data("gm1001g")
 
-    result <- mar::MARsampling(
+    result <- MARsampling(
         gm = gm1001g,
         scheme = "random",
         nrep = 2,
@@ -32,9 +32,9 @@ test_that("MARsampling works with gm1001g genomaps data", {
 })
 
 test_that("MARsampling works with animate", {
-    data("gm1001g", package = "mar")
+    data("gm1001g")
 
-    result <- mar::MARsampling(
+    result <- MARsampling(
         gm = gm1001g,
         scheme = "random",
         nrep = 2,

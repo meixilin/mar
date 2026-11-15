@@ -2,7 +2,6 @@
 
 <!-- badges: start -->
 
-![GitHub R package version](https://img.shields.io/github/r-package/v/meixilin/mar)
 [![R-CMD-check](https://github.com/r-lib/gert/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/gert/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 ![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-green)
@@ -20,6 +19,13 @@ To install the development version with all dependencies and the vignettes:
 ```R
 library(devtools)
 devtools::install_github("meixilin/mar", build_vignettes = TRUE)
+```
+
+Or download the mar package and install locally:
+
+```R
+setwd('mar')
+devtools::install(build_vignettes = TRUE)
 ```
 
 Or in bash:

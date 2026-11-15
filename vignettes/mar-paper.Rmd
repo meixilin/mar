@@ -53,6 +53,11 @@ summary(cellinfo)
 #   R2 / R2a: (adjusted) proportion of variation in M explained by area
 #   AIC/AICc/BIC compare models fitted to the same data only
 marfitsum <- summary(marfit)
+
+# print full outputs
+print(marfitsum)
+
+# print the z values
 marfitsum
 # z and 95% confidence interval, using occupied grid cell areas (A)
 round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
@@ -66,10 +71,16 @@ round(marfitsum$R2a, digits = 2)
 # refit using the total square area (Asq) regardless of individual occupancy:
 # accounts for variation in sample size across space, but weakens the correlation
 marfit_asq <- MARcalc(mardf, Atype = 'Asq')
-marfitsum <- summary(marfit_asq)
-round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
-round(marfitsum$Parameters['z', 'Pr(>|t|)'], digits = 3)
-round(marfitsum$R2a, digits = 2)
+marfitsum_asq <- summary(marfit_asq)
+
+# print full outputs
+print(marfitsum_asq)
+
+
+# print the z values
+round(marfitsum_asq$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
+round(marfitsum_asq$Parameters['z', 'Pr(>|t|)'], digits = 3)
+round(marfitsum_asq$R2a, digits = 2)
 ```
 
 ```{r extpred}
@@ -104,6 +115,8 @@ dimnames(summarydf)[[1]] <- Mtypes
 dimnames(summarydf)[[2]][4:5] <- c('Pr(>|t|)', 'R2_adj')
 print(summarydf)
 ```
+
+# Figures
 
 ```{r Fig2, fig.width = 10, fig.height = 8, fig.cap = "Sample map (A), observed site-frequency spectrum (B), MAR sampling curve (C), and extinction curve (D) for the global Arabidopsis 1001G dataset."}
 par(mfrow = c(2,2), mar = c(4,4,3,2))

@@ -49,7 +49,7 @@ test_that(".extsample works correctly", {
 })
 
 test_that("MARextinction basic functionality works", {
-    data("gm1001g", package = "mar")
+    data("gm1001g")
 
     # Test with default parameters
     result <- MARextinction(gm1001g, nrep = 2)
@@ -130,7 +130,7 @@ test_that(".animate_MARextinction works", {
     skip_if_not(interactive(), "Animation tests only run in interactive mode")
 
     gm <- create_test_genomaps()
-    extlist <- .extlist_sample(gm, xfrac = 0.1, scheme = "random", nrep = 1, r0c0 = c(1, 1))
+    extlist <- .extlist_sample(gm, xfrac = 0.1, scheme = "random", nrep = 1, r0c0 = c(1,1))
 
     # Test animation function doesn't error
     expect_invisible(.animate_MARextinction(gm, extlist[[1]]))
