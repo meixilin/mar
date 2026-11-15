@@ -2,6 +2,21 @@
 .Mtype <- c("M", "E", "thetaw", "thetapi")
 .Atype <- c("A", "Asq", "N")
 
+# match.arg() with an error naming the argument and its allowed values,
+# so empty / NA / misspelled metric or scheme selections fail informatively
+.match_choice <- function(arg, choices, argname) {
+    if (identical(arg, choices)) {
+        return(choices[1]) # left at default
+    }
+    if (!is.character(arg) || length(arg) != 1 || is.na(arg) || is.na(pmatch(arg, choices))) {
+        stop("`", argname, "` must be one of ", toString(dQuote(choices, FALSE)),
+            "; got ", paste(deparse(arg), collapse = ""),
+            call. = FALSE
+        )
+    }
+    return(choices[pmatch(arg, choices)])
+}
+
 #' Calculate the mutations-area relationship (MAR) using the power-law model
 #'
 #' This function calculates the MAR using the power-law model from the provided data frame.
@@ -25,8 +40,8 @@
 #' # the same power law model fitted against sample size rather than area
 #' MARcalc(mardf, Mtype = "M", Atype = "N")
 MARcalc <- function(mardf, Mtype = .Mtype, Atype = .Atype) {
-    Mtype <- match.arg(Mtype)
-    Atype <- match.arg(Atype)
+    Mtype <- .match_choice(Mtype, .Mtype, "Mtype")
+    Atype <- .match_choice(Atype, .Atype, "Atype")
     # remove NA or zero data
     tmpdf <- mardf[, c(Atype, Mtype)]
     tmpdf <- tmpdf[(tmpdf[, Mtype] > 0 & !is.na(tmpdf[, Mtype])), ]

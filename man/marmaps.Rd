@@ -18,8 +18,9 @@ If not provided (mapres = NULL), it will be automatically calculated.}
 Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
 the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
 assignment are computed, so those stay consistent with the map units.
-Set both \code{incrs} and \code{mapcrs} to \code{""} for coordinates on an arbitrary plane,
-such as those of a spatial simulation.}
+Set both \code{incrs} and \code{mapcrs} to \code{"local"} for coordinates on an arbitrary plane,
+such as those of a spatial simulation. \code{"local"} gives \code{terra} a Cartesian
+(meter) engineering CRS, so area is still well-defined (unlike an empty CRS).}
 }
 \value{
 A marmaps object, holding the sample IDs, the coordinates in \code{mapcrs},

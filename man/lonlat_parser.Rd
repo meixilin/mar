@@ -19,8 +19,9 @@ If not provided (mapres = NULL), it will be automatically calculated.}
 Defaults to "EPSG:4326" (WGS84 longitude/latitude). When \code{incrs} differs from \code{mapcrs},
 the coordinates are reprojected into \code{mapcrs} before the resolution, extent, and cell
 assignment are computed, so those stay consistent with the map units.
-Set both \code{incrs} and \code{mapcrs} to \code{""} for coordinates on an arbitrary plane,
-such as those of a spatial simulation.}
+Set both \code{incrs} and \code{mapcrs} to \code{"local"} for coordinates on an arbitrary plane,
+such as those of a spatial simulation. \code{"local"} gives \code{terra} a Cartesian
+(meter) engineering CRS, so area is still well-defined (unlike an empty CRS).}
   }}
 }
 \value{
@@ -41,9 +42,9 @@ maps <- lonlat_parser(lonlat.fn, mapcrs = "EPSG:8857")
 print(maps)
 plot(maps)
 
-# simulated locations without a coordinate reference system, so no projection is applied
+# simulated locations on an arbitrary plane, so no real-world projection is applied
 lonlat.fn <- system.file("extdata", "gmexp_lonlat.csv", package = "mar")
-lonlat_parser(lonlat.fn, incrs = "", mapcrs = "")
+lonlat_parser(lonlat.fn, incrs = "local", mapcrs = "local")
 }
 \seealso{
 \code{\link[=marmaps]{marmaps()}}, and \code{\link[=text_parser]{text_parser()}} / \code{\link[=vcf_parser]{vcf_parser()}} for the matching

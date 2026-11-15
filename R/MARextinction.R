@@ -34,12 +34,13 @@
 #'
 MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 0.01, animate = FALSE, myseed = NULL) {
     # same as MARsampling ------------------------------------------------------
+    .check_controls(nrep, xfrac, animate)
     # set seed if specified
     if (!is.null(myseed)) {
         set.seed(myseed)
     }
     # match schemes (default to random)
-    scheme <- match.arg(scheme)
+    scheme <- .match_choice(scheme, .MARsampling_schemes, "scheme")
     # unwrap the samplemap raster once for the terra operations below
     sm <- .get_samplemap(gm$maps)
     # calculate and store raster area in the given samplemap
@@ -53,7 +54,13 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
 
     # if need to plot
     if (animate) {
-        lapply(extlist, .animate_MARextinction, gm = gm)
+        total_frames <- sum(lengths(extlist))
+        pb <- utils::txtProgressBar(min = 0, max = total_frames, style = 3)
+        frame <- 0
+        for (extl in extlist) {
+            frame <- .animate_MARextinction(gm, extl, pb = pb, frame = frame)
+        }
+        close(pb)
     }
 
     # calculate area and genetic diversity in each extant cell list
@@ -157,7 +164,7 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
     return(extl)
 }
 
-.animate_MARextinction <- function(gm, extl, pause = 0.2) {
+.animate_MARextinction <- function(gm, extl, pause = 0.2, pb = NULL, frame = 0) {
     grDevices::dev.flush()
     plot.marmaps(gm$maps)
     sm <- .get_samplemap(gm$maps)
@@ -166,5 +173,10 @@ MARextinction <- function(gm, scheme = .MARsampling_schemes, nrep = 10, xfrac = 
         sm[setdiff(gm$maps$cellid, extl[[ii]])] <- 1
         terra::plot(sm, add = T, col = "black", legend = FALSE)
         Sys.sleep(pause)
+        if (!is.null(pb)) {
+            frame <- frame + 1
+            utils::setTxtProgressBar(pb, frame)
+        }
     }
+    return(invisible(frame))
 }
