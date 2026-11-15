@@ -10,7 +10,7 @@ License: MIT + file LICENSE
 Depends:
     R (>= 4.0.0)
 Imports:
-    terra (>= 1.9-25),
+    terra (>= 1.8-50),
     sars,
     matrixStats
 Encoding: UTF-8
