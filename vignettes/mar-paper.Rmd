@@ -57,10 +57,10 @@ marfitsum <- summary(marfit)
 # print full outputs
 print(marfitsum)
 
-# print the z values
-marfitsum
 # z and 95% confidence interval, using occupied grid cell areas (A)
-round(marfitsum$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
+round(marfitsum$Parameters['z',c('Estimate')], digits = 2)
+round(marfitsum$Parameters['z',c( '2.5%', '97.5%')], digits = 3)
+
 # p-value of z
 round(marfitsum$Parameters['z', 'Pr(>|t|)'], digits = 3)
 # adjusted R2
@@ -76,9 +76,9 @@ marfitsum_asq <- summary(marfit_asq)
 # print full outputs
 print(marfitsum_asq)
 
-
 # print the z values
-round(marfitsum_asq$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
+round(marfitsum_asq$Parameters['z',c('Estimate')], digits = 2)
+round(marfitsum_asq$Parameters['z',c( '2.5%', '97.5%')], digits = 3)
 round(marfitsum_asq$Parameters['z', 'Pr(>|t|)'], digits = 3)
 round(marfitsum_asq$R2a, digits = 2)
 ```
@@ -101,10 +101,11 @@ m_remaining
 # extract z (95% CI), p-value of z, and adjusted R2 from each sars fit
 extract_summary <- function(x) {
     sumx <- summary(x)
-    a = round(sumx$Parameters['z',c('Estimate', '2.5%', '97.5%')], digits = 2)
-    b = round(sumx$Parameters['z', 'Pr(>|t|)'], digits = 3)
-    c = round(sumx$R2a, digits = 2)
-    out <- c(a,b,c)
+    a = round(sumx$Parameters['z',c('Estimate')], digits = 2)
+    b = round(sumx$Parameters['z',c('2.5%', '97.5%')], digits = 3)
+    c = round(sumx$Parameters['z', 'Pr(>|t|)'], digits = 3)
+    d = round(sumx$R2a, digits = 2)
+    out <- c(a,b,c,d)
     return(out)
 }
 Mtypes = c('E', 'thetaw', 'thetapi')
