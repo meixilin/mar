@@ -45,6 +45,8 @@ Useful links:
 \itemize{
 \item{Package repository: ANONYMOUS}
 \item{Package paper: ANONYMOUS}
+\item{Accompanying marApp shiny interface: ANONYMOUS}
+\item{marApp repository: ANONYMOUS}
 }
 }
 \keyword{internal}
